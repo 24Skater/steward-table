@@ -1,0 +1,42 @@
+model DeliveryZone {
+  id            String   @id @default(cuid())
+  churchId      String
+  name          String
+  translations  Json?
+  postalCodes   String[]
+  feeCents      Int      @default(0)
+  minOrderCents Int      @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
+  @@map("delivery_zones")
+}
+
+model DeliveryInfo {
+  id            String  @id @default(cuid())
+  orderId       String  @unique
+  zoneId        String?
+  driverId      String?
+  recipientName String
+  phone         String
+  line1         String
+  line2         String?
+  city          String
+  region        String
+  postalCode    String
+  country       String
+  instructions  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driver User? @relation("DriverAssignment", fields: [driverId], references: [id])
+
+  @@map("delivery_info")
+}

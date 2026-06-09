@@ -1,0 +1,95 @@
+model AuditLog {
+  id         String   @id @default(cuid())
+  churchId   String?
+  actorId    String?
+  action     String
+  resource   String
+  resourceId String?
+  metadata   Json?
+  ip         String?
+  userAgent  String?
+
+  createdAt DateTime @default(now())
+
+  church Church? @relation(fields: [churchId], references: [id], onDelete: SetNull)
+  actor  User?   @relation("AuditLogActor", fields: [actorId], references: [id])
+
+  @@index([churchId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([resource, resourceId])
+  @@map("audit_logs")
+}
+
+model WebhookEvent {
+  id              String    @id @default(cuid())
+  churchId        String?
+  provider        String
+  eventId         String
+  eventType       String
+  payload         Json
+  signatureValid  Boolean
+  processedAt     DateTime?
+  processingError String?
+
+  createdAt DateTime @default(now())
+
+  church Church? @relation(fields: [churchId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, eventId])
+  @@index([churchId, createdAt])
+  @@map("webhook_events")
+}
+
+model EmailLog {
+  id         String  @id @default(cuid())
+  churchId   String
+  to         String
+  from       String
+  subject    String
+  template   String
+  status     String
+  providerId String?
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId, createdAt])
+  @@map("email_logs")
+}
+
+model SmsLog {
+  id            String  @id @default(cuid())
+  churchId      String
+  to            String
+  body          String
+  status        String
+  providerId    String?
+  optInProofUrl String?
+  metadata      Json?
+
+  createdAt DateTime @default(now())
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId, createdAt])
+  @@map("sms_logs")
+}
+
+model Notification {
+  id       String    @id @default(cuid())
+  churchId String
+  userId   String?
+  type     String
+  body     String
+  link     String?
+  readAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId, userId, readAt])
+  @@map("notifications")
+}
