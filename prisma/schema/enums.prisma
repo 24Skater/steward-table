@@ -1,0 +1,138 @@
+enum Locale {
+  EN
+  ES
+}
+
+enum ChurchStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  STAFF
+  COOK
+  DRIVER
+  VIEWER
+}
+
+enum MembershipStatus {
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum CatalogStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum ItemStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum Channel {
+  ONLINE
+  PHONE
+  IN_PERSON
+}
+
+enum FulfillmentType {
+  PICKUP
+  DELIVERY
+  DINE_IN
+}
+
+enum OrderStatus {
+  DRAFT
+  SUBMITTED
+  CONFIRMED
+  IN_KITCHEN
+  READY
+  AWAITING_PICKUP
+  PICKED_UP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  SERVED
+  COMPLETED
+  CANCELED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  STRIPE_CARD
+  STRIPE_OTHER
+  CASH
+  ZELLE
+  PAY_ON_PICKUP
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  VOIDED
+}
+
+enum RefundStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum StripeMode {
+  BYO
+  CONNECT
+}
+
+enum TaxMode {
+  STRIPE_TAX
+  MANUAL
+}
+
+enum ReceiptLanguagePreset {
+  OFF
+  US_501C3
+  CUSTOM
+}
+
+enum SendingMode {
+  PLATFORM
+  BYO_DOMAIN
+}
+
+enum StockMovementKind {
+  RESTOCK
+  ORDER_DECREMENT
+  REFUND_INCREMENT
+  MANUAL_ADJUSTMENT
+  STOCKTAKE
+  SHRINKAGE
+}
+
+enum KitchenDisplayMode {
+  IMMEDIATE
+  JUST_IN_TIME
+}
