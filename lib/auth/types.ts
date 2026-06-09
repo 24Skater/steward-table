@@ -1,5 +1,6 @@
 import type { DefaultSession } from "next-auth";
-import type { Role } from "@prisma/client";
+
+export type Role = "OWNER" | "ADMIN" | "STAFF" | "COOK" | "DRIVER" | "VIEWER";
 
 export interface SessionMembership {
   id: string;
