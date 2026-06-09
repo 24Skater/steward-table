@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
-import type { SessionMembership } from "./types";
-import type { Role } from "@prisma/client";
+import type { SessionMembership, Role } from "./types";
 
 /**
  * Get the current session or throw if unauthenticated.

@@ -58,7 +58,7 @@ export const authConfig: NextAuthConfig = {
           roles: true,
           status: true,
         },
-        // @ts-expect-error bypass tenancy for session resolution
+        // @ts-expect-error _bypassTenancyCheck is custom middleware flag
         _bypassTenancyCheck: true,
       });
 
