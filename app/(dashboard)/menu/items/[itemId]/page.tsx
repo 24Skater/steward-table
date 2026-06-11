@@ -51,6 +51,9 @@ export default async function ItemDetailPage({
         orderBy: { sortOrder: "asc" },
       },
     },
+    // translations is already included via the main model select (Prisma
+    // returns all scalar fields by default with `include`; explicit select
+    // would require listing every field, so we rely on the default).
   });
 
   if (!item) redirect("/menu");
