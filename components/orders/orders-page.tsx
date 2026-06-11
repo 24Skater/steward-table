@@ -3,6 +3,7 @@
 import type { OrderStatus } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import type { DateRange } from "@/app/(dashboard)/orders/page";
 import { NewOrderDialog } from "./new-order-dialog";
 import { OrderRow } from "./order-row";
 import type { OrderRowData } from "./order-row";
@@ -14,6 +15,7 @@ import { FULFILLMENT_LABELS, formatOrderTime, getNextStep } from "./order-utils"
 interface OrdersPageProps {
   orders: OrderRowData[];
   churchId: string;
+  range: DateRange;
 }
 
 type FilterTab = "all" | "pending" | "in-progress" | "completed" | "canceled";
@@ -37,6 +39,33 @@ const TAB_LABELS: Record<FilterTab, string> = {
   completed: "Completed",
   canceled: "Canceled",
 };
+
+// ── Bulk action config ────────────────────────────────────────────────────────
+
+interface BulkAction {
+  label: string;
+  targetStatus: OrderStatus;
+}
+
+function getBulkAction(selectedOrders: OrderRowData[]): BulkAction | null {
+  if (selectedOrders.length === 0) return null;
+  const statuses = new Set(selectedOrders.map((o) => o.status));
+  if (statuses.size === 1) {
+    const status = [...statuses][0];
+    if (status === "SUBMITTED") return { label: "Confirm All", targetStatus: "CONFIRMED" };
+    if (status === "IN_KITCHEN") return { label: "Mark All Ready", targetStatus: "READY" };
+  }
+  return null;
+}
+
+// ── Date range options ────────────────────────────────────────────────────────
+
+const DATE_RANGE_OPTIONS: { label: string; value: DateRange }[] = [
+  { label: "Today", value: "today" },
+  { label: "Last 7 days", value: "week" },
+  { label: "Last 30 days", value: "month" },
+  { label: "All time", value: "all" },
+];
 
 // ── Filter helper ─────────────────────────────────────────────────────────────
 
@@ -183,12 +212,58 @@ function ExportDropdown() {
   );
 }
 
+// ── Bulk action bar ───────────────────────────────────────────────────────────
+
+interface BulkActionBarProps {
+  selectedCount: number;
+  bulkAction: BulkAction | null;
+  isBulkLoading: boolean;
+  onBulkAction: () => void;
+  onClear: () => void;
+}
+
+function BulkActionBar({
+  selectedCount,
+  bulkAction,
+  isBulkLoading,
+  onBulkAction,
+  onClear,
+}: BulkActionBarProps) {
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-lg">
+      <span className="text-sm font-medium text-slate-700">
+        {selectedCount} {selectedCount === 1 ? "order" : "orders"} selected
+      </span>
+      {bulkAction && (
+        <button
+          onClick={onBulkAction}
+          disabled={isBulkLoading}
+          className="px-3 py-1.5 rounded-md bg-slate-800 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isBulkLoading ? "Updating…" : bulkAction.label}
+        </button>
+      )}
+      <button
+        onClick={onClear}
+        disabled={isBulkLoading}
+        aria-label="Clear selection"
+        className="text-slate-400 hover:text-slate-600 disabled:opacity-50 transition-colors text-lg leading-none"
+      >
+        &times;
+      </button>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export function OrdersPage({ orders, churchId }: OrdersPageProps) {
+export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const [newOrderOpen, setNewOrderOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkLoading, setIsBulkLoading] = useState(false);
 
   const tabFiltered = filterOrders(orders, activeTab);
   const visible = search.trim()
@@ -199,7 +274,64 @@ export function OrdersPage({ orders, churchId }: OrdersPageProps) {
       )
     : tabFiltered;
 
+  const selectedOrders = visible.filter((o) => selectedIds.has(o.id));
+  const bulkAction = getBulkAction(selectedOrders);
+  const allVisibleSelected = visible.length > 0 && visible.every((o) => selectedIds.has(o.id));
+  const someVisibleSelected = visible.some((o) => selectedIds.has(o.id));
+
   const tabs: FilterTab[] = ["all", "pending", "in-progress", "completed", "canceled"];
+
+  function handleSelectAll(checked: boolean) {
+    if (checked) {
+      setSelectedIds(new Set(visible.map((o) => o.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  }
+
+  function handleSelectRow(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  function handleClearSelection() {
+    setSelectedIds(new Set());
+  }
+
+  function handleRangeChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    router.push(`/orders?range=${e.target.value}`);
+  }
+
+  async function handleBulkAction() {
+    if (!bulkAction || isBulkLoading || selectedOrders.length === 0) return;
+    setIsBulkLoading(true);
+    try {
+      await fetch("/api/orders/bulk-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderIds: selectedOrders.map((o) => o.id),
+          targetStatus: bulkAction.targetStatus,
+        }),
+      });
+      setSelectedIds(new Set());
+      window.location.reload();
+    } catch {
+      setIsBulkLoading(false);
+    }
+  }
+
+  // Clear selection when tab or search changes
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [activeTab, search]);
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -208,6 +340,7 @@ export function OrdersPage({ orders, churchId }: OrdersPageProps) {
         onClose={() => setNewOrderOpen(false)}
         churchId={churchId}
       />
+
       {/* Filter tabs + search + export */}
       <div className="px-6 pt-4 pb-0 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border-b border-slate-200">
         {/* Segmented control */}
@@ -240,8 +373,20 @@ export function OrdersPage({ orders, churchId }: OrdersPageProps) {
           })}
         </div>
 
-        {/* Search + Export + New order */}
-        <div className="pb-3 sm:pb-0 flex gap-2 items-center">
+        {/* Date range + Search + Export + New order */}
+        <div className="pb-3 sm:pb-0 flex gap-2 items-center flex-wrap">
+          {/* Date range filter */}
+          <select
+            value={range}
+            onChange={handleRangeChange}
+            className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+          >
+            {DATE_RANGE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
           <input
             type="search"
             placeholder="Search order # or name…"
@@ -274,7 +419,20 @@ export function OrdersPage({ orders, churchId }: OrdersPageProps) {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50">
-                      <th className="py-2.5 pl-4 pr-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                      {/* Checkbox column */}
+                      <th className="py-2.5 pl-4 pr-2 w-10">
+                        <input
+                          type="checkbox"
+                          checked={allVisibleSelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = someVisibleSelected && !allVisibleSelected;
+                          }}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          aria-label="Select all orders"
+                          className="h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-slate-300"
+                        />
+                      </th>
+                      <th className="py-2.5 pr-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
                         Order
                       </th>
                       <th className="py-2.5 px-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
@@ -299,7 +457,28 @@ export function OrdersPage({ orders, churchId }: OrdersPageProps) {
                   </thead>
                   <tbody>
                     {visible.map((order) => (
-                      <OrderRow key={order.id} order={order} />
+                      <tr
+                        key={order.id}
+                        className={
+                          selectedIds.has(order.id)
+                            ? "border-b border-slate-100 bg-slate-50"
+                            : "border-b border-slate-100"
+                        }
+                      >
+                        {/* Checkbox */}
+                        <td className="py-3 pl-4 pr-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(order.id)}
+                            onChange={(e) => handleSelectRow(order.id, e.target.checked)}
+                            aria-label={`Select order #${order.number}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-slate-300"
+                          />
+                        </td>
+                        {/* Delegate remaining cells to OrderRow (rendered inline) */}
+                        <OrderRow order={order} />
+                      </tr>
                     ))}
                   </tbody>
                 </table>
@@ -315,6 +494,17 @@ export function OrdersPage({ orders, churchId }: OrdersPageProps) {
           </>
         )}
       </div>
+
+      {/* Bulk action floating bar */}
+      {selectedIds.size > 0 && (
+        <BulkActionBar
+          selectedCount={selectedIds.size}
+          bulkAction={bulkAction}
+          isBulkLoading={isBulkLoading}
+          onBulkAction={handleBulkAction}
+          onClear={handleClearSelection}
+        />
+      )}
     </div>
   );
 }
