@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { Sidebar } from "@/components/layout/sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -12,12 +13,11 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen">
-      <nav aria-label="Dashboard navigation">
-        {/* TODO: Implement sidebar with nav items */}
-        {/* Nav items: Orders, Kitchen, Catalog, Customers, Inventory, Drivers, Settings, Reports */}
-      </nav>
-      <main className="flex-1 overflow-auto">{children}</main>
+    <div className="flex h-screen overflow-hidden bg-slate-100">
+      <Sidebar />
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <main className="flex-1 overflow-y-auto">{children}</main>
+      </div>
     </div>
   );
 }
