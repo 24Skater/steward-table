@@ -82,6 +82,7 @@ export default async function OrdersPageRoute({ searchParams }: OrdersPageRouteP
       fulfillment: true,
       createdAt: true,
       scheduledFor: true,
+      total: true,
       customer: {
         select: { name: true },
       },
@@ -99,6 +100,7 @@ export default async function OrdersPageRoute({ searchParams }: OrdersPageRouteP
     fulfillment: o.fulfillment,
     createdAt: o.createdAt,
     scheduledFor: o.scheduledFor,
+    total: o.total,
     customer: { name: o.customer.name },
     _count: { items: o._count.items },
   }));

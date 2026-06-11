@@ -15,6 +15,7 @@ export interface OrderRowData {
   fulfillment: FulfillmentType;
   createdAt: Date;
   scheduledFor: Date | null;
+  total: number;
   customer: { name: string };
   _count: { items: number };
 }
@@ -28,6 +29,10 @@ interface OrderRowProps {
  * The parent component is responsible for rendering the wrapping <tr> and any
  * additional columns (e.g. the bulk-selection checkbox column).
  */
+function formatCents(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
 export function OrderRow({ order }: OrderRowProps) {
   const router = useRouter();
   const [inFlight, setInFlight] = useState(false);
@@ -82,6 +87,13 @@ export function OrderRow({ order }: OrderRowProps) {
       {/* Status */}
       <td className="py-3 px-3">
         <OrderStatusBadge status={order.status} />
+      </td>
+
+      {/* Total */}
+      <td className="py-3 px-3 text-right">
+        <span className="text-sm font-medium text-slate-700 tabular-nums">
+          {formatCents(order.total)}
+        </span>
       </td>
 
       {/* Time */}
