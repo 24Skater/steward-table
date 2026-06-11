@@ -223,6 +223,63 @@ function buildSimpleBody(
     </div>`;
 }
 
+export async function sendWelcomeEmail(userId: string): Promise<void> {
+  if (!resend) return;
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { email: true, name: true },
+    // @ts-expect-error — bypass tenancy for user lookups
+    _bypassTenancyCheck: true,
+  });
+
+  if (!user?.email) return;
+
+  const displayName = user.name ?? user.email;
+  const fromAddress =
+    process.env.RESEND_FROM_EMAIL ?? "noreply@table.steward.app";
+
+  try {
+    await resend.emails.send({
+      from: fromAddress,
+      to: user.email,
+      subject: "Welcome to Steward Table",
+      html: buildWelcomeEmailHtml(displayName),
+    });
+  } catch {
+    // Best-effort — never throw, never block sign-up flow
+  }
+}
+
+function buildWelcomeEmailHtml(displayName: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Steward Table</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 20px;">
+  <div style="max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <div style="background: #0f172a; padding: 24px; text-align: center;">
+      <p style="color: #94a3b8; font-size: 13px; margin: 0;">Steward Table</p>
+    </div>
+    <div style="padding: 32px 24px;">
+      <h1 style="font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 16px;">Welcome to Steward Table</h1>
+      <p style="color: #64748b; font-size: 15px; margin: 0 0 24px;">Hi ${displayName}, your account has been created. You can now sign in and start managing your church orders.</p>
+    </div>
+    <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0;">
+      <p style="color: #94a3b8; font-size: 12px; margin: 0; text-align: center;">
+        Powered by Steward Table
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
 function buildEmailHtml(
   payload: OrderNotificationPayload,
   message: NotificationMessage,

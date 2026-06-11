@@ -9,6 +9,7 @@ model User {
   preferredLocale  Locale     @default(EN)
   twoFactorEnabled Boolean    @default(false)
   twoFactorSecret  String?
+  passwordHash     String?
   status           UserStatus @default(ACTIVE)
 
   createdAt DateTime  @default(now())
