@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -150,6 +151,7 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
+  const router = useRouter();
   const [inFlight, setInFlight] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
   const [refundReason, setRefundReason] = useState("");
@@ -170,7 +172,7 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStep.targetStatus }),
       });
-      window.location.reload();
+      router.refresh();
     } catch {
       setInFlight(false);
     }
@@ -193,7 +195,7 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
         return;
       }
       setRefundOpen(false);
-      window.location.reload();
+      router.refresh();
     } catch {
       setRefundError("Network error — please try again");
       setRefundInFlight(false);
