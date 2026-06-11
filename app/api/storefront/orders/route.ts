@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { effectQueue } from "@/lib/orders/effect-queue";
+import { transition } from "@/lib/orders/transitions";
 
 interface CartModifierPayload {
   groupName: string;
@@ -129,7 +131,7 @@ export async function POST(req: NextRequest) {
       number: counter.value,
       channel: "ONLINE",
       fulfillment: fulfillmentType,
-      status: "SUBMITTED",
+      status: "DRAFT",
       currency: church.currency,
       subtotal,
       tax: 0,
@@ -158,6 +160,9 @@ export async function POST(req: NextRequest) {
     },
     select: { id: true, number: true },
   });
+
+  // Transition DRAFT → SUBMITTED to fire side effects (email, SMS, inventory)
+  await transition(order.id, "SUBMITTED", { actorId: "guest", queue: effectQueue });
 
   return NextResponse.json({ orderId: order.id, orderNumber: order.number }, { status: 201 });
 }
