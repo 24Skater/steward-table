@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InventoryTable } from "./inventory-table";
 import { CreateInventoryDialog } from "./create-inventory-dialog";
+import { EditInventoryDialog } from "./edit-inventory-dialog";
 import type { InventoryRow } from "./inventory-table";
 
 interface InventoryPageProps {
@@ -15,6 +16,7 @@ interface InventoryPageProps {
 export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
   const [items, setItems] = useState<InventoryRow[]>(initialItems);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<InventoryRow | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   async function handleQuantityChange(
@@ -66,10 +68,11 @@ export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
   }
 
   function handleEdit(item: InventoryRow): void {
-    setCreateOpen(false);
-    // Edit opens the create dialog pre-populated — handled inline via state if needed.
-    // For now, this is a placeholder for a future edit dialog.
-    void item;
+    setEditingItem(item);
+  }
+
+  function handleUpdated(updated: InventoryRow): void {
+    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
   }
 
   function handleCreated(newItem: InventoryRow): void {
@@ -147,6 +150,13 @@ export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
         churchId={churchId}
         onClose={() => setCreateOpen(false)}
         onCreated={handleCreated}
+      />
+
+      <EditInventoryDialog
+        key={editingItem?.id}
+        item={editingItem}
+        onClose={() => setEditingItem(null)}
+        onUpdated={handleUpdated}
       />
     </div>
   );
