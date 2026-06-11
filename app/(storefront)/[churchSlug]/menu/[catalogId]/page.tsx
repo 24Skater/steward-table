@@ -39,6 +39,7 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
               name: true,
               description: true,
               defaultPrice: true,
+              station: true,
               modifierGroups: {
                 where: { deletedAt: null },
                 orderBy: { sortOrder: "asc" },
@@ -85,6 +86,7 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
     name: ci.item.name as string,
     description: ci.item.description as string | null,
     price: (ci.priceOverride ?? ci.item.defaultPrice) as number,
+    category: (ci.item.station as string | null) ?? null,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     modifierGroups: (ci.item.modifierGroups as any[]).map((img: any) => ({
       id: img.group.id as string,
@@ -102,6 +104,10 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
     })),
   }));
 
+  const categories: string[] = Array.from(
+    new Set(items.map((item) => item.category).filter((c): c is string => c !== null)),
+  );
+
   return (
     <div>
       <h1 className="mb-2 text-2xl font-bold text-slate-800">{catalog.name}</h1>
@@ -109,6 +115,7 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
         catalogName={catalog.name}
         catalogDescription={catalog.description}
         items={items}
+        categories={categories}
       />
     </div>
   );

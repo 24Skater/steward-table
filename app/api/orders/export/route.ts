@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus, Prisma } from "@prisma/client";
 import type { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -35,19 +35,11 @@ export async function GET(req: NextRequest) {
     // "all" — no date filter
   }
 
-  // Build where clause with proper typing
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = {
+  const where: Prisma.OrderWhereInput = {
     churchId,
+    ...(since ? { createdAt: { gte: since } } : {}),
+    ...(statusFilter ? { status: statusFilter as OrderStatus } : {}),
   };
-
-  if (since) {
-    where.createdAt = { gte: since };
-  }
-
-  if (statusFilter) {
-    where.status = statusFilter as OrderStatus;
-  }
 
   const orders = await db.order.findMany({
     where,
@@ -56,7 +48,6 @@ export async function GET(req: NextRequest) {
       items: {
         select: {
           quantity: true,
-          unitPrice: true,
           itemName: true,
         },
       },
@@ -68,20 +59,9 @@ export async function GET(req: NextRequest) {
   // Build CSV
   const rows: string[] = [];
 
-  // Header row
+  // Header row — columns match the export spec
   rows.push(
-    [
-      "Order #",
-      "Date",
-      "Status",
-      "Fulfillment",
-      "Customer Name",
-      "Customer Phone",
-      "Customer Email",
-      "Items",
-      "Total (USD)",
-      "Notes",
-    ]
+    ["Order #", "Status", "Customer Name", "Customer Email", "Customer Phone", "Fulfillment", "Items", "Total ($)", "Created At", "Scheduled For"]
       .map(csvEscape)
       .join(","),
   );
@@ -89,25 +69,21 @@ export async function GET(req: NextRequest) {
   for (const order of orders) {
     const itemSummary = order.items.map((item) => `${item.quantity}x ${item.itemName}`).join("; ");
 
-    // total is in cents
+    // total is stored in cents
     const totalUsd = (order.total / 100).toFixed(2);
-
-    const customerName = order.customer?.name ?? "";
-    const customerPhone = order.customer?.phone ?? "";
-    const customerEmail = order.customer?.email ?? "";
 
     rows.push(
       [
         order.number.toString(),
-        order.createdAt.toISOString().slice(0, 19).replace("T", " "),
         order.status,
+        order.customer?.name ?? "",
+        order.customer?.email ?? "",
+        order.customer?.phone ?? "",
         order.fulfillment,
-        customerName,
-        customerPhone,
-        customerEmail,
         itemSummary,
         totalUsd,
-        order.notes ?? "",
+        order.createdAt.toISOString().slice(0, 19).replace("T", " "),
+        order.scheduledFor ? order.scheduledFor.toISOString().slice(0, 19).replace("T", " ") : "",
       ]
         .map(csvEscape)
         .join(","),
@@ -115,7 +91,7 @@ export async function GET(req: NextRequest) {
   }
 
   const csv = rows.join("\r\n");
-  const filename = `orders-${range}-${now.toISOString().slice(0, 10)}.csv`;
+  const filename = `orders-${now.toISOString().slice(0, 10)}.csv`;
 
   return new Response(csv, {
     headers: {

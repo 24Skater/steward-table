@@ -35,6 +35,12 @@ interface NotificationMessage {
 }
 
 const NOTIFICATION_MESSAGES: Partial<Record<string, NotificationMessage>> = {
+  SUBMITTED: {
+    subject: "Order received",
+    headline: "Order received",
+    body: "Thanks for your order! We have received it and will begin preparing it shortly.",
+    template: "order.submitted",
+  },
   CONFIRMED: {
     subject: "Your order has been confirmed",
     headline: "Order confirmed",
@@ -222,7 +228,7 @@ function buildEmailHtml(
   message: NotificationMessage,
 ): string {
   const bodyContent =
-    payload.status === "CONFIRMED"
+    payload.status === "SUBMITTED" || payload.status === "CONFIRMED"
       ? buildConfirmedBody(payload)
       : buildSimpleBody(payload, message);
 
