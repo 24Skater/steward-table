@@ -3,6 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { KitchenOrderCard } from "./kitchen-order-card";
 import { KitchenTopBar } from "./kitchen-top-bar";
+import {
+  KitchenFilters,
+  applyFilters,
+  type StatusFilter,
+  type FulfillmentFilter,
+} from "./kitchen-filters";
 
 export interface KitchenOrderItem {
   id: string;
@@ -30,6 +36,9 @@ export function KitchenDisplay() {
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
   const [connected, setConnected] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL_ACTIVE");
+  const [fulfillmentFilter, setFulfillmentFilter] = useState<FulfillmentFilter>("ALL");
+  const [markingAllReady, setMarkingAllReady] = useState(false);
 
   // Wakelock: keep screen awake on kitchen tablet
   useEffect(() => {
@@ -47,7 +56,6 @@ export function KitchenDisplay() {
 
     acquireWakeLock();
 
-    // Re-acquire on visibility change (browser releases lock when tab is hidden)
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         acquireWakeLock();
@@ -90,7 +98,6 @@ export function KitchenDisplay() {
         try {
           const updated = JSON.parse(e.data) as KitchenOrder;
           setOrders((prev) => {
-            // Remove completed/canceled orders, update or add active ones
             const activeStatuses = new Set(["CONFIRMED", "IN_KITCHEN", "READY"]);
             if (!activeStatuses.has(updated.status)) {
               return prev.filter((o) => o.id !== updated.id);
@@ -129,25 +136,66 @@ export function KitchenDisplay() {
     }
   }, []);
 
+  const handleMarkAllReady = useCallback(async () => {
+    const inKitchenIds = orders
+      .filter((o) => o.status === "IN_KITCHEN")
+      .map((o) => o.id);
+
+    if (inKitchenIds.length === 0) return;
+
+    setMarkingAllReady(true);
+    try {
+      await fetch("/api/orders/bulk-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderIds: inKitchenIds, targetStatus: "READY" }),
+      });
+    } catch {
+      // TODO: Show error toast
+    } finally {
+      setMarkingAllReady(false);
+    }
+  }, [orders]);
+
+  const inKitchenCount = orders.filter((o) => o.status === "IN_KITCHEN").length;
+  const visibleOrders = applyFilters(orders, statusFilter, fulfillmentFilter);
+
   return (
     <div className="flex flex-col h-screen bg-slate-950 overflow-hidden">
       <KitchenTopBar
         orderCount={orders.length}
         currentTime={currentTime}
         connected={connected}
+        inKitchenCount={inKitchenCount}
+        onMarkAllReady={handleMarkAllReady}
+        markingAllReady={markingAllReady}
       />
 
-      {orders.length === 0 ? (
+      <KitchenFilters
+        orders={orders}
+        statusFilter={statusFilter}
+        fulfillmentFilter={fulfillmentFilter}
+        onStatusChange={setStatusFilter}
+        onFulfillmentChange={setFulfillmentFilter}
+      />
+
+      {visibleOrders.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-2">
-            <p className="text-slate-400 text-xl font-medium">No active orders</p>
-            <p className="text-slate-600 text-sm">Orders will appear here automatically</p>
+            <p className="text-slate-400 text-xl font-medium">
+              {orders.length === 0 ? "No active orders" : "No orders match the current filters"}
+            </p>
+            <p className="text-slate-600 text-sm">
+              {orders.length === 0
+                ? "Orders will appear here automatically"
+                : "Try adjusting the status or fulfillment filters"}
+            </p>
           </div>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-4">
           <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {orders.map((order) => (
+            {visibleOrders.map((order) => (
               <KitchenOrderCard
                 key={order.id}
                 order={order}

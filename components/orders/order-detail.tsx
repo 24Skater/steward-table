@@ -4,6 +4,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { OrderStatusBadge } from "./order-status-badge";
 import { AssignDriverSelect } from "./assign-driver-select";
 import type { DriverOption } from "./assign-driver-select";
@@ -142,8 +151,15 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 
 export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
   const [inFlight, setInFlight] = useState(false);
+  const [refundOpen, setRefundOpen] = useState(false);
+  const [refundReason, setRefundReason] = useState("");
+  const [refundInFlight, setRefundInFlight] = useState(false);
+  const [refundError, setRefundError] = useState<string | null>(null);
+
   const nextStep = getNextStep(order.status, order.fulfillment);
   const displayTime = order.scheduledFor ?? order.createdAt;
+
+  const canRefund = order.status === "COMPLETED";
 
   async function handleNextStep() {
     if (!nextStep || inFlight) return;
@@ -157,6 +173,30 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
       window.location.reload();
     } catch {
       setInFlight(false);
+    }
+  }
+
+  async function handleRefund() {
+    if (refundInFlight) return;
+    setRefundInFlight(true);
+    setRefundError(null);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refundAll: true, reason: refundReason || undefined }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        setRefundError(data.error ?? "Refund failed");
+        setRefundInFlight(false);
+        return;
+      }
+      setRefundOpen(false);
+      window.location.reload();
+    } catch {
+      setRefundError("Network error — please try again");
+      setRefundInFlight(false);
     }
   }
 
@@ -216,6 +256,16 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
             ) : inFlight ? (
               <span className="text-sm text-slate-400">Updating…</span>
             ) : null}
+            {canRefund && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 px-3 text-sm text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                onClick={() => { setRefundError(null); setRefundOpen(true); }}
+              >
+                Issue refund
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"
@@ -414,6 +464,64 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
           </Card>
         </div>
       </div>
+
+      {/* Refund dialog */}
+      <Dialog open={refundOpen} onOpenChange={setRefundOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Issue full refund — Order #{order.number}</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 py-2">
+            <p className="text-sm text-slate-600">
+              This will refund the full amount of{" "}
+              <span className="font-medium tabular-nums">
+                {formatPrice(order.total)}
+              </span>{" "}
+              to the customer. This action cannot be undone.
+            </p>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="refund-reason" className="text-sm">
+                Reason <span className="text-slate-400">(optional)</span>
+              </Label>
+              <Textarea
+                id="refund-reason"
+                rows={3}
+                placeholder="e.g. Customer request, quality issue…"
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                className="resize-none text-sm"
+              />
+            </div>
+
+            {refundError && (
+              <p className="text-sm text-red-600" role="alert">
+                {refundError}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRefundOpen(false)}
+              disabled={refundInFlight}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={handleRefund}
+              disabled={refundInFlight}
+            >
+              {refundInFlight ? "Processing…" : "Confirm refund"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

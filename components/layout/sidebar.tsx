@@ -14,6 +14,7 @@ import {
   Settings,
   BarChart3,
   LogOut,
+  UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/layout/notification-bell";
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
 ] as const;
 
 const BOTTOM_ITEMS = [
+  { href: "/profile", label: "My Profile", icon: UserCircle },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
