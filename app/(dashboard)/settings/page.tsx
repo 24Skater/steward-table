@@ -16,6 +16,9 @@ function parseFulfillmentPrefs(brandTokens: unknown) {
       dineInEnabled: false,
       deliveryRadiusMiles: null,
       pickupInstructions: null,
+      pickupWindowStartHour: 10,
+      pickupWindowEndHour: 20,
+      slotIntervalMinutes: 30,
     };
   }
   const raw = brandTokens as Record<string, unknown>;
@@ -27,6 +30,12 @@ function parseFulfillmentPrefs(brandTokens: unknown) {
       typeof raw.deliveryRadiusMiles === "number" ? raw.deliveryRadiusMiles : null,
     pickupInstructions:
       typeof raw.pickupInstructions === "string" ? raw.pickupInstructions : null,
+    pickupWindowStartHour:
+      typeof raw.pickupWindowStartHour === "number" ? raw.pickupWindowStartHour : 10,
+    pickupWindowEndHour:
+      typeof raw.pickupWindowEndHour === "number" ? raw.pickupWindowEndHour : 20,
+    slotIntervalMinutes:
+      typeof raw.slotIntervalMinutes === "number" ? raw.slotIntervalMinutes : 30,
   };
 }
 

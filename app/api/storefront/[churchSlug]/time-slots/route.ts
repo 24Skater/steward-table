@@ -53,7 +53,7 @@ export async function GET(
 
   const church = await (db.church.findFirst as Function)({
     where: { slug: churchSlug, status: "ACTIVE" },
-    select: { id: true },
+    select: { id: true, settings: { select: { brandTokens: true } } },
     _bypassTenancyCheck: true,
   });
 
@@ -73,12 +73,25 @@ export async function GET(
     return NextResponse.json({ error: "Invalid date format. Use YYYY-MM-DD." }, { status: 400 });
   }
 
-  // Use hardcoded defaults (ChurchSettings does not have pickup window fields yet)
-  const windowStartHour = DEFAULT_WINDOW_START_HOUR;
+  // Read pickup window settings from church brandTokens with fallback to defaults
+  const brandTokens =
+    church.settings?.brandTokens && typeof church.settings.brandTokens === "object"
+      ? (church.settings.brandTokens as Record<string, unknown>)
+      : {};
+  const windowStartHour =
+    typeof brandTokens.pickupWindowStartHour === "number"
+      ? brandTokens.pickupWindowStartHour
+      : DEFAULT_WINDOW_START_HOUR;
   const windowStartMinute = DEFAULT_WINDOW_START_MINUTE;
-  const windowEndHour = DEFAULT_WINDOW_END_HOUR;
+  const windowEndHour =
+    typeof brandTokens.pickupWindowEndHour === "number"
+      ? brandTokens.pickupWindowEndHour
+      : DEFAULT_WINDOW_END_HOUR;
   const windowEndMinute = DEFAULT_WINDOW_END_MINUTE;
-  const intervalMinutes = DEFAULT_SLOT_INTERVAL_MINUTES;
+  const intervalMinutes =
+    typeof brandTokens.slotIntervalMinutes === "number"
+      ? brandTokens.slotIntervalMinutes
+      : DEFAULT_SLOT_INTERVAL_MINUTES;
 
   // Earliest bookable time = now + buffer
   const earliest = new Date(now.getTime() + BUFFER_MINUTES * 60 * 1000);

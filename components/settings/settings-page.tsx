@@ -23,6 +23,9 @@ interface SettingsPageProps {
     dineInEnabled: boolean;
     deliveryRadiusMiles: number | null;
     pickupInstructions: string | null;
+    pickupWindowStartHour: number;
+    pickupWindowEndHour: number;
+    slotIntervalMinutes: number;
   };
 }
 
@@ -90,6 +93,9 @@ export function SettingsPage({ church, payments, fulfillment }: SettingsPageProp
               dineInEnabled={fulfillment.dineInEnabled}
               deliveryRadiusMiles={fulfillment.deliveryRadiusMiles}
               pickupInstructions={fulfillment.pickupInstructions}
+              pickupWindowStartHour={fulfillment.pickupWindowStartHour}
+              pickupWindowEndHour={fulfillment.pickupWindowEndHour}
+              slotIntervalMinutes={fulfillment.slotIntervalMinutes}
             />
           </div>
         </TabsContent>

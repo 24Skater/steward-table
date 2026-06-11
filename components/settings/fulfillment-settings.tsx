@@ -14,6 +14,15 @@ interface FulfillmentSettingsProps {
   dineInEnabled: boolean;
   deliveryRadiusMiles: number | null;
   pickupInstructions: string | null;
+  pickupWindowStartHour: number;
+  pickupWindowEndHour: number;
+  slotIntervalMinutes: number;
+}
+
+function formatHour(hour: number): string {
+  const period = hour < 12 ? "AM" : "PM";
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${displayHour}:00 ${period}`;
 }
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -24,6 +33,9 @@ export function FulfillmentSettings({
   dineInEnabled: initialDineIn,
   deliveryRadiusMiles: initialRadius,
   pickupInstructions: initialInstructions,
+  pickupWindowStartHour: initialStartHour,
+  pickupWindowEndHour: initialEndHour,
+  slotIntervalMinutes: initialInterval,
 }: FulfillmentSettingsProps) {
   const [pickupEnabled, setPickupEnabled] = useState(initialPickup);
   const [deliveryEnabled, setDeliveryEnabled] = useState(initialDelivery);
@@ -32,6 +44,9 @@ export function FulfillmentSettings({
     initialRadius !== null ? String(initialRadius) : "",
   );
   const [pickupInstructions, setPickupInstructions] = useState(initialInstructions ?? "");
+  const [pickupWindowStartHour, setPickupWindowStartHour] = useState(initialStartHour);
+  const [pickupWindowEndHour, setPickupWindowEndHour] = useState(initialEndHour);
+  const [slotIntervalMinutes, setSlotIntervalMinutes] = useState(initialInterval);
 
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -57,6 +72,9 @@ export function FulfillmentSettings({
           dineInEnabled,
           deliveryRadiusMiles: radiusValue,
           pickupInstructions: pickupEnabled ? pickupInstructions.trim() || null : null,
+          pickupWindowStartHour,
+          pickupWindowEndHour,
+          slotIntervalMinutes,
         }),
       });
 
@@ -93,15 +111,69 @@ export function FulfillmentSettings({
       </div>
 
       {pickupEnabled && (
-        <div className="space-y-1.5 pl-1">
-          <Label htmlFor="pickup-instructions">Pickup Instructions (optional)</Label>
-          <Textarea
-            id="pickup-instructions"
-            value={pickupInstructions}
-            onChange={(e) => setPickupInstructions(e.target.value)}
-            placeholder="Enter your pickup location or special instructions..."
-            rows={3}
-          />
+        <div className="space-y-4 pl-1">
+          <div className="space-y-1.5">
+            <Label htmlFor="pickup-instructions">Pickup Instructions (optional)</Label>
+            <Textarea
+              id="pickup-instructions"
+              value={pickupInstructions}
+              onChange={(e) => setPickupInstructions(e.target.value)}
+              placeholder="Enter your pickup location or special instructions..."
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-slate-900">Pickup Window Hours</p>
+            <div className="flex flex-wrap gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="pickup-window-start">Window Start</Label>
+                <select
+                  id="pickup-window-start"
+                  value={pickupWindowStartHour}
+                  onChange={(e) => setPickupWindowStartHour(Number(e.target.value))}
+                  className="flex h-9 w-36 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+                >
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={i}>
+                      {formatHour(i)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="pickup-window-end">Window End</Label>
+                <select
+                  id="pickup-window-end"
+                  value={pickupWindowEndHour}
+                  onChange={(e) => setPickupWindowEndHour(Number(e.target.value))}
+                  className="flex h-9 w-36 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+                >
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={i}>
+                      {formatHour(i)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="slot-interval">Slot Interval</Label>
+                <select
+                  id="slot-interval"
+                  value={slotIntervalMinutes}
+                  onChange={(e) => setSlotIntervalMinutes(Number(e.target.value))}
+                  className="flex h-9 w-36 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+                >
+                  <option value={15}>15 minutes</option>
+                  <option value={30}>30 minutes</option>
+                  <option value={45}>45 minutes</option>
+                  <option value={60}>60 minutes</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

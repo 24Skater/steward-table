@@ -31,6 +31,8 @@ export function OrderRow({ order }: OrderRowProps) {
   const [inFlight, setInFlight] = useState(false);
   const nextStep = getNextStep(order.status, order.fulfillment);
   const displayTime = order.scheduledFor ?? order.createdAt;
+  const isFutureScheduled =
+    order.scheduledFor !== null && order.scheduledFor > new Date();
 
   async function handleNextStep() {
     if (!nextStep || inFlight) return;
@@ -82,7 +84,12 @@ export function OrderRow({ order }: OrderRowProps) {
 
       {/* Time */}
       <td className="py-3 px-3">
-        <span className="text-xs text-slate-400 tabular-nums whitespace-nowrap">
+        <span
+          className={[
+            "text-xs tabular-nums whitespace-nowrap",
+            isFutureScheduled ? "text-amber-500 font-medium" : "text-slate-400",
+          ].join(" ")}
+        >
           {formatOrderTime(displayTime)}
         </span>
       </td>

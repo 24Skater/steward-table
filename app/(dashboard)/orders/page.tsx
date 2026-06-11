@@ -5,9 +5,9 @@ import { TopBar } from "@/components/layout/top-bar";
 import { OrdersPage } from "@/components/orders";
 import type { OrderRowData } from "@/components/orders";
 
-export type DateRange = "today" | "week" | "month" | "all";
+export type DateRange = "today" | "week" | "month" | "all" | "scheduled";
 
-const VALID_RANGES = new Set<string>(["today", "week", "month", "all"]);
+const VALID_RANGES = new Set<string>(["today", "week", "month", "all", "scheduled"]);
 
 function getRangeStart(range: DateRange): Date | undefined {
   const now = new Date();
@@ -30,6 +30,7 @@ function getRangeStart(range: DateRange): Date | undefined {
       return start;
     }
     case "all":
+    case "scheduled":
       return undefined;
   }
 }
@@ -61,12 +62,18 @@ export default async function OrdersPageRoute({ searchParams }: OrdersPageRouteP
 
   const rangeStart = getRangeStart(rangeParam);
 
+  const now = new Date();
+
   const raw = await db.order.findMany({
     where: {
       churchId,
-      ...(rangeStart ? { createdAt: { gte: rangeStart } } : {}),
+      ...(rangeParam === "scheduled"
+        ? { scheduledFor: { not: null, gte: now } }
+        : rangeStart
+          ? { createdAt: { gte: rangeStart } }
+          : {}),
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: rangeParam === "scheduled" ? { scheduledFor: "asc" } : { createdAt: "desc" },
     take: 500,
     select: {
       id: true,

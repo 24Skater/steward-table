@@ -10,6 +10,9 @@ interface FulfillmentPrefs {
   dineInEnabled: boolean;
   deliveryRadiusMiles: number | null;
   pickupInstructions: string | null;
+  pickupWindowStartHour: number;
+  pickupWindowEndHour: number;
+  slotIntervalMinutes: number;
 }
 
 function parseFulfillmentPrefs(brandTokens: unknown): FulfillmentPrefs {
@@ -20,6 +23,9 @@ function parseFulfillmentPrefs(brandTokens: unknown): FulfillmentPrefs {
       dineInEnabled: false,
       deliveryRadiusMiles: null,
       pickupInstructions: null,
+      pickupWindowStartHour: 10,
+      pickupWindowEndHour: 20,
+      slotIntervalMinutes: 30,
     };
   }
   const raw = brandTokens as Record<string, unknown>;
@@ -31,6 +37,12 @@ function parseFulfillmentPrefs(brandTokens: unknown): FulfillmentPrefs {
       typeof raw.deliveryRadiusMiles === "number" ? raw.deliveryRadiusMiles : null,
     pickupInstructions:
       typeof raw.pickupInstructions === "string" ? raw.pickupInstructions : null,
+    pickupWindowStartHour:
+      typeof raw.pickupWindowStartHour === "number" ? raw.pickupWindowStartHour : 10,
+    pickupWindowEndHour:
+      typeof raw.pickupWindowEndHour === "number" ? raw.pickupWindowEndHour : 20,
+    slotIntervalMinutes:
+      typeof raw.slotIntervalMinutes === "number" ? raw.slotIntervalMinutes : 30,
   };
 }
 
@@ -109,6 +121,9 @@ export async function PATCH(req: NextRequest) {
       body.deliveryRadiusMiles !== undefined ? body.deliveryRadiusMiles : current.deliveryRadiusMiles,
     pickupInstructions:
       body.pickupInstructions !== undefined ? body.pickupInstructions : current.pickupInstructions,
+    pickupWindowStartHour: body.pickupWindowStartHour ?? current.pickupWindowStartHour,
+    pickupWindowEndHour: body.pickupWindowEndHour ?? current.pickupWindowEndHour,
+    slotIntervalMinutes: body.slotIntervalMinutes ?? current.slotIntervalMinutes,
   };
 
   // Merge with existing brandTokens to preserve non-fulfillment data
