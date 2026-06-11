@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { OnboardingFlow } from "@/components/onboarding";
+import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 
 export default async function OnboardingPage() {
   const session = await auth();
@@ -13,8 +13,10 @@ export default async function OnboardingPage() {
     (m: { status: string }) => m.status === "ACTIVE",
   );
   if (hasActiveMembership) {
-    redirect("/orders");
+    redirect("/");
   }
 
-  return <OnboardingFlow />;
+  const displayName = session.user.name ?? "";
+
+  return <OnboardingWizard initialDisplayName={displayName} />;
 }
