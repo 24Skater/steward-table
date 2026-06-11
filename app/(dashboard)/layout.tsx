@@ -12,6 +12,13 @@ export default async function DashboardLayout({
     redirect("/auth/sign-in");
   }
 
+  const hasActiveMembership = session.user.memberships?.some(
+    (m: { status: string }) => m.status === "ACTIVE",
+  );
+  if (!hasActiveMembership) {
+    redirect("/onboarding");
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100">
       <Sidebar />
