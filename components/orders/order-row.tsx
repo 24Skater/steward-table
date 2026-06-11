@@ -1,0 +1,101 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { OrderStatusBadge } from "./order-status-badge";
+import { getNextStep, FULFILLMENT_LABELS, formatOrderTime } from "./order-utils";
+import type { OrderStatus, FulfillmentType } from "@prisma/client";
+
+export interface OrderRowData {
+  id: string;
+  number: number;
+  status: OrderStatus;
+  fulfillment: FulfillmentType;
+  createdAt: Date;
+  scheduledFor: Date | null;
+  customer: { name: string };
+  _count: { items: number };
+}
+
+interface OrderRowProps {
+  order: OrderRowData;
+}
+
+export function OrderRow({ order }: OrderRowProps) {
+  const [inFlight, setInFlight] = useState(false);
+  const nextStep = getNextStep(order.status, order.fulfillment);
+  const displayTime = order.scheduledFor ?? order.createdAt;
+
+  async function handleNextStep() {
+    if (!nextStep || inFlight) return;
+    setInFlight(true);
+    try {
+      await fetch(`/api/orders/${order.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStep.targetStatus }),
+      });
+      window.location.reload();
+    } catch {
+      setInFlight(false);
+    }
+  }
+
+  return (
+    <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+      {/* Order # */}
+      <td className="py-3 pl-4 pr-3">
+        <span className="font-mono font-semibold text-slate-800 tabular-nums text-sm">
+          #{order.number}
+        </span>
+      </td>
+
+      {/* Customer */}
+      <td className="py-3 px-3">
+        <span className="text-sm text-slate-700">{order.customer.name}</span>
+      </td>
+
+      {/* Items */}
+      <td className="py-3 px-3 text-center">
+        <span className="text-sm text-slate-500 tabular-nums">
+          {order._count.items}
+        </span>
+      </td>
+
+      {/* Fulfillment */}
+      <td className="py-3 px-3">
+        <span className="text-sm text-slate-500">
+          {FULFILLMENT_LABELS[order.fulfillment]}
+        </span>
+      </td>
+
+      {/* Status */}
+      <td className="py-3 px-3">
+        <OrderStatusBadge status={order.status} />
+      </td>
+
+      {/* Time */}
+      <td className="py-3 px-3">
+        <span className="text-xs text-slate-400 tabular-nums whitespace-nowrap">
+          {formatOrderTime(displayTime)}
+        </span>
+      </td>
+
+      {/* Next step */}
+      <td className="py-3 pl-3 pr-4 text-right">
+        {nextStep && !inFlight ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleNextStep}
+            className="text-xs h-7 px-2.5"
+          >
+            {nextStep.label}
+          </Button>
+        ) : inFlight ? (
+          <span className="text-xs text-slate-400">Updating…</span>
+        ) : null}
+      </td>
+    </tr>
+  );
+}
