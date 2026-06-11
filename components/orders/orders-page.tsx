@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { OrderStatus } from "@prisma/client";
 import { OrderStatusBadge } from "./order-status-badge";
@@ -133,6 +133,76 @@ function MobileOrderCard({ order }: { order: OrderRowData }) {
   );
 }
 
+// ── Export dropdown ───────────────────────────────────────────────────────────
+
+type ExportRange = "today" | "week" | "month" | "all";
+
+interface ExportOption {
+  label: string;
+  range: ExportRange;
+}
+
+const EXPORT_OPTIONS: ExportOption[] = [
+  { label: "Today", range: "today" },
+  { label: "Last 7 days", range: "week" },
+  { label: "This month", range: "month" },
+  { label: "All time", range: "all" },
+];
+
+function ExportDropdown() {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  function handleExport(range: ExportRange) {
+    const url = `/api/orders/export?range=${range}`;
+    window.location.href = url;
+    setIsOpen(false);
+  }
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="px-3 py-2 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+      >
+        Export
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-40 rounded-md border border-slate-200 bg-white shadow-md z-10">
+          {EXPORT_OPTIONS.map((option) => (
+            <button
+              key={option.range}
+              onClick={() => handleExport(option.range)}
+              className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors first:rounded-t-md last:rounded-b-md"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function OrdersPage({ orders }: OrdersPageProps) {
@@ -158,7 +228,7 @@ export function OrdersPage({ orders }: OrdersPageProps) {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Filter tabs + search */}
+      {/* Filter tabs + search + export */}
       <div className="px-6 pt-4 pb-0 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border-b border-slate-200">
         {/* Segmented control */}
         <div className="flex gap-1 p-1 bg-slate-100 rounded-lg w-fit overflow-x-auto">
@@ -191,8 +261,8 @@ export function OrdersPage({ orders }: OrdersPageProps) {
           })}
         </div>
 
-        {/* Search */}
-        <div className="pb-3 sm:pb-0">
+        {/* Search + Export */}
+        <div className="pb-3 sm:pb-0 flex gap-2 items-center">
           <input
             type="search"
             placeholder="Search order # or name…"
@@ -200,6 +270,7 @@ export function OrdersPage({ orders }: OrdersPageProps) {
             onChange={(e) => setSearch(e.target.value)}
             className="h-8 w-56 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
           />
+          <ExportDropdown />
         </div>
       </div>
 
