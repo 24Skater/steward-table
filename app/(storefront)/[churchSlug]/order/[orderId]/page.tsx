@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react";
 import { OrderStatusRefresher } from "@/components/storefront/order-status-refresher";
 import { OrderProgress } from "@/components/storefront/order-progress";
 import { CancelOrderButton } from "@/components/storefront/cancel-order-button";
+import { auth } from "@/lib/auth";
 
 interface OrderStatusPageProps {
   params: Promise<{ churchSlug: string; orderId: string }>;
@@ -34,6 +35,7 @@ const SELF_CANCEL_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 export default async function OrderStatusPage({ params }: OrderStatusPageProps) {
   const { churchSlug, orderId } = await params;
+  const session = await auth();
 
   const church = await db.church.findFirst({
     where: { slug: churchSlug, status: "ACTIVE" },
@@ -138,13 +140,21 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
 
       {showCancelButton && <CancelOrderButton orderId={order.id} />}
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 flex flex-col items-center gap-2 text-center">
         <Link
           href={`/${churchSlug}/menu`}
           className="text-sm text-emerald-600 underline-offset-2 hover:underline"
         >
           Place another order
         </Link>
+        {session?.user?.email && (
+          <Link
+            href={`/${churchSlug}/orders`}
+            className="text-sm text-slate-400 underline-offset-2 hover:text-slate-600 hover:underline"
+          >
+            View all your orders →
+          </Link>
+        )}
       </div>
     </div>
   );

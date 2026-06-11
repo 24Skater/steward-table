@@ -1,12 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { CustomerRow } from "./customer-detail-drawer";
 
 interface CustomersTableProps {
   customers: CustomerRow[];
-  onViewCustomer: (customer: CustomerRow) => void;
+  onViewCustomer?: (customer: CustomerRow) => void;
 }
 
 function relativeTime(date: Date): string {
@@ -23,6 +24,16 @@ export function CustomersTable({
   customers,
   onViewCustomer,
 }: CustomersTableProps) {
+  const router = useRouter();
+
+  function handleView(customer: CustomerRow) {
+    if (onViewCustomer) {
+      onViewCustomer(customer);
+    } else {
+      router.push(`/customers/${customer.id}`);
+    }
+  }
+
   if (customers.length === 0) {
     return (
       <div className="flex items-center justify-center h-40">
@@ -93,7 +104,7 @@ export function CustomersTable({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => onViewCustomer(customer)}
+                      onClick={() => handleView(customer)}
                       className="h-7 text-xs"
                     >
                       View orders
@@ -143,7 +154,7 @@ export function CustomersTable({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onViewCustomer(customer)}
+                onClick={() => handleView(customer)}
                 className="h-7 text-xs"
               >
                 View orders

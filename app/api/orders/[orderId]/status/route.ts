@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { transition, InvalidTransitionError } from "@/lib/orders/transitions";
-import { can } from "@/lib/rbac/can";
 import { db } from "@/lib/db";
-import { sendOrderNotification } from "@/lib/notifications";
+import { effectQueue } from "@/lib/orders/effect-queue";
+import { InvalidTransitionError, transition } from "@/lib/orders/transitions";
+import { can } from "@/lib/rbac/can";
 import type { OrderStatus } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   req: NextRequest,
@@ -30,11 +30,11 @@ export async function PATCH(
   const targetStatus = (body as Record<string, string>).status as OrderStatus;
 
   // System-level read to get churchId — auth check has already happened above
-  const order = await (db.order.findUnique as Function)({
+  const order = (await (db.order.findUnique as Function)({
     where: { id: orderId },
     select: { id: true, churchId: true, status: true },
     _bypassTenancyCheck: true,
-  }) as { id: string; churchId: string; status: OrderStatus } | null;
+  })) as { id: string; churchId: string; status: OrderStatus } | null;
 
   if (!order) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -57,8 +57,7 @@ export async function PATCH(
   }
 
   try {
-    await transition(orderId, targetStatus, { actorId: session.user.id });
-    void sendOrderNotification(orderId, targetStatus);
+    await transition(orderId, targetStatus, { actorId: session.user.id, queue: effectQueue });
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof InvalidTransitionError) {
