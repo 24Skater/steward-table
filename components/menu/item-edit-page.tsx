@@ -48,6 +48,14 @@ interface CatalogItemRef {
   catalog: CatalogRef;
 }
 
+// Shape of the translations JSONB field stored on the Item model
+interface ItemTranslations {
+  es?: {
+    name?: string;
+    description?: string;
+  };
+}
+
 interface ItemData {
   id: string;
   name: string;
@@ -55,6 +63,7 @@ interface ItemData {
   defaultPrice: number;
   imageUrl: string | null;
   status: string;
+  translations: ItemTranslations | null;
   catalogItems: CatalogItemRef[];
   modifierGroups: ItemModifierGroup[];
 }
@@ -476,6 +485,15 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
   const [isActive, setIsActive] = useState(item.status === "ACTIVE");
   const [imageUrl, setImageUrl] = useState(item.imageUrl ?? "");
 
+  // ── Bilingual fields ──
+  const [langTab, setLangTab] = useState<"EN" | "ES">("EN");
+  const [nameEs, setNameEs] = useState(
+    item.translations?.es?.name ?? "",
+  );
+  const [descriptionEs, setDescriptionEs] = useState(
+    item.translations?.es?.description ?? "",
+  );
+
   // ── Modifier groups ──
   const [modifierGroups, setModifierGroups] = useState<ItemModifierGroup[]>(
     item.modifierGroups,
@@ -505,6 +523,12 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
           defaultPrice: displayToCents(priceStr),
           status: isActive ? "ACTIVE" : "INACTIVE",
           imageUrl: imageUrl.trim() || null,
+          translations: {
+            es: {
+              name: nameEs,
+              description: descriptionEs,
+            },
+          },
         }),
       });
 
@@ -598,32 +622,89 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
             {/* ── Left column: core info ── */}
             <div className="space-y-5">
               <div>
-                <h3 className="text-sm font-semibold text-slate-700 mb-4">
-                  Item details
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-slate-700">
+                    Item details
+                  </h3>
+                  {/* Language tab toggle */}
+                  <div className="flex items-center gap-1 text-xs font-medium">
+                    <button
+                      type="button"
+                      onClick={() => setLangTab("EN")}
+                      className={`px-2.5 py-1 rounded-full transition-colors ${
+                        langTab === "EN"
+                          ? "bg-slate-900 text-white"
+                          : "border border-slate-200 text-slate-500 hover:border-slate-300"
+                      }`}
+                    >
+                      EN
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLangTab("ES")}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-colors ${
+                        langTab === "ES"
+                          ? "bg-slate-900 text-white"
+                          : "border border-slate-200 text-slate-500 hover:border-slate-300"
+                      }`}
+                    >
+                      ES
+                      {nameEs === "" && (
+                        <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                      )}
+                    </button>
+                  </div>
+                </div>
 
                 <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="item-name">Name</Label>
-                    <Input
-                      id="item-name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Item name"
-                      required
-                    />
-                  </div>
+                  {langTab === "EN" ? (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="item-name">Name</Label>
+                        <Input
+                          id="item-name"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Item name"
+                          required
+                        />
+                      </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="item-description">Description</Label>
-                    <Textarea
-                      id="item-description"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Brief description…"
-                      rows={3}
-                    />
-                  </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="item-description">Description</Label>
+                        <Textarea
+                          id="item-description"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          placeholder="Brief description…"
+                          rows={3}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="item-name-es">Name</Label>
+                        <Input
+                          id="item-name-es"
+                          value={nameEs}
+                          onChange={(e) => setNameEs(e.target.value)}
+                          placeholder="Spanish translation (optional)"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="item-description-es">Description</Label>
+                        <Textarea
+                          id="item-description-es"
+                          value={descriptionEs}
+                          onChange={(e) => setDescriptionEs(e.target.value)}
+                          placeholder="Spanish translation (optional)"
+                          rows={3}
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <div className="space-y-1.5">
                     <Label htmlFor="item-price">Price (USD)</Label>

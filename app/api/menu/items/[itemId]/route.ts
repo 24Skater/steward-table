@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
 import type { SessionMembership } from "@/lib/auth/types";
+
+const translationsSchema = z
+  .object({
+    es: z
+      .object({
+        name: z.string().max(200).optional(),
+        description: z.string().max(1000).optional(),
+      })
+      .optional(),
+  })
+  .optional();
 
 const patchSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -11,6 +23,7 @@ const patchSchema = z.object({
   defaultPrice: z.number().int().min(0).optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
   imageUrl: z.string().url().nullable().optional(),
+  translations: translationsSchema,
 });
 
 export async function PATCH(
@@ -62,7 +75,7 @@ export async function PATCH(
     );
   }
 
-  const { name, description, defaultPrice, status, imageUrl } = parsed.data;
+  const { name, description, defaultPrice, status, imageUrl, translations } = parsed.data;
 
   const updated = await db.item.update({
     where: { id: itemId },
@@ -72,6 +85,9 @@ export async function PATCH(
       ...(defaultPrice !== undefined && { defaultPrice }),
       ...(status !== undefined && { status }),
       ...(imageUrl !== undefined && { imageUrl }),
+      ...(translations !== undefined && {
+        translations: translations as Prisma.InputJsonValue,
+      }),
     },
     select: {
       id: true,
