@@ -5,6 +5,13 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
+interface OrderItemDetail {
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+}
+
 interface OrderNotificationPayload {
   orderId: string;
   status: string;
@@ -15,6 +22,9 @@ interface OrderNotificationPayload {
   orderNumber: number;
   fulfillment: string;
   scheduledFor: Date | null;
+  total: number;
+  items: OrderItemDetail[];
+  replyToEmail: string | null;
 }
 
 interface NotificationMessage {
@@ -80,7 +90,16 @@ export async function sendOrderNotification(
     where: { id: orderId },
     include: {
       customer: { select: { email: true, name: true } },
-      church: { select: { id: true, name: true } },
+      church: {
+        select: {
+          id: true,
+          name: true,
+          settings: { select: { replyToEmail: true } },
+        },
+      },
+      items: {
+        select: { itemName: true, quantity: true, unitPrice: true, subtotal: true },
+      },
     },
     // @ts-expect-error — bypass tenancy for notification reads
     _bypassTenancyCheck: true,
@@ -98,19 +117,27 @@ export async function sendOrderNotification(
     orderNumber: order.number,
     fulfillment: order.fulfillment,
     scheduledFor: order.scheduledFor,
+    total: order.total,
+    items: order.items,
+    replyToEmail: order.church.settings?.replyToEmail ?? null,
   };
 
   const fromAddress =
     process.env.RESEND_FROM_EMAIL ?? "orders@table.steward.app";
   const subject = `${message.subject} — ${payload.churchName}`;
 
+  const sendOptions: Parameters<typeof resend.emails.send>[0] = {
+    from: fromAddress,
+    to: payload.customerEmail,
+    subject,
+    html: buildEmailHtml(payload, message),
+  };
+  if (payload.replyToEmail) {
+    sendOptions.replyTo = payload.replyToEmail;
+  }
+
   try {
-    const result = await resend.emails.send({
-      from: fromAddress,
-      to: payload.customerEmail,
-      subject,
-      html: buildEmailHtml(payload, message),
-    });
+    const result = await resend.emails.send(sendOptions);
 
     await db.emailLog.create({
       data: {
@@ -129,10 +156,76 @@ export async function sendOrderNotification(
   }
 }
 
+function formatCents(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+function buildItemsTable(items: OrderItemDetail[]): string {
+  const rows = items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding: 8px 0; color: #334155; font-size: 14px;">${item.quantity}x ${item.itemName}</td>
+          <td style="padding: 8px 0; color: #334155; font-size: 14px; text-align: right;">${formatCents(item.subtotal)}</td>
+        </tr>`,
+    )
+    .join("");
+
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-top: 16px;">
+      <thead>
+        <tr>
+          <th style="padding: 0 0 8px; color: #94a3b8; font-size: 12px; font-weight: 600; text-align: left; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0;">Item</th>
+          <th style="padding: 0 0 8px; color: #94a3b8; font-size: 12px; font-weight: 600; text-align: right; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0;">Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>`;
+}
+
+function buildConfirmedBody(payload: OrderNotificationPayload): string {
+  const fulfillmentLabel =
+    payload.fulfillment === "DELIVERY" ? "Delivery" : "Pickup";
+  const itemsTable = buildItemsTable(payload.items);
+  const total = formatCents(payload.total);
+
+  return `
+    <p style="color: #64748b; font-size: 15px; margin: 0 0 4px;">Hi ${payload.customerName},</p>
+    <p style="color: #64748b; font-size: 15px; margin: 0 0 24px;">Your order from <strong>${payload.churchName}</strong> has been confirmed.</p>
+    <div style="background: #f1f5f9; border-radius: 8px; padding: 16px 20px;">
+      <p style="color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin: 0 0 4px;">Order #${payload.orderNumber}</p>
+      ${itemsTable}
+      <div style="display: flex; justify-content: space-between; margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+        <span style="color: #0f172a; font-size: 15px; font-weight: 700;">Total</span>
+        <span style="color: #0f172a; font-size: 15px; font-weight: 700;">${total}</span>
+      </div>
+      <p style="color: #64748b; font-size: 13px; margin: 12px 0 0;">Fulfillment: ${fulfillmentLabel}</p>
+    </div>`;
+}
+
+function buildSimpleBody(
+  payload: OrderNotificationPayload,
+  message: NotificationMessage,
+): string {
+  return `
+    <p style="color: #64748b; font-size: 15px; margin: 0 0 24px;">Hi ${payload.customerName}, ${message.body}</p>
+    <div style="background: #f1f5f9; border-radius: 8px; padding: 16px;">
+      <p style="color: #475569; font-size: 13px; margin: 0 0 4px;">Order number</p>
+      <p style="color: #0f172a; font-size: 20px; font-weight: 700; font-family: monospace; margin: 0;">#${payload.orderNumber}</p>
+    </div>`;
+}
+
 function buildEmailHtml(
   payload: OrderNotificationPayload,
   message: NotificationMessage,
 ): string {
+  const bodyContent =
+    payload.status === "CONFIRMED"
+      ? buildConfirmedBody(payload)
+      : buildSimpleBody(payload, message);
+
   return `
 <!DOCTYPE html>
 <html>
@@ -147,12 +240,8 @@ function buildEmailHtml(
       <p style="color: #94a3b8; font-size: 13px; margin: 0;">${payload.churchName}</p>
     </div>
     <div style="padding: 32px 24px;">
-      <h1 style="font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 8px;">${message.headline}</h1>
-      <p style="color: #64748b; font-size: 15px; margin: 0 0 24px;">Hi ${payload.customerName}, ${message.body}</p>
-      <div style="background: #f1f5f9; border-radius: 8px; padding: 16px;">
-        <p style="color: #475569; font-size: 13px; margin: 0 0 4px;">Order number</p>
-        <p style="color: #0f172a; font-size: 20px; font-weight: 700; font-family: monospace; margin: 0;">#${payload.orderNumber}</p>
-      </div>
+      <h1 style="font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 16px;">${message.headline}</h1>
+      ${bodyContent}
     </div>
     <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0;">
       <p style="color: #94a3b8; font-size: 12px; margin: 0; text-align: center;">
