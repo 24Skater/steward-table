@@ -12,11 +12,13 @@ export default async function CatalogPage() {
   );
   if (!membership) redirect("/auth/sign-in");
 
-  const catalogs = await db.catalog.findMany({
+  const rawCatalogs = await db.catalog.findMany({
     where: { churchId: membership.churchId },
     include: { _count: { select: { items: true } } },
     orderBy: { createdAt: "desc" },
   });
+
+  const catalogs = rawCatalogs.map((c) => ({ ...c, isActive: c.status === "OPEN" }));
 
   return (
     <main className="p-6 space-y-6">

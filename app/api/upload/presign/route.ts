@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { nanoid } from "nanoid";
 import { auth } from "@/lib/auth";
 import { getPresignedUploadUrl } from "@/lib/storage";
+import { nanoid } from "nanoid";
+import { type NextRequest, NextResponse } from "next/server";
 
 const ALLOWED_CONTENT_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -42,10 +42,7 @@ export async function GET(req: NextRequest) {
   const uploadUrl = await getPresignedUploadUrl(key, contentType, PRESIGN_EXPIRES);
 
   if (!uploadUrl) {
-    return NextResponse.json(
-      { error: "Storage not configured" },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: "Storage not configured" }, { status: 503 });
   }
 
   const endpoint = process.env.R2_ENDPOINT ?? "";
