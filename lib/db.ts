@@ -1,153 +1,128 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 const TENANTED_MODELS = new Set([
   "catalog",
   "item",
-  "catalogItem",
-  "modifierGroup",
-  "modifierOption",
-  "itemModifierGroup",
+  "catalogitem",
+  "modifiergroup",
+  "modifieroption",
+  "itemmodifiergroup",
   "customer",
   "order",
-  "deliveryZone",
-  "inventoryItem",
-  "auditLog",
-  "webhookEvent",
-  "emailLog",
-  "smsLog",
+  "deliveryzone",
+  "inventoryitem",
+  "auditlog",
+  "webhookevent",
+  "emaillog",
+  "smslog",
   "notification",
   "membership",
   "invitation",
-  "apiKey",
-  "churchSettings",
+  "apikey",
+  "churchsettings",
 ]);
 
 const SOFT_DELETE_MODELS = new Set([
   "user",
   "church",
-  "churchSettings",
+  "churchsettings",
   "catalog",
   "item",
-  "itemPhoto",
-  "catalogItem",
-  "modifierGroup",
-  "modifierOption",
-  "itemModifierGroup",
+  "itemphoto",
+  "catalogitem",
+  "modifiergroup",
+  "modifieroption",
+  "itemmodifiergroup",
   "customer",
   "address",
-  "inventoryItem",
-  "apiKey",
-  "deliveryZone",
+  "inventoryitem",
+  "apikey",
+  "deliveryzone",
 ]);
 
 const READ_OPS = new Set(["findUnique", "findFirst", "findMany", "count", "aggregate", "groupBy"]);
+const WRITE_OPS = new Set(["create", "createMany", "update", "updateMany", "upsert"]);
 
 function createPrismaClient() {
   const client = new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
-  // Soft-delete middleware: auto-filter deletedAt IS NULL on reads
-  client.$use(async (params, next) => {
-    const model = params.model?.toLowerCase();
+  return client.$extends({
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }) {
+          const modelLower = model?.toLowerCase() ?? "";
 
-    if (!model || !SOFT_DELETE_MODELS.has(model)) {
-      return next(params);
-    }
+          // ── Tenancy bypass ───────────────────────────────────────────
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const anyArgs = args as any;
+          let bypassTenancy = false;
 
-    if (READ_OPS.has(params.action)) {
-      // Allow opt-out via withDeleted flag in args
-      if (params.args?.where?.withDeleted) {
-        const { withDeleted: _, ...rest } = params.args.where;
-        params.args = { ...params.args, where: rest };
-        return next(params);
-      }
+          if (anyArgs?._bypassTenancyCheck === true) {
+            bypassTenancy = true;
+            delete anyArgs._bypassTenancyCheck;
+          }
 
-      params.args ??= {};
-      params.args.where ??= {};
+          // ── Soft-delete filter ───────────────────────────────────────
+          if (SOFT_DELETE_MODELS.has(modelLower) && READ_OPS.has(operation)) {
+            if (anyArgs?.where?.withDeleted) {
+              delete anyArgs.where.withDeleted;
+            } else {
+              anyArgs.where ??= {};
+              if (!("deletedAt" in anyArgs.where)) {
+                anyArgs.where.deletedAt = null;
+              }
+            }
+          }
 
-      if (!("deletedAt" in params.args.where)) {
-        params.args.where.deletedAt = null;
-      }
-    }
+          // ── Tenancy enforcement ──────────────────────────────────────
+          if (!bypassTenancy && TENANTED_MODELS.has(modelLower)) {
+            if (READ_OPS.has(operation)) {
+              const hasChurchId =
+                anyArgs?.where?.churchId !== undefined ||
+                anyArgs?.where?.church !== undefined;
+              if (!hasChurchId) {
+                throw new Error(
+                  `[Tenancy] Unscoped read on ${model} — add churchId to where, ` +
+                    `or pass _bypassTenancyCheck: true for system-level ops.`,
+                );
+              }
+            }
 
-    // Soft-delete: remap delete → update with deletedAt
-    if (params.action === "delete") {
-      params.action = "update";
-      params.args.data = { deletedAt: new Date() };
-    }
+            if (WRITE_OPS.has(operation)) {
+              const data = anyArgs?.data;
+              if (
+                (operation === "create" || operation === "upsert") &&
+                data?.churchId === undefined &&
+                data?.church === undefined
+              ) {
+                throw new Error(
+                  `[Tenancy] Missing churchId on ${operation} for ${model}. ` +
+                    `Every tenanted model must be created with an explicit churchId.`,
+                );
+              }
+            }
+          }
 
-    if (params.action === "deleteMany") {
-      params.action = "updateMany";
-      params.args.data ??= {};
-      params.args.data.deletedAt = new Date();
-    }
-
-    return next(params);
+          return query(args);
+        },
+      },
+    },
   });
-
-  // churchId-scope enforcement middleware
-  client.$use(async (params, next) => {
-    const model = params.model?.toLowerCase();
-
-    if (!model || !TENANTED_MODELS.has(model)) {
-      return next(params);
-    }
-
-    // Skip enforcement for system-level operations that bypass tenancy
-    if (params.args?._bypassTenancyCheck === true) {
-      const { _bypassTenancyCheck: _, ...rest } = params.args;
-      params.args = rest;
-      return next(params);
-    }
-
-    const writeOps = new Set(["create", "createMany", "update", "updateMany", "upsert"]);
-
-    if (READ_OPS.has(params.action)) {
-      const hasChurchId =
-        params.args?.where?.churchId !== undefined ||
-        params.args?.where?.church !== undefined;
-
-      if (!hasChurchId) {
-        throw new Error(
-          `[Tenancy] Unscoped read on ${params.model} — all reads on tenanted models must include churchId in the where clause. ` +
-            `Pass { _bypassTenancyCheck: true } to opts if this is intentional (e.g., background jobs).`,
-        );
-      }
-    }
-
-    if (writeOps.has(params.action)) {
-      const data = params.args?.data;
-      const hasChurchId = data?.churchId !== undefined || data?.church !== undefined;
-
-      if (params.action === "create" || params.action === "upsert") {
-        if (!hasChurchId) {
-          throw new Error(
-            `[Tenancy] Missing churchId on create/upsert for ${params.model}. ` +
-              `Every tenanted model must be created with an explicit churchId.`,
-          );
-        }
-      }
-    }
-
-    return next(params);
-  });
-
-  return client;
 }
 
-// Standard Next.js singleton to prevent hot-reload from spawning multiple connections
-declare global {
-  // eslint-disable-next-line no-var
-  var __prisma: PrismaClient | undefined;
-}
+type ExtendedPrismaClient = ReturnType<typeof createPrismaClient>;
 
-export const db: PrismaClient =
-  global.__prisma ??
+// Standard Next.js singleton to prevent hot-reload connection leaks
+const globalForPrisma = globalThis as unknown as { __prisma: ExtendedPrismaClient | undefined };
+
+export const db: ExtendedPrismaClient =
+  globalForPrisma.__prisma ??
   (() => {
     const client = createPrismaClient();
     if (process.env.NODE_ENV !== "production") {
-      global.__prisma = client;
+      globalForPrisma.__prisma = client;
     }
     return client;
   })();
