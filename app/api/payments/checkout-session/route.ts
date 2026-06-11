@@ -19,7 +19,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
   }
 
-  const order = await (db.order.findUnique as Function)({
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore — Prisma client types are not generated yet; models exist at runtime
+  const order = await db.order.findUnique({
     where: { id: body.orderId },
     include: {
       items: {
@@ -41,7 +43,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // Check whether the church has a Stripe key configured
-  const stripeKeyRow = await (db.apiKey.findFirst as Function)({
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const stripeKeyRow = await db.apiKey.findFirst({
     where: { churchId: order.churchId, provider: "stripe", isLive: true },
     select: { id: true },
     _bypassTenancyCheck: true,

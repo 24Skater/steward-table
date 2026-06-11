@@ -1,5 +1,25 @@
 import type Stripe from "stripe";
 
+export interface LineItem {
+  name: string;
+  unitAmount: number; // cents
+  quantity: number;
+}
+
+export interface CreateCheckoutSessionParams {
+  orderId: string;
+  churchId: string;
+  lineItems: LineItem[];
+  successUrl: string;
+  cancelUrl: string;
+}
+
+export interface CheckoutSession {
+  id: string;
+  url: string;
+  expiresAt: Date;
+}
+
 export interface CreatePaymentIntentParams {
   amount: number; // minor units (cents)
   currency: string; // ISO 4217
@@ -47,8 +67,13 @@ export interface RefundResult {
  * Steward Table never talks to Stripe directly — all payment operations go through this.
  */
 export interface PaymentAdapter {
+  createCheckoutSession(params: CreateCheckoutSessionParams): Promise<CheckoutSession>;
   createPaymentIntent(params: CreatePaymentIntentParams): Promise<PaymentIntentResult>;
   capturePayment(params: CapturePaymentParams): Promise<CaptureResult>;
   refund(params: RefundParams): Promise<RefundResult>;
-  constructWebhookEvent(payload: string | Buffer, signature: string): Stripe.Event;
+  constructWebhookEvent(
+    payload: string | Buffer,
+    signature: string,
+    churchId: string,
+  ): Promise<Stripe.Event>;
 }

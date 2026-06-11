@@ -1,7 +1,10 @@
 import type { PaymentAdapter } from "./adapter";
 import { StripeBYOAdapter } from "./stripe-byo";
 import { StripeConnectAdapter } from "./stripe-connect";
-import type { StripeMode } from "@prisma/client";
+
+// Mirror the Prisma enum values without importing from @prisma/client
+// so this module works even before `prisma generate` has run.
+type StripeMode = "BYO" | "CONNECT";
 
 const adapterCache = new Map<string, PaymentAdapter>();
 
