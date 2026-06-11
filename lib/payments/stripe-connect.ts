@@ -1,20 +1,24 @@
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import type {
-  PaymentAdapter,
-  CreatePaymentIntentParams,
   CapturePaymentParams,
-  RefundParams,
-  PaymentIntentResult,
   CaptureResult,
+  CheckoutSession,
+  CreateCheckoutSessionParams,
+  CreatePaymentIntentParams,
+  PaymentAdapter,
+  PaymentIntentResult,
+  RefundParams,
   RefundResult,
 } from "./adapter";
 
 // TODO: Implement Stripe Connect adapter for hosted deployments
 // In Connect mode, Steward Table is the platform — churches are connected accounts
 export class StripeConnectAdapter implements PaymentAdapter {
-  async createPaymentIntent(
-    _params: CreatePaymentIntentParams
-  ): Promise<PaymentIntentResult> {
+  async createCheckoutSession(_params: CreateCheckoutSessionParams): Promise<CheckoutSession> {
+    throw new Error("TODO: implement Stripe Connect createCheckoutSession");
+  }
+
+  async createPaymentIntent(_params: CreatePaymentIntentParams): Promise<PaymentIntentResult> {
     throw new Error("TODO: implement Stripe Connect createPaymentIntent");
   }
 
@@ -26,7 +30,11 @@ export class StripeConnectAdapter implements PaymentAdapter {
     throw new Error("TODO: implement Stripe Connect refund");
   }
 
-  constructWebhookEvent(payload: string | Buffer, signature: string): Stripe.Event {
+  async constructWebhookEvent(
+    _payload: string | Buffer,
+    _signature: string,
+    _churchId: string,
+  ): Promise<Stripe.Event> {
     throw new Error("TODO: implement Stripe Connect constructWebhookEvent");
   }
 }

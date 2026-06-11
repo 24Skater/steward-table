@@ -1,29 +1,67 @@
 import Stripe from "stripe";
+import { db } from "@/lib/db";
+import { decrypt } from "@/lib/crypto/aes";
 import type {
-  PaymentAdapter,
-  CreatePaymentIntentParams,
   CapturePaymentParams,
-  RefundParams,
-  PaymentIntentResult,
   CaptureResult,
+  CheckoutSession,
+  CreateCheckoutSessionParams,
+  CreatePaymentIntentParams,
+  PaymentAdapter,
+  PaymentIntentResult,
+  RefundParams,
   RefundResult,
 } from "./adapter";
 
-// TODO: Replace with proper encryption/decryption using lib/crypto/
-async function decryptApiKey(encrypted: Buffer): Promise<string> {
-  // TODO: Implement AES-256-GCM decryption using ENCRYPTION_KEY env var
-  throw new Error("TODO: implement decryptApiKey in lib/crypto/");
-}
+const STRIPE_API_VERSION = "2025-02-24.acacia" as const;
 
 async function getStripeClientForChurch(churchId: string): Promise<Stripe> {
-  // TODO: Look up church's ApiKey from DB, decrypt, return Stripe client
-  // This is the BYO model — Steward Table never holds the keys in plaintext
-  throw new Error(
-    `TODO: getStripeClientForChurch(${churchId}) — fetch encrypted key from DB and decrypt`
-  );
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore — Prisma client types are not generated yet; db.apiKey exists at runtime
+  const apiKey = await db.apiKey.findFirst({
+    where: { churchId, provider: "stripe", isLive: true },
+    select: { encrypted: true },
+    _bypassTenancyCheck: true,
+  });
+
+  if (!apiKey?.encrypted) {
+    throw new Error(`[Stripe] No Stripe key configured for church ${churchId}`);
+  }
+
+  const secretKey = decrypt(apiKey.encrypted as Buffer);
+
+  return new Stripe(secretKey, { apiVersion: STRIPE_API_VERSION });
 }
 
 export class StripeBYOAdapter implements PaymentAdapter {
+  async createCheckoutSession(params: CreateCheckoutSessionParams): Promise<CheckoutSession> {
+    const stripe = await getStripeClientForChurch(params.churchId);
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: params.lineItems.map((item) => ({
+        price_data: {
+          currency: "usd",
+          product_data: { name: item.name },
+          unit_amount: item.unitAmount,
+        },
+        quantity: item.quantity,
+      })),
+      success_url: params.successUrl,
+      cancel_url: params.cancelUrl,
+      metadata: {
+        orderId: params.orderId,
+        churchId: params.churchId,
+      },
+    });
+
+    return {
+      id: session.id,
+      url: session.url ?? "",
+      expiresAt: new Date(session.expires_at * 1000),
+    };
+  }
+
   async createPaymentIntent(params: CreatePaymentIntentParams): Promise<PaymentIntentResult> {
     const stripe = await getStripeClientForChurch(params.churchId);
 
@@ -69,7 +107,7 @@ export class StripeBYOAdapter implements PaymentAdapter {
         reason: "requested_by_customer",
         metadata: { reason: params.reason },
       },
-      { idempotencyKey: params.idempotencyKey }
+      { idempotencyKey: params.idempotencyKey },
     );
 
     return {
@@ -79,15 +117,44 @@ export class StripeBYOAdapter implements PaymentAdapter {
     };
   }
 
-  constructWebhookEvent(payload: string | Buffer, signature: string): Stripe.Event {
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
+  async constructWebhookEvent(
+    payload: string | Buffer,
+    signature: string,
+    churchId: string,
+  ): Promise<Stripe.Event> {
+    // Fetch both the Stripe secret key and webhook secret in parallel
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore — Prisma client types are not generated yet; db.apiKey exists at runtime
+    const [stripeKeyRow, webhookKeyRow] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      db.apiKey.findFirst({
+        where: { churchId, provider: "stripe", isLive: true },
+        select: { encrypted: true },
+        _bypassTenancyCheck: true,
+      }),
+      // Webhook secret is stored as a separate ApiKey row with provider "stripe_webhook"
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      db.apiKey.findFirst({
+        where: { churchId, provider: "stripe_webhook", isLive: true },
+        select: { encrypted: true },
+        _bypassTenancyCheck: true,
+      }),
+    ]);
+
+    if (!stripeKeyRow?.encrypted) {
+      throw new Error(`[Stripe] No Stripe secret key configured for church ${churchId}`);
     }
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-      apiVersion: "2025-02-24.acacia",
-    });
+    if (!webhookKeyRow?.encrypted) {
+      throw new Error(`[Stripe] No webhook secret configured for church ${churchId}`);
+    }
+
+    const secretKey = decrypt(stripeKeyRow.encrypted as Buffer);
+    const webhookSecret = decrypt(webhookKeyRow.encrypted as Buffer);
+
+    const stripe = new Stripe(secretKey, { apiVersion: STRIPE_API_VERSION });
 
     return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
   }
