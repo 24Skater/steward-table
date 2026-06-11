@@ -8,8 +8,12 @@ interface CartButtonProps {
   churchSlug: string;
 }
 
+function formatCents(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
 export function CartButton({ churchSlug }: CartButtonProps) {
-  const { items } = useCart();
+  const { items, total } = useCart();
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
   return (
@@ -20,9 +24,14 @@ export function CartButton({ churchSlug }: CartButtonProps) {
       <ShoppingCart className="h-4 w-4" />
       <span>Cart</span>
       {count > 0 && (
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-600 px-1 text-xs font-semibold text-white">
-          {count}
-        </span>
+        <>
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-600 px-1 text-xs font-semibold text-white">
+            {count}
+          </span>
+          <span className="hidden text-xs font-semibold text-emerald-700 sm:inline">
+            {formatCents(total)}
+          </span>
+        </>
       )}
     </Link>
   );

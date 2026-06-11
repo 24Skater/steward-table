@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { CartButton } from "@/components/storefront/cart-button";
+import { CartBar } from "@/components/storefront/cart-bar";
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
@@ -39,7 +40,8 @@ export default async function StorefrontLayout({
           <CartButton churchSlug={churchSlug} />
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-5xl px-4 py-8 pb-24 sm:pb-8">{children}</main>
+      <CartBar churchSlug={churchSlug} />
     </div>
   );
 }
