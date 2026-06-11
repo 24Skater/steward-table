@@ -18,6 +18,7 @@ interface CreatedCatalog {
   name: string;
   description: string | null;
   isActive: boolean;
+  status: string;
   _count: { items: number };
 }
 
@@ -63,7 +64,11 @@ export function CreateCatalogDialog({
       }
 
       const catalog = await res.json();
-      onCreated({ ...catalog, _count: { items: 0 } });
+      onCreated({
+        ...catalog,
+        _count: { items: 0 },
+        isActive: (catalog.status ?? "DRAFT") === "OPEN",
+      });
       setName("");
       setDescription("");
     } catch (err) {

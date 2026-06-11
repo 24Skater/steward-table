@@ -19,6 +19,7 @@ interface Catalog {
   name: string;
   description: string | null;
   isActive: boolean;
+  status: string;
   _count: { items: number };
 }
 
@@ -63,7 +64,11 @@ export function EditCatalogDialog({
       }
 
       const updated = await res.json();
-      onUpdated({ ...updated, _count: catalog._count });
+      onUpdated({
+        ...updated,
+        _count: catalog._count,
+        isActive: (updated.status ?? catalog.status) === "OPEN",
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

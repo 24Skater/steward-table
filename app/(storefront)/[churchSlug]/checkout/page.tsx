@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/hooks/use-cart";
 
 type FulfillmentType = "PICKUP" | "DELIVERY" | "DINE_IN";
+type PaymentMethod = "pay_online" | "pay_on_pickup";
 
 const FULFILLMENT_LABELS: Record<FulfillmentType, string> = {
   PICKUP: "Pickup",
@@ -37,6 +38,8 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [fulfillment, setFulfillment] = useState<FulfillmentType>("PICKUP");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pay_on_pickup");
+  const [stripeEnabled, setStripeEnabled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,13 +51,22 @@ export default function CheckoutPage() {
 
   const churchSlug = params.churchSlug;
 
-  // Fetch delivery zones once when component mounts
+  // Fetch delivery zones and payment config once when component mounts
   useEffect(() => {
     fetch(`/api/storefront/${churchSlug}/delivery-zones`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data: DeliveryZone[]) => setDeliveryZones(data))
       .catch(() => {
         // Silently ignore — delivery zone lookup is best-effort
+      });
+
+    fetch(`/api/storefront/${churchSlug}/payment-config`)
+      .then((res) => (res.ok ? res.json() : { stripeEnabled: false }))
+      .then((data: { stripeEnabled: boolean }) => {
+        setStripeEnabled(data.stripeEnabled);
+      })
+      .catch(() => {
+        // Silently ignore — payment config is best-effort
       });
   }, [churchSlug]);
 
@@ -85,6 +97,24 @@ export default function CheckoutPage() {
     );
   }
 
+  const cartPayload = {
+    churchSlug,
+    customerName: name.trim(),
+    phone: phone.trim() || null,
+    notes: notes.trim() || null,
+    fulfillment,
+    zoneId: fulfillment === "DELIVERY" && matchedZone ? matchedZone.id : undefined,
+    items: items.map((item) => ({
+      itemId: item.itemId,
+      catalogId: item.catalogId,
+      itemName: item.itemName,
+      quantity: item.quantity,
+      basePrice: item.basePrice,
+      modifiers: item.modifiers,
+      totalPrice: item.totalPrice,
+    })),
+  };
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -106,27 +136,42 @@ export default function CheckoutPage() {
     }
 
     setSubmitting(true);
+
+    if (paymentMethod === "pay_online") {
+      try {
+        const res = await fetch(`/api/storefront/stripe/checkout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(cartPayload),
+        });
+
+        if (!res.ok) {
+          const data = (await res.json().catch(() => ({}))) as { error?: string };
+          setError(data.error ?? "Failed to start checkout. Please try again.");
+          return;
+        }
+
+        const data = (await res.json()) as { url: string | null };
+        if (data.url) {
+          // Redirect to Stripe Checkout — cart cleared on success page redirect
+          window.location.href = data.url;
+        } else {
+          setError("Could not open payment page. Please try again.");
+        }
+      } catch {
+        setError("Network error. Please check your connection and try again.");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // Pay on pickup — original flow
     try {
       const res = await fetch(`/api/storefront/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          churchSlug,
-          customerName: name.trim(),
-          phone: phone.trim() || null,
-          notes: notes.trim() || null,
-          fulfillment,
-          zoneId: fulfillment === "DELIVERY" && matchedZone ? matchedZone.id : undefined,
-          items: items.map((item) => ({
-            itemId: item.itemId,
-            catalogId: item.catalogId,
-            itemName: item.itemName,
-            quantity: item.quantity,
-            basePrice: item.basePrice,
-            modifiers: item.modifiers,
-            totalPrice: item.totalPrice,
-          })),
-        }),
+        body: JSON.stringify(cartPayload),
       });
 
       if (!res.ok) {
@@ -246,6 +291,38 @@ export default function CheckoutPage() {
           </div>
         )}
 
+        {stripeEnabled && (
+          <div>
+            <Label className="mb-2 block text-sm font-medium text-slate-700">
+              How would you like to pay?
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("pay_online")}
+                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                  paymentMethod === "pay_online"
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                Pay online (card)
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("pay_on_pickup")}
+                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                  paymentMethod === "pay_on_pickup"
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                Pay on pickup
+              </button>
+            </div>
+          </div>
+        )}
+
         <div>
           <Label htmlFor="notes" className="mb-1.5 block text-sm font-medium text-slate-700">
             Notes <span className="text-slate-400 font-normal">(optional)</span>
@@ -286,7 +363,13 @@ export default function CheckoutPage() {
           className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60"
           size="lg"
         >
-          {submitting ? "Placing order..." : `Place order — ${formatCents(orderTotal)}`}
+          {submitting
+            ? paymentMethod === "pay_online"
+              ? "Redirecting to payment..."
+              : "Placing order..."
+            : paymentMethod === "pay_online"
+              ? `Pay ${formatCents(orderTotal)} online`
+              : `Place order — ${formatCents(orderTotal)}`}
         </Button>
       </form>
     </div>
