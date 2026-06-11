@@ -55,7 +55,7 @@ export default async function OrdersPageRoute() {
   return (
     <div className="flex flex-col h-full">
       <TopBar title="Orders" />
-      <OrdersPage orders={orders} />
+      <OrdersPage orders={orders} churchId={churchId} />
     </div>
   );
 }

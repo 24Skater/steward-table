@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,8 +11,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { ImagePlus, Loader2, X } from "lucide-react";
+import { useRef, useState } from "react";
 
 interface CreateItemDialogProps {
   open: boolean;
@@ -28,6 +29,7 @@ interface FormState {
   description: string;
   basePrice: string;
   isAvailable: boolean;
+  imageUrl: string;
 }
 
 const INITIAL_FORM: FormState = {
@@ -35,6 +37,7 @@ const INITIAL_FORM: FormState = {
   description: "",
   basePrice: "",
   isAvailable: true,
+  imageUrl: "",
 };
 
 export function CreateItemDialog({
@@ -47,6 +50,8 @@ export function CreateItemDialog({
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleClose(nextOpen: boolean) {
     if (!nextOpen) {
@@ -56,11 +61,50 @@ export function CreateItemDialog({
     onOpenChange(nextOpen);
   }
 
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setError(null);
+    try {
+      const presignRes = await fetch(
+        `/api/upload/presign?contentType=${encodeURIComponent(file.type)}`,
+      );
+      if (!presignRes.ok) {
+        const body = await presignRes.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? "Failed to get upload URL");
+      }
+      const { uploadUrl, publicUrl } = (await presignRes.json()) as {
+        uploadUrl: string;
+        key: string;
+        publicUrl: string;
+      };
+
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      setForm((prev) => ({ ...prev, imageUrl: publicUrl }));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Image upload failed");
+    } finally {
+      setIsUploading(false);
+      // Reset input so re-selecting same file triggers change
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    const priceFloat = parseFloat(form.basePrice);
+    const priceFloat = Number.parseFloat(form.basePrice);
     if (!form.name.trim()) {
       setError("Name is required.");
       return;
@@ -82,6 +126,7 @@ export function CreateItemDialog({
           basePrice: priceFloat,
           isAvailable: form.isAvailable,
           churchId,
+          imageUrl: form.imageUrl || null,
         }),
       });
 
@@ -175,21 +220,73 @@ export function CreateItemDialog({
             </div>
           </div>
 
+          {/* Image upload */}
+          <div className="space-y-2">
+            <Label>Image</Label>
+            <div className="flex items-center gap-3">
+              {form.imageUrl ? (
+                <div className="relative h-16 w-16 shrink-0 rounded-md overflow-hidden border border-slate-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={form.imageUrl}
+                    alt="Item preview"
+                    className="h-full w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, imageUrl: "" }))}
+                    className="absolute top-0.5 right-0.5 rounded-full bg-white/80 p-0.5 hover:bg-white transition-colors"
+                    aria-label="Remove image"
+                  >
+                    <X className="h-3 w-3 text-slate-600" />
+                  </button>
+                </div>
+              ) : null}
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="sr-only"
+                  id="item-image-upload"
+                  onChange={handleImageSelect}
+                  disabled={isSubmitting || isUploading}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting || isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Uploading…
+                    </>
+                  ) : (
+                    <>
+                      <ImagePlus className="h-4 w-4 mr-2" />
+                      {form.imageUrl ? "Change image" : "Upload image"}
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-slate-400 mt-1">JPEG, PNG, WebP, or GIF</p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
             <div className="space-y-0.5">
               <Label htmlFor="item-available" className="text-sm font-medium">
                 Available
               </Label>
-              <p className="text-xs text-slate-500">
-                Show this item as orderable in the catalog.
-              </p>
+              <p className="text-xs text-slate-500">Show this item as orderable in the catalog.</p>
             </div>
             <Switch
               id="item-available"
               checked={form.isAvailable}
-              onCheckedChange={(checked) =>
-                setForm((prev) => ({ ...prev, isAvailable: checked }))
-              }
+              onCheckedChange={(checked) => setForm((prev) => ({ ...prev, isAvailable: checked }))}
               disabled={isSubmitting}
             />
           </div>

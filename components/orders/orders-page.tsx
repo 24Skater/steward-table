@@ -3,6 +3,7 @@
 import type { OrderStatus } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { NewOrderDialog } from "./new-order-dialog";
 import { OrderRow } from "./order-row";
 import type { OrderRowData } from "./order-row";
 import { OrderStatusBadge } from "./order-status-badge";
@@ -12,6 +13,7 @@ import { FULFILLMENT_LABELS, formatOrderTime, getNextStep } from "./order-utils"
 
 interface OrdersPageProps {
   orders: OrderRowData[];
+  churchId: string;
 }
 
 type FilterTab = "all" | "pending" | "in-progress" | "completed" | "canceled";
@@ -183,9 +185,10 @@ function ExportDropdown() {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export function OrdersPage({ orders }: OrdersPageProps) {
+export function OrdersPage({ orders, churchId }: OrdersPageProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
+  const [newOrderOpen, setNewOrderOpen] = useState(false);
 
   const tabFiltered = filterOrders(orders, activeTab);
   const visible = search.trim()
@@ -200,6 +203,11 @@ export function OrdersPage({ orders }: OrdersPageProps) {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
+      <NewOrderDialog
+        open={newOrderOpen}
+        onClose={() => setNewOrderOpen(false)}
+        churchId={churchId}
+      />
       {/* Filter tabs + search + export */}
       <div className="px-6 pt-4 pb-0 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border-b border-slate-200">
         {/* Segmented control */}
@@ -232,7 +240,7 @@ export function OrdersPage({ orders }: OrdersPageProps) {
           })}
         </div>
 
-        {/* Search + Export */}
+        {/* Search + Export + New order */}
         <div className="pb-3 sm:pb-0 flex gap-2 items-center">
           <input
             type="search"
@@ -242,6 +250,13 @@ export function OrdersPage({ orders }: OrdersPageProps) {
             className="h-8 w-56 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
           />
           <ExportDropdown />
+          <button
+            type="button"
+            onClick={() => setNewOrderOpen(true)}
+            className="px-3 py-2 rounded-md bg-slate-800 text-sm font-medium text-white hover:bg-slate-700 transition-colors"
+          >
+            New order
+          </button>
         </div>
       </div>
 

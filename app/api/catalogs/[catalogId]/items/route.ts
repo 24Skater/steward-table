@@ -13,6 +13,60 @@ async function resolveCatalogChurchId(catalogId: string): Promise<string | null>
   return catalog?.churchId ?? null;
 }
 
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ catalogId: string }> },
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
+  }
+
+  const { catalogId } = await params;
+
+  const churchId = await resolveCatalogChurchId(catalogId);
+  if (!churchId) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const membership = session.user.memberships?.find(
+    (m: SessionMembership) => m.churchId === churchId && m.status === "ACTIVE",
+  );
+  if (!membership) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const result = await can("catalog.read", {
+    userId: session.user.id,
+    churchId,
+    roles: membership.roles,
+  });
+  if (!result.allowed) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const items = await db.catalogItem.findMany({
+    where: { catalogId },
+    orderBy: { sortOrder: "asc" },
+    select: {
+      itemId: true,
+      priceOverride: true,
+      isAvailable: true,
+      item: {
+        select: {
+          id: true,
+          name: true,
+          defaultPrice: true,
+          status: true,
+        },
+      },
+    },
+    ...({ _bypassTenancyCheck: true } as object),
+  });
+
+  return NextResponse.json(items);
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ catalogId: string }> },

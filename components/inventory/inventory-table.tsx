@@ -194,11 +194,26 @@ export function InventoryTable({
                   {item.itemName}
                 </TableCell>
                 <TableCell>
-                  <InlineQuantityCell
-                    itemId={item.id}
-                    value={item.quantityOnHand}
-                    onCommit={onQuantityChange}
-                  />
+                  <div className="flex items-center gap-2">
+                    <InlineQuantityCell
+                      itemId={item.id}
+                      value={item.quantityOnHand}
+                      onCommit={onQuantityChange}
+                    />
+                    {item.trackingEnabled && item.quantityOnHand <= 0 && (
+                      <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100 text-xs">
+                        Out of stock
+                      </Badge>
+                    )}
+                    {item.trackingEnabled &&
+                      item.quantityOnHand > 0 &&
+                      item.lowStockThreshold !== null &&
+                      item.quantityOnHand <= item.lowStockThreshold && (
+                        <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 text-xs">
+                          Low stock
+                        </Badge>
+                      )}
+                  </div>
                 </TableCell>
                 <TableCell className="text-slate-600 tabular-nums">
                   {item.lowStockThreshold ?? <span className="text-slate-400">—</span>}

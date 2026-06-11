@@ -1,8 +1,4 @@
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const DEFAULT_PRESIGN_EXPIRES = 300; // 5 minutes
@@ -18,9 +14,7 @@ function getEnv() {
 
 function isConfigured(): boolean {
   const env = getEnv();
-  return Boolean(
-    env.endpoint && env.accessKeyId && env.secretAccessKey && env.bucketName,
-  );
+  return Boolean(env.endpoint && env.accessKeyId && env.secretAccessKey && env.bucketName);
 }
 
 let _client: S3Client | null = null;

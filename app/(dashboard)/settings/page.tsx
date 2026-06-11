@@ -119,6 +119,12 @@ export default async function SettingsRoute() {
 
         <div className="mt-6 pt-6 border-t border-slate-200 flex flex-col gap-2">
           <Link
+            href="/settings/delivery"
+            className="text-sm text-slate-600 hover:text-slate-900 hover:underline"
+          >
+            Manage delivery zones →
+          </Link>
+          <Link
             href="/settings/webhooks"
             className="text-sm text-slate-600 hover:text-slate-900 hover:underline"
           >
