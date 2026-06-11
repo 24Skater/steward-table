@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default async function CheckoutSuccessPage({
   params,
   searchParams,
@@ -8,6 +10,12 @@ export default async function CheckoutSuccessPage({
   const { churchSlug } = await params;
   const { orderId } = await searchParams;
 
+  // Redirect to the order status page so the customer can track their order
+  if (orderId) {
+    redirect(`/${churchSlug}/order/${orderId}`);
+  }
+
+  // Fallback if orderId is missing (should not happen in normal flow)
   return (
     <main className="min-h-screen flex items-center justify-center bg-white px-4">
       <div className="text-center space-y-4 max-w-sm">
@@ -27,19 +35,10 @@ export default async function CheckoutSuccessPage({
             />
           </svg>
         </div>
-
         <h1 className="text-2xl font-semibold text-slate-900">Order placed!</h1>
-
         <p className="text-slate-600 text-sm">
           Your order has been received. You will be notified when it is ready.
         </p>
-
-        {orderId && (
-          <p className="text-slate-400 text-xs font-mono">
-            Order ID: {orderId.slice(-8).toUpperCase()}
-          </p>
-        )}
-
         <a
           href={`/${churchSlug}/menu`}
           className="inline-block mt-4 px-5 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
