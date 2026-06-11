@@ -27,6 +27,7 @@ export interface MenuItemData {
   description: string | null;
   price: number;
   category: string | null;
+  imageUrl: string | null;
   modifierGroups: ModifierGroup[];
 }
 

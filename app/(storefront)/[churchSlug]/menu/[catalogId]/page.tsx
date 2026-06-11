@@ -41,6 +41,7 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
               description: true,
               defaultPrice: true,
               station: true,
+              imageUrl: true,
               translations: true,
               modifierGroups: {
                 where: { deletedAt: null },
@@ -95,6 +96,7 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
         : null,
     price: (ci.priceOverride ?? ci.item.defaultPrice) as number,
     category: (ci.item.station as string | null) ?? null,
+    imageUrl: (ci.item.imageUrl as string | null) ?? null,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     modifierGroups: (ci.item.modifierGroups as any[]).map((img: any) => ({
       id: img.group.id as string,

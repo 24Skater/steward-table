@@ -28,6 +28,7 @@ export interface ItemCardProps {
   name: string;
   description: string | null;
   price: number; // cents
+  imageUrl: string | null;
   modifierGroups: ModifierGroup[];
 }
 
@@ -41,6 +42,7 @@ export function ItemCard({
   name,
   description,
   price,
+  imageUrl,
   modifierGroups,
 }: ItemCardProps) {
   const { addItem } = useCart();
@@ -80,22 +82,34 @@ export function ItemCard({
 
   return (
     <>
-      <div className="group flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-        <div className="flex-1">
-          <h3 className="font-semibold text-slate-800">{name}</h3>
-          {description && (
-            <p className="mt-1 line-clamp-2 text-sm text-slate-500">{description}</p>
-          )}
-        </div>
-        <div className="mt-4 flex items-center justify-between">
-          <span className="text-base font-semibold text-emerald-700">{formatCents(price)}</span>
-          <Button
-            size="sm"
-            onClick={handleAddClick}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
-          >
-            {hasRequiredModifiers ? "Customize" : "Add"}
-          </Button>
+      <div className="group flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md overflow-hidden">
+        {imageUrl && (
+          <div className="h-36 w-full overflow-hidden bg-slate-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt={name}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          </div>
+        )}
+        <div className="flex flex-col flex-1 p-4">
+          <div className="flex-1">
+            <h3 className="font-semibold text-slate-800">{name}</h3>
+            {description && (
+              <p className="mt-1 line-clamp-2 text-sm text-slate-500">{description}</p>
+            )}
+          </div>
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-base font-semibold text-emerald-700">{formatCents(price)}</span>
+            <Button
+              size="sm"
+              onClick={handleAddClick}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {hasRequiredModifiers ? "Customize" : "Add"}
+            </Button>
+          </div>
         </div>
       </div>
 
