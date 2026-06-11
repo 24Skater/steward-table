@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { OrderStatus } from "@prisma/client";
 import { OrderStatusBadge } from "./order-status-badge";
 import { OrderRow } from "./order-row";
@@ -72,11 +73,13 @@ function filterOrders(orders: OrderRowData[], tab: FilterTab): OrderRowData[] {
 // ── Mobile card ───────────────────────────────────────────────────────────────
 
 function MobileOrderCard({ order }: { order: OrderRowData }) {
+  const router = useRouter();
   const [inFlight, setInFlight] = useState(false);
   const nextStep = getNextStep(order.status, order.fulfillment);
   const displayTime = order.scheduledFor ?? order.createdAt;
 
-  async function handleNextStep() {
+  async function handleNextStep(e: React.MouseEvent) {
+    e.stopPropagation();
     if (!nextStep || inFlight) return;
     setInFlight(true);
     try {
@@ -92,7 +95,15 @@ function MobileOrderCard({ order }: { order: OrderRowData }) {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 flex flex-col gap-2">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => router.push(`/orders/${order.id}`)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") router.push(`/orders/${order.id}`);
+      }}
+      className="rounded-lg border border-slate-200 bg-white p-4 flex flex-col gap-2 cursor-pointer hover:border-slate-300 transition-colors"
+    >
       <div className="flex items-center justify-between">
         <span className="font-mono font-semibold text-slate-800 tabular-nums text-sm">
           #{order.number}
