@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { can } from "@/lib/rbac/can";
 import { transition } from "@/lib/orders/transitions";
 import { db } from "@/lib/db";
+import { sendOrderNotification } from "@/lib/notifications";
 
 export async function POST(
   _req: NextRequest,
@@ -49,6 +50,7 @@ export async function POST(
 
   try {
     await transition(orderId, "READY", { actorId: session.user.id });
+    void sendOrderNotification(orderId, "READY");
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof Error && err.message.includes("Invalid order transition")) {
