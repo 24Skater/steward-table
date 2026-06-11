@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,14 @@ const FULFILLMENT_LABELS: Record<FulfillmentType, string> = {
   DELIVERY: "Delivery",
   DINE_IN: "Dine-in",
 };
+
+interface DeliveryZone {
+  id: string;
+  name: string;
+  postalCodes: string[];
+  feeCents: number;
+  minOrderCents: number;
+}
 
 function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
@@ -32,7 +40,36 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Delivery zone state
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [postalCode, setPostalCode] = useState("");
+  const [matchedZone, setMatchedZone] = useState<DeliveryZone | null>(null);
+  const [zoneChecked, setZoneChecked] = useState(false);
+
   const churchSlug = params.churchSlug;
+
+  // Fetch delivery zones once when component mounts
+  useEffect(() => {
+    fetch(`/api/storefront/${churchSlug}/delivery-zones`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: DeliveryZone[]) => setDeliveryZones(data))
+      .catch(() => {
+        // Silently ignore — delivery zone lookup is best-effort
+      });
+  }, [churchSlug]);
+
+  // Match postal code against zones on input change
+  useEffect(() => {
+    if (fulfillment !== "DELIVERY" || !postalCode.trim()) {
+      setMatchedZone(null);
+      setZoneChecked(false);
+      return;
+    }
+    setZoneChecked(true);
+    const trimmed = postalCode.trim();
+    const found = deliveryZones.find((z) => z.postalCodes.includes(trimmed)) ?? null;
+    setMatchedZone(found);
+  }, [postalCode, deliveryZones, fulfillment]);
 
   if (items.length === 0) {
     return (
@@ -57,7 +94,17 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Derive churchId from the first item's catalogId context — we pass it via the API lookup by slug
+    if (fulfillment === "DELIVERY") {
+      if (!postalCode.trim()) {
+        setError("Please enter your postal code for delivery.");
+        return;
+      }
+      if (!matchedZone) {
+        setError("Delivery is not available to your area.");
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const res = await fetch(`/api/storefront/orders`, {
@@ -69,6 +116,7 @@ export default function CheckoutPage() {
           phone: phone.trim() || null,
           notes: notes.trim() || null,
           fulfillment,
+          zoneId: fulfillment === "DELIVERY" && matchedZone ? matchedZone.id : undefined,
           items: items.map((item) => ({
             itemId: item.itemId,
             catalogId: item.catalogId,
@@ -96,6 +144,9 @@ export default function CheckoutPage() {
       setSubmitting(false);
     }
   }
+
+  const deliveryFee = fulfillment === "DELIVERY" && matchedZone ? matchedZone.feeCents : 0;
+  const orderTotal = total + deliveryFee;
 
   return (
     <div className="mx-auto max-w-lg">
@@ -160,6 +211,41 @@ export default function CheckoutPage() {
           </div>
         </div>
 
+        {fulfillment === "DELIVERY" && (
+          <div className="space-y-2">
+            <Label htmlFor="postal-code" className="block text-sm font-medium text-slate-700">
+              Postal code <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              id="postal-code"
+              type="text"
+              value={postalCode}
+              onChange={(e) => setPostalCode(e.target.value)}
+              placeholder="e.g. 20715"
+              autoComplete="postal-code"
+              className="max-w-xs"
+            />
+            {zoneChecked && postalCode.trim() && (
+              matchedZone ? (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                  <span className="font-medium">{matchedZone.name}</span>
+                  {" — "}
+                  Delivery fee: {formatCents(matchedZone.feeCents)}
+                  {matchedZone.minOrderCents > 0 && (
+                    <span className="text-emerald-700">
+                      {" "}(min. order {formatCents(matchedZone.minOrderCents)})
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-rose-600">
+                  Delivery is not available to your area.
+                </p>
+              )
+            )}
+          </div>
+        )}
+
         <div>
           <Label htmlFor="notes" className="mb-1.5 block text-sm font-medium text-slate-700">
             Notes <span className="text-slate-400 font-normal">(optional)</span>
@@ -173,6 +259,23 @@ export default function CheckoutPage() {
           />
         </div>
 
+        {deliveryFee > 0 && (
+          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm space-y-1">
+            <div className="flex justify-between text-slate-600">
+              <span>Subtotal</span>
+              <span>{formatCents(total)}</span>
+            </div>
+            <div className="flex justify-between text-slate-600">
+              <span>Delivery fee</span>
+              <span>{formatCents(deliveryFee)}</span>
+            </div>
+            <div className="flex justify-between font-semibold text-slate-900 border-t border-slate-100 pt-1 mt-1">
+              <span>Total</span>
+              <span>{formatCents(orderTotal)}</span>
+            </div>
+          </div>
+        )}
+
         {error && (
           <p className="rounded-lg bg-rose-50 px-4 py-2.5 text-sm text-rose-700">{error}</p>
         )}
@@ -183,7 +286,7 @@ export default function CheckoutPage() {
           className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60"
           size="lg"
         >
-          {submitting ? "Placing order..." : `Place order — ${formatCents(total)}`}
+          {submitting ? "Placing order..." : `Place order — ${formatCents(orderTotal)}`}
         </Button>
       </form>
     </div>
