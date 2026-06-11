@@ -4,6 +4,7 @@ export interface CatalogTemplateItem {
   description?: string;
   descriptionEs?: string;
   defaultPrice: number;
+  station?: string;
   modifierGroupNames: string[];
 }
 
@@ -22,6 +23,7 @@ export interface CatalogTemplateModifierGroup {
 }
 
 export interface CatalogTemplate {
+  key: string;
   name: string;
   description: string;
   items: CatalogTemplateItem[];
