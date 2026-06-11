@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { OrderStatusBadge } from "./order-status-badge";
 import { getNextStep, FULFILLMENT_LABELS, formatOrderTime } from "./order-utils";
@@ -83,18 +84,26 @@ export function OrderRow({ order }: OrderRowProps) {
 
       {/* Next step */}
       <td className="py-3 pl-3 pr-4 text-right">
-        {nextStep && !inFlight ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleNextStep}
-            className="text-xs h-7 px-2.5"
+        <div className="flex items-center justify-end gap-2">
+          <Link
+            href={`/orders/${order.id}`}
+            className="text-xs text-slate-500 hover:text-slate-700 underline-offset-2 hover:underline transition-colors"
           >
-            {nextStep.label}
-          </Button>
-        ) : inFlight ? (
-          <span className="text-xs text-slate-400">Updating…</span>
-        ) : null}
+            View
+          </Link>
+          {nextStep && !inFlight ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleNextStep}
+              className="text-xs h-7 px-2.5"
+            >
+              {nextStep.label}
+            </Button>
+          ) : inFlight ? (
+            <span className="text-xs text-slate-400">Updating…</span>
+          ) : null}
+        </div>
       </td>
     </tr>
   );
