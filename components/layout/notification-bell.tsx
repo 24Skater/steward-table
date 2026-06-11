@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Bell } from "lucide-react";
+import { Bell, ShoppingBag, CheckCircle, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Notification {
@@ -30,9 +30,40 @@ function relativeTime(isoString: string): string {
   return `${days}d ago`;
 }
 
+function NotificationIcon({ type }: { type: string }) {
+  if (type === "new_order" || type === "order") {
+    return (
+      <ShoppingBag
+        size={14}
+        className="shrink-0 text-blue-400 mt-0.5"
+        aria-hidden="true"
+      />
+    );
+  }
+  if (type === "low_stock" || type === "stock") {
+    return (
+      <AlertTriangle
+        size={14}
+        className="shrink-0 text-amber-400 mt-0.5"
+        aria-hidden="true"
+      />
+    );
+  }
+  // status_update and anything else
+  return (
+    <CheckCircle
+      size={14}
+      className="shrink-0 text-emerald-400 mt-0.5"
+      aria-hidden="true"
+    />
+  );
+}
+
 export function NotificationBell() {
   const router = useRouter();
   const [data, setData] = useState<NotificationsResponse | null>(null);
+  const [prevUnread, setPrevUnread] = useState(0);
+  const [pulsing, setPulsing] = useState(false);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +72,14 @@ export function NotificationBell() {
       const res = await fetch("/api/notifications");
       if (!res.ok) return;
       const json = (await res.json()) as NotificationsResponse;
-      setData(json);
+      setData((prev) => {
+        // Trigger pulse animation when new unread notifications arrive
+        if (prev !== null && json.unread > prev.unread) {
+          setPulsing(true);
+          setTimeout(() => setPulsing(false), 1200);
+        }
+        return json;
+      });
     } catch {
       // silently ignore network errors
     }
@@ -49,12 +87,23 @@ export function NotificationBell() {
 
   useEffect(() => {
     void fetchNotifications();
+    // Poll every 30 seconds for new notifications
+    const interval = setInterval(() => void fetchNotifications(), 30_000);
+    return () => clearInterval(interval);
   }, []);
+
+  // Track previous unread count for animation trigger
+  useEffect(() => {
+    if (data) setPrevUnread(data.unread);
+  }, [data]);
 
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     }
@@ -99,6 +148,7 @@ export function NotificationBell() {
   }
 
   const recent = data?.notifications.slice(0, 5) ?? [];
+  const hasUnread = (data?.unread ?? 0) > 0;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -110,7 +160,12 @@ export function NotificationBell() {
       >
         <Bell size={18} strokeWidth={1.75} aria-hidden="true" />
         {data && data.unread > 0 && (
-          <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[16px] h-4 px-0.5 text-[10px] font-bold leading-none rounded-full bg-red-500 text-white">
+          <span
+            className={cn(
+              "absolute top-1.5 right-1.5 flex items-center justify-center min-w-[16px] h-4 px-0.5 text-[10px] font-bold leading-none rounded-full bg-red-500 text-white",
+              pulsing && "animate-pulse",
+            )}
+          >
             {data.unread > 99 ? "99+" : data.unread}
           </span>
         )}
@@ -118,12 +173,12 @@ export function NotificationBell() {
 
       {open && (
         <div className="absolute bottom-full left-0 mb-2 w-80 rounded-lg border border-slate-700 bg-slate-800 shadow-xl z-50">
-          {/* Header */}
+          {/* Header with mark-all-read at the top */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700">
             <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
               Notifications
             </span>
-            {data && data.unread > 0 && (
+            {hasUnread && (
               <button
                 type="button"
                 onClick={() => void markAllRead()}
@@ -146,25 +201,27 @@ export function NotificationBell() {
                   <button
                     type="button"
                     onClick={() => void handleNotificationClick(notification)}
-                    className="w-full flex items-start gap-2.5 px-3 py-2.5 text-left hover:bg-slate-700/50 transition-colors"
+                    className={cn(
+                      "w-full flex items-start gap-2.5 px-3 py-2.5 text-left hover:bg-slate-700/50 transition-colors",
+                      !notification.readAt && "bg-slate-700/20",
+                    )}
                   >
-                    {/* Read/unread dot */}
-                    <span
-                      className={cn(
-                        "mt-1.5 shrink-0 w-2 h-2 rounded-full",
-                        notification.readAt
-                          ? "border border-slate-500 bg-transparent"
-                          : "bg-blue-400",
-                      )}
-                      aria-hidden="true"
-                    />
+                    {/* Type icon */}
+                    <NotificationIcon type={notification.type} />
+
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-slate-200 leading-snug line-clamp-2">
                         {notification.body}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        {relativeTime(notification.createdAt)}
-                      </p>
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        {/* Unread dot */}
+                        {!notification.readAt && (
+                          <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-blue-400" />
+                        )}
+                        <p className="text-xs text-slate-500">
+                          {relativeTime(notification.createdAt)}
+                        </p>
+                      </div>
                     </div>
                   </button>
                 </li>
