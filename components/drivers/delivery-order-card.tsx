@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import type { OrderStatus } from "@prisma/client";
@@ -41,6 +42,7 @@ export function DeliveryOrderCard({
   drivers,
   canAssign,
 }: DeliveryOrderCardProps) {
+  const router = useRouter();
   const [selectedDriverId, setSelectedDriverId] = useState<string>(
     order.deliveryInfo?.driverId ?? "",
   );
@@ -73,8 +75,8 @@ export function DeliveryOrderCard({
         // Revert to original value on error
         setSelectedDriverId(order.deliveryInfo?.driverId ?? "");
       } else {
-        // Reload to reflect the new assignment across both panels
-        window.location.reload();
+        // Refresh to reflect the new assignment across both panels
+        router.refresh();
       }
     } catch {
       setError("Network error");

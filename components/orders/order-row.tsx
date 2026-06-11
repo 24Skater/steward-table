@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { OrderStatusBadge } from "./order-status-badge";
 import { getNextStep, FULFILLMENT_LABELS, formatOrderTime } from "./order-utils";
@@ -28,6 +29,7 @@ interface OrderRowProps {
  * additional columns (e.g. the bulk-selection checkbox column).
  */
 export function OrderRow({ order }: OrderRowProps) {
+  const router = useRouter();
   const [inFlight, setInFlight] = useState(false);
   const nextStep = getNextStep(order.status, order.fulfillment);
   const displayTime = order.scheduledFor ?? order.createdAt;
@@ -43,7 +45,7 @@ export function OrderRow({ order }: OrderRowProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStep.targetStatus }),
       });
-      window.location.reload();
+      router.refresh();
     } catch {
       setInFlight(false);
     }

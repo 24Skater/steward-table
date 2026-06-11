@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -524,6 +525,7 @@ const STEP_TITLES: Record<Step, string> = {
 };
 
 export function NewOrderDialog({ open, onClose, churchId }: NewOrderDialogProps) {
+  const router = useRouter();
   const [step, setStep] = useState<Step>(1);
 
   // Step 1 state
@@ -635,7 +637,7 @@ export function NewOrderDialog({ open, onClose, churchId }: NewOrderDialogProps)
       setSuccessMessage(`Order #${data.orderNumber} created`);
       setTimeout(() => {
         handleClose();
-        window.location.reload();
+        router.refresh();
       }, 1200);
     } catch {
       setSubmitError("Network error. Please try again.");

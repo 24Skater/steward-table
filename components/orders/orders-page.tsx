@@ -167,7 +167,7 @@ function MobileOrderCard({ order }: { order: OrderRowData }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStep.targetStatus }),
       });
-      window.location.reload();
+      router.refresh();
     } catch {
       setInFlight(false);
     }
@@ -351,7 +351,7 @@ export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
         }),
       });
       setSelectedIds(new Set());
-      window.location.reload();
+      router.refresh();
     } catch {
       setIsBulkLoading(false);
     }
