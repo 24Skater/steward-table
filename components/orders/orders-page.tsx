@@ -195,6 +195,10 @@ function MobileOrderCard({ order }: { order: OrderRowData }) {
         <span>&middot;</span>
         <span>{FULFILLMENT_LABELS[order.fulfillment]}</span>
         <span>&middot;</span>
+        <span className="tabular-nums font-medium text-slate-600">
+          ${(order.total / 100).toFixed(2)}
+        </span>
+        <span>&middot;</span>
         <span className="tabular-nums">{formatOrderTime(displayTime)}</span>
       </div>
       {nextStep && !inFlight && (
@@ -491,6 +495,9 @@ export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
                       </th>
                       <th className="py-2.5 px-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
                         Status
+                      </th>
+                      <th className="py-2.5 px-3 text-xs font-medium text-slate-500 uppercase tracking-wide text-right">
+                        Total
                       </th>
                       <th className="py-2.5 px-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
                         Time
