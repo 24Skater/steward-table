@@ -3,7 +3,7 @@
 import type { OrderStatus } from "@prisma/client";
 import { Download } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DateRange } from "@/app/(dashboard)/orders/page";
 import { NewOrderDialog } from "./new-order-dialog";
 import { OrderRow } from "./order-row";
@@ -20,6 +20,57 @@ interface OrdersPageProps {
 }
 
 type FilterTab = "all" | "pending" | "in-progress" | "completed" | "canceled" | "scheduled";
+
+interface OrdersSsePayload {
+  statusCounts: Partial<Record<OrderStatus, number>>;
+  newOrders: Array<{
+    id: string;
+    number: number;
+    customerName: string;
+    status: OrderStatus;
+    createdAt: string;
+  }>;
+}
+
+// ── SSE hook ──────────────────────────────────────────────────────────────────
+
+function useOrdersSse() {
+  const [liveStatusCounts, setLiveStatusCounts] = useState<Partial<Record<OrderStatus, number>>>({});
+  const [isLive, setIsLive] = useState(false);
+  // Track previous total to detect new orders arriving
+  const prevTotalRef = useRef<number>(0);
+  const [flashTab, setFlashTab] = useState<FilterTab | null>(null);
+
+  useEffect(() => {
+    const es = new EventSource("/api/sse/orders");
+
+    es.addEventListener("orders", (e: MessageEvent<string>) => {
+      const payload = JSON.parse(e.data) as OrdersSsePayload;
+      setIsLive(true);
+      setLiveStatusCounts(payload.statusCounts);
+
+      // Detect newly arrived orders (new orders in the last 5 minutes)
+      const newTotal = payload.newOrders.length;
+      if (newTotal > prevTotalRef.current) {
+        // Flash the "pending" tab since new orders arrive as SUBMITTED
+        setFlashTab("pending");
+        setTimeout(() => setFlashTab(null), 1_500);
+      }
+      prevTotalRef.current = newTotal;
+    });
+
+    es.onerror = () => {
+      setIsLive(false);
+    };
+
+    return () => {
+      es.close();
+      setIsLive(false);
+    };
+  }, []);
+
+  return { liveStatusCounts, isLive, flashTab };
+}
 
 // ── Status groups ─────────────────────────────────────────────────────────────
 
@@ -241,6 +292,8 @@ export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkLoading, setIsBulkLoading] = useState(false);
 
+  const { liveStatusCounts, isLive, flashTab } = useOrdersSse();
+
   const tabFiltered = filterOrders(orders, activeTab);
   const visible = search.trim()
     ? tabFiltered.filter(
@@ -322,8 +375,9 @@ export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
         {/* Segmented control */}
         <div className="flex gap-1 p-1 bg-slate-100 rounded-lg w-fit overflow-x-auto">
           {tabs.map((tab) => {
-            const count = tab !== "all" ? filterOrders(orders, tab).length : orders.length;
+            const serverCount = tab !== "all" ? filterOrders(orders, tab).length : orders.length;
             const isActive = activeTab === tab;
+            const isFlashing = flashTab === tab;
             return (
               <button
                 key={tab}
@@ -338,12 +392,20 @@ export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
                 {TAB_LABELS[tab]}
                 <span
                   className={[
-                    "ml-1.5 text-xs",
-                    isActive ? "text-slate-500" : "text-slate-400",
+                    "ml-1.5 text-xs transition-colors duration-300",
+                    isFlashing
+                      ? "text-emerald-500 font-semibold"
+                      : isActive
+                        ? "text-slate-500"
+                        : "text-slate-400",
                   ].join(" ")}
                 >
-                  {count}
+                  {serverCount}
                 </span>
+                {/* Live count overlay dot when SSE has data */}
+                {isLive && Object.keys(liveStatusCounts).length > 0 && isFlashing && (
+                  <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 align-middle" />
+                )}
               </button>
             );
           })}
@@ -371,6 +433,13 @@ export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
             className="h-8 w-56 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
           />
           <ExportButton range={range} />
+          {/* Live indicator */}
+          {isLive && (
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live
+            </span>
+          )}
           <button
             type="button"
             onClick={() => setNewOrderOpen(true)}
