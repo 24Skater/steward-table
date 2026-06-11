@@ -15,11 +15,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EditCatalogDialog } from "./edit-catalog-dialog";
 
-interface Catalog {
+export interface Catalog {
   id: string;
   name: string;
   description: string | null;
   isActive: boolean;
+  status: string;
   _count: { items: number };
 }
 
@@ -31,12 +32,37 @@ interface CatalogCardProps {
 
 export function CatalogCard({ catalog, onUpdated, onDeleted }: CatalogCardProps) {
   const [editOpen, setEditOpen] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
   async function handleDelete() {
     if (!confirm(`Delete catalog "${catalog.name}"?`)) return;
     const res = await fetch(`/api/catalogs/${catalog.id}`, { method: "DELETE" });
     if (res.ok) onDeleted(catalog.id);
   }
+
+  async function handleToggleStatus() {
+    const newStatus = catalog.status === "OPEN" ? "CLOSED" : "OPEN";
+    setToggling(true);
+    try {
+      const res = await fetch(`/api/catalogs/${catalog.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        onUpdated({
+          ...catalog,
+          status: updated.status as string,
+          isActive: updated.status === "OPEN",
+        });
+      }
+    } finally {
+      setToggling(false);
+    }
+  }
+
+  const isArchived = catalog.status === "ARCHIVED";
 
   return (
     <>
@@ -45,9 +71,11 @@ export function CatalogCard({ catalog, onUpdated, onDeleted }: CatalogCardProps)
           <div className="space-y-1 flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-slate-900 truncate">{catalog.name}</h3>
-              {!catalog.isActive && (
+              {isArchived ? (
+                <Badge variant="secondary" className="text-xs shrink-0">Archived</Badge>
+              ) : !catalog.isActive ? (
                 <Badge variant="secondary" className="text-xs shrink-0">Inactive</Badge>
-              )}
+              ) : null}
             </div>
             {catalog.description && (
               <p className="text-slate-500 text-sm line-clamp-2">{catalog.description}</p>
@@ -65,6 +93,11 @@ export function CatalogCard({ catalog, onUpdated, onDeleted }: CatalogCardProps)
                 <Pencil size={14} className="mr-2" />
                 Edit
               </DropdownMenuItem>
+              {!isArchived && (
+                <DropdownMenuItem onClick={handleToggleStatus} disabled={toggling}>
+                  {catalog.status === "OPEN" ? "Close catalog" : "Open catalog"}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-red-600 focus:text-red-600"

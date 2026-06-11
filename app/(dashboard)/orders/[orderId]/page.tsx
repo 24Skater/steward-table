@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { TopBar } from "@/components/layout/top-bar";
 import { OrderDetail } from "@/components/orders/order-detail";
 import type { OrderDetailData, AuditLogEntry } from "@/components/orders/order-detail";
+import type { DriverOption } from "@/components/orders/assign-driver-select";
 
 export default async function OrderDetailPage({
   params,
@@ -44,11 +45,43 @@ export default async function OrderDetailPage({
           },
         },
       },
-      deliveryInfo: true,
+      deliveryInfo: {
+        select: {
+          recipientName: true,
+          phone: true,
+          line1: true,
+          line2: true,
+          city: true,
+          region: true,
+          postalCode: true,
+          country: true,
+          instructions: true,
+          driverId: true,
+        },
+      },
     },
   });
 
   if (!raw) notFound();
+
+  // Fetch DRIVER members for the driver assignment select (only relevant for delivery orders)
+  const rawDrivers = raw.fulfillment === "DELIVERY"
+    ? await (db.membership.findMany as Function)({
+        where: {
+          churchId,
+          status: "ACTIVE",
+          roles: { has: "DRIVER" },
+        },
+        select: {
+          user: { select: { id: true, name: true } },
+        },
+        _bypassTenancyCheck: true,
+      })
+    : [];
+
+  const drivers: DriverOption[] = (
+    rawDrivers as Array<{ user: { id: string; name: string | null } }>
+  ).map((m) => ({ id: m.user.id, name: m.user.name }));
 
   const auditRaw = await db.auditLog.findMany({
     where: {
@@ -115,6 +148,7 @@ export default async function OrderDetailPage({
           instructions: raw.deliveryInfo.instructions,
         }
       : null,
+    currentDriverId: raw.deliveryInfo?.driverId ?? null,
   };
 
   const auditLogs: AuditLogEntry[] = auditRaw.map((log) => ({
@@ -130,7 +164,7 @@ export default async function OrderDetailPage({
   return (
     <div className="flex flex-col h-full">
       <TopBar title={`Order #${raw.number}`} />
-      <OrderDetail order={order} auditLogs={auditLogs} />
+      <OrderDetail order={order} auditLogs={auditLogs} drivers={drivers} />
     </div>
   );
 }

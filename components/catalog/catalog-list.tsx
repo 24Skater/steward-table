@@ -4,15 +4,8 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CatalogCard } from "./catalog-card";
+import type { Catalog } from "./catalog-card";
 import { CreateCatalogDialog } from "./create-catalog-dialog";
-
-interface Catalog {
-  id: string;
-  name: string;
-  description: string | null;
-  isActive: boolean;
-  _count: { items: number };
-}
 
 interface CatalogListProps {
   initialCatalogs: Catalog[];

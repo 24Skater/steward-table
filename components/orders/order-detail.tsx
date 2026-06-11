@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { OrderStatusBadge } from "./order-status-badge";
+import { AssignDriverSelect } from "./assign-driver-select";
+import type { DriverOption } from "./assign-driver-select";
 import { getNextStep, FULFILLMENT_LABELS, formatOrderTime } from "./order-utils";
 import type { OrderStatus, FulfillmentType } from "@prisma/client";
 
@@ -67,6 +69,7 @@ export interface OrderDetailData {
   items: OrderItemData[];
   events: OrderEventData[];
   deliveryInfo: DeliveryInfoData | null;
+  currentDriverId?: string | null;
 }
 
 export interface AuditLogEntry {
@@ -82,6 +85,7 @@ export interface AuditLogEntry {
 interface OrderDetailProps {
   order: OrderDetailData;
   auditLogs: AuditLogEntry[];
+  drivers?: DriverOption[];
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -136,7 +140,7 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function OrderDetail({ order, auditLogs }: OrderDetailProps) {
+export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
   const [inFlight, setInFlight] = useState(false);
   const nextStep = getNextStep(order.status, order.fulfillment);
   const displayTime = order.scheduledFor ?? order.createdAt;
@@ -387,6 +391,18 @@ export function OrderDetail({ order, auditLogs }: OrderDetailProps) {
                 )}
               </div>
             </Card>
+
+            {/* Driver assignment — only shown for delivery orders when drivers list is provided */}
+            {order.fulfillment === "DELIVERY" && drivers !== undefined && (
+              <Card>
+                <SectionHeading>Driver</SectionHeading>
+                <AssignDriverSelect
+                  orderId={order.id}
+                  currentDriverId={order.currentDriverId ?? null}
+                  drivers={drivers}
+                />
+              </Card>
+            )}
           </div>
         </div>
 
