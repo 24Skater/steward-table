@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { AlertTriangle } from "lucide-react";
 import { KitchenOrderCard } from "./kitchen-order-card";
 import { KitchenTopBar } from "./kitchen-top-bar";
 import {
@@ -39,6 +40,7 @@ export function KitchenDisplay() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL_ACTIVE");
   const [fulfillmentFilter, setFulfillmentFilter] = useState<FulfillmentFilter>("ALL");
   const [markingAllReady, setMarkingAllReady] = useState(false);
+  const [kitchenError, setKitchenError] = useState<string | null>(null);
 
   // Wakelock: keep screen awake on kitchen tablet
   useEffect(() => {
@@ -132,7 +134,8 @@ export function KitchenDisplay() {
       const res = await fetch(`/api/orders/${orderId}/ready`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to mark ready");
     } catch {
-      // TODO: Show error toast
+      setKitchenError("Could not mark order ready. Please try again.");
+      setTimeout(() => setKitchenError(null), 4000);
     }
   }, []);
 
@@ -151,7 +154,8 @@ export function KitchenDisplay() {
         body: JSON.stringify({ orderIds: inKitchenIds, targetStatus: "READY" }),
       });
     } catch {
-      // TODO: Show error toast
+      setKitchenError("Could not mark all orders ready. Please try again.");
+      setTimeout(() => setKitchenError(null), 4000);
     } finally {
       setMarkingAllReady(false);
     }
@@ -162,6 +166,12 @@ export function KitchenDisplay() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-950 overflow-hidden">
+      {kitchenError && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-lg bg-red-900/90 px-4 py-2.5 text-sm text-red-100 shadow-xl">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          {kitchenError}
+        </div>
+      )}
       <KitchenTopBar
         orderCount={orders.length}
         currentTime={currentTime}
