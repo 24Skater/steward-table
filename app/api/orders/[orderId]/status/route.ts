@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { transition, InvalidTransitionError } from "@/lib/orders/transitions";
 import { can } from "@/lib/rbac/can";
 import { db } from "@/lib/db";
+import { sendOrderNotification } from "@/lib/notifications";
 import type { OrderStatus } from "@prisma/client";
 
 export async function PATCH(
@@ -57,6 +58,7 @@ export async function PATCH(
 
   try {
     await transition(orderId, targetStatus, { actorId: session.user.id });
+    void sendOrderNotification(orderId, targetStatus);
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof InvalidTransitionError) {
