@@ -7,6 +7,7 @@ import {
   ChefHat,
   BookOpen,
   Users,
+  Users2,
   Package,
   Truck,
   Settings,
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/drivers", label: "Drivers", icon: Truck },
   { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/team", label: "Team", icon: Users2 },
 ] as const;
 
 const BOTTOM_ITEMS = [
