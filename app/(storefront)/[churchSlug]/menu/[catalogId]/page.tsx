@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { translate } from "@/lib/i18n/translate";
 import { MenuPage } from "@/components/storefront/menu-page";
 import type { MenuItemData } from "@/components/storefront/menu-page";
 
@@ -12,7 +13,7 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
 
   const church = await db.church.findFirst({
     where: { slug: churchSlug, status: "ACTIVE" },
-    select: { id: true },
+    select: { id: true, locale: true },
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore bypass tenancy for storefront
     _bypassTenancyCheck: true,
@@ -40,6 +41,7 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
               description: true,
               defaultPrice: true,
               station: true,
+              translations: true,
               modifierGroups: {
                 where: { deletedAt: null },
                 orderBy: { sortOrder: "asc" },
@@ -79,18 +81,24 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
     notFound();
   }
 
+  const locale: "EN" | "ES" =
+    (church.locale as string) === "ES" ? "ES" : "EN";
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const items: MenuItemData[] = (catalog.items as any[]).map((ci: any) => ({
     itemId: ci.item.id as string,
     catalogId: catalog.id as string,
-    name: ci.item.name as string,
-    description: ci.item.description as string | null,
+    name: translate(ci.item.name as string, ci.item.translations, locale),
+    description:
+      ci.item.description != null
+        ? translate(ci.item.description as string, ci.item.translations, locale, "description")
+        : null,
     price: (ci.priceOverride ?? ci.item.defaultPrice) as number,
     category: (ci.item.station as string | null) ?? null,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     modifierGroups: (ci.item.modifierGroups as any[]).map((img: any) => ({
       id: img.group.id as string,
-      name: img.group.name as string,
+      name: translate(img.group.name as string, img.group.translations, locale),
       minSelections: (img.overrideMin ?? img.group.defaultMinSelections) as number,
       maxSelections: (img.overrideMax ?? img.group.defaultMaxSelections) as number,
       isRequired: (img.overrideIsRequired ?? img.group.defaultIsRequired) as boolean,
