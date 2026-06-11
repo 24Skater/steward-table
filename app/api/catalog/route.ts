@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+// Superseded by /api/catalogs — kept for route resolution
 export async function GET() {
-  return NextResponse.json({ message: "TODO: implement catalog GET" }, { status: 501 });
+  return NextResponse.redirect(
+    new URL("/api/catalogs", process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
+  );
 }
