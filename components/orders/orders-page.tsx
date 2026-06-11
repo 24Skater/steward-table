@@ -1,8 +1,9 @@
 "use client";
 
 import type { OrderStatus } from "@prisma/client";
+import { Download } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { DateRange } from "@/app/(dashboard)/orders/page";
 import { NewOrderDialog } from "./new-order-dialog";
 import { OrderRow } from "./order-row";
@@ -158,70 +159,32 @@ function MobileOrderCard({ order }: { order: OrderRowData }) {
   );
 }
 
-// ── Export dropdown ───────────────────────────────────────────────────────────
+// ── Export button ─────────────────────────────────────────────────────────────
 
-type ExportRange = "today" | "week" | "month" | "all";
-
-interface ExportOption {
-  label: string;
-  range: ExportRange;
+interface ExportButtonProps {
+  range: DateRange;
 }
 
-const EXPORT_OPTIONS: ExportOption[] = [
-  { label: "Today", range: "today" },
-  { label: "Last 7 days", range: "week" },
-  { label: "This month", range: "month" },
-  { label: "All time", range: "all" },
-];
-
-function ExportDropdown() {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
-
-  function handleExport(range: ExportRange) {
+function ExportButton({ range }: ExportButtonProps) {
+  function handleExport() {
     const url = `/api/orders/export?range=${range}`;
-    window.location.href = url;
-    setIsOpen(false);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   return (
-    <div ref={dropdownRef} className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="px-3 py-2 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-      >
-        Export
-      </button>
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-40 rounded-md border border-slate-200 bg-white shadow-md z-10">
-          {EXPORT_OPTIONS.map((option) => (
-            <button
-              key={option.range}
-              onClick={() => handleExport(option.range)}
-              className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors first:rounded-t-md last:rounded-b-md"
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <button
+      type="button"
+      onClick={handleExport}
+      className="h-8 inline-flex items-center gap-1.5 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+    >
+      <Download className="h-3.5 w-3.5" />
+      Export CSV
+    </button>
   );
 }
 
@@ -407,7 +370,7 @@ export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
             onChange={(e) => setSearch(e.target.value)}
             className="h-8 w-56 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
           />
-          <ExportDropdown />
+          <ExportButton range={range} />
           <button
             type="button"
             onClick={() => setNewOrderOpen(true)}
