@@ -1,15 +1,29 @@
-import { TopBar } from "@/components/layout/top-bar";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { CatalogList } from "@/components/catalog/catalog-list";
 
-export default function CatalogPage() {
+export default async function CatalogPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/auth/sign-in");
+
+  const membership = session.user.memberships?.find(
+    (m: { status: string; churchId: string }) => m.status === "ACTIVE"
+  );
+  if (!membership) redirect("/auth/sign-in");
+
+  const catalogs = await db.catalog.findMany({
+    where: { churchId: membership.churchId },
+    include: { _count: { select: { items: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
-    <div className="flex flex-col h-full">
-      <TopBar title="Catalog" />
-      <div className="flex-1 p-6">
-        <div className="rounded-lg border border-slate-200 bg-white p-12 text-center">
-          <p className="text-slate-500 text-sm">No catalogs yet.</p>
-          <p className="text-slate-400 text-xs mt-1">Create a catalog to start selling.</p>
-        </div>
-      </div>
-    </div>
+    <main className="p-6 space-y-6">
+      <CatalogList
+        initialCatalogs={catalogs}
+        churchId={membership.churchId}
+      />
+    </main>
   );
 }
