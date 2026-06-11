@@ -1,0 +1,241 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { CreateItemDialog } from "./create-item-dialog";
+
+interface ModifierOption {
+  id: string;
+  name: string;
+  priceDelta: number;
+}
+
+interface ModifierGroup {
+  id: string;
+  name: string;
+  options: ModifierOption[];
+}
+
+interface ItemModifierGroup {
+  id: string;
+  group: ModifierGroup;
+}
+
+interface Item {
+  id: string;
+  name: string;
+  description: string | null;
+  defaultPrice: number;
+  status: string;
+  modifierGroups: ItemModifierGroup[];
+}
+
+interface CatalogItem {
+  id: string;
+  itemId: string;
+  isAvailable: boolean;
+  priceOverride: number | null;
+  item: Item;
+}
+
+interface Catalog {
+  id: string;
+  name: string;
+  status: string;
+  items: CatalogItem[];
+}
+
+interface CatalogItemsManagerProps {
+  catalog: Catalog;
+  churchId: string;
+}
+
+export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerProps) {
+  const router = useRouter();
+  const [removeTarget, setRemoveTarget] = useState<CatalogItem | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  const effectivePrice = (ci: CatalogItem) => ci.priceOverride ?? ci.item.defaultPrice;
+
+  async function handleRemove() {
+    if (!removeTarget) return;
+    setIsRemoving(true);
+    try {
+      const res = await fetch(
+        `/api/catalogs/${catalog.id}/items?itemId=${removeTarget.itemId}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? "Failed to remove item");
+      }
+      router.refresh();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to remove item");
+    } finally {
+      setIsRemoving(false);
+      setRemoveTarget(null);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <Link
+            href="/catalog"
+            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to catalogs
+          </Link>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold text-slate-900">{catalog.name}</h1>
+            <Badge
+              variant={catalog.status === "OPEN" ? "default" : "secondary"}
+              className="capitalize text-xs"
+            >
+              {catalog.status.toLowerCase()}
+            </Badge>
+          </div>
+          <p className="text-sm text-slate-500">
+            {catalog.items.length}{" "}
+            {catalog.items.length === 1 ? "item" : "items"}
+          </p>
+        </div>
+
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Item
+        </Button>
+      </div>
+
+      {/* Items list */}
+      {catalog.items.length === 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-12 text-center">
+          <p className="text-slate-500 text-sm">No items in this catalog yet.</p>
+          <p className="text-slate-400 text-xs mt-1">
+            Add items to start building your catalog.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">
+          {catalog.items.map((ci) => (
+            <div
+              key={ci.id}
+              className="flex items-center justify-between px-4 py-3 gap-4"
+            >
+              <div className="flex-1 min-w-0 space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-slate-900 text-sm truncate">
+                    {ci.item.name}
+                  </span>
+                  <Badge
+                    variant={
+                      ci.isAvailable && ci.item.status === "ACTIVE"
+                        ? "default"
+                        : "secondary"
+                    }
+                    className="text-xs shrink-0"
+                  >
+                    {ci.isAvailable && ci.item.status === "ACTIVE"
+                      ? "Available"
+                      : "Unavailable"}
+                  </Badge>
+                </div>
+                {ci.item.description && (
+                  <p className="text-xs text-slate-500 truncate">
+                    {ci.item.description}
+                  </p>
+                )}
+                {ci.item.modifierGroups.length > 0 && (
+                  <p className="text-xs text-slate-400">
+                    Modifiers:{" "}
+                    {ci.item.modifierGroups.map((mg) => mg.group.name).join(", ")}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-sm font-medium text-slate-700 tabular-nums">
+                  ${(effectivePrice(ci) / 100).toFixed(2)}
+                  {ci.priceOverride !== null && (
+                    <span className="ml-1 text-xs font-normal text-slate-400">
+                      override
+                    </span>
+                  )}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-slate-400 hover:text-red-500"
+                  onClick={() => setRemoveTarget(ci)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Remove {ci.item.name}</span>
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Create item dialog */}
+      <CreateItemDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        catalogId={catalog.id}
+        churchId={churchId}
+        onSuccess={() => router.refresh()}
+      />
+
+      {/* Remove confirmation dialog */}
+      <Dialog
+        open={removeTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRemoveTarget(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove item from catalog?</DialogTitle>
+            <DialogDescription>
+              <strong>{removeTarget?.item.name}</strong> will be removed from this
+              catalog. The item itself will not be deleted and can be re-added later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRemoveTarget(null)}
+              disabled={isRemoving}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRemove}
+              disabled={isRemoving}
+            >
+              {isRemoving ? "Removing…" : "Remove"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

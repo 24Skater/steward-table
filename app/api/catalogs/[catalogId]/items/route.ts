@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
+import type { SessionMembership } from "@/lib/auth/types";
 
 async function resolveCatalogChurchId(catalogId: string): Promise<string | null> {
   const catalog = await db.catalog.findUnique({
     where: { id: catalogId },
     select: { churchId: true },
-    _bypassTenancyCheck: true,
-  } as Parameters<typeof db.catalog.findUnique>[0]);
+    ...({ _bypassTenancyCheck: true } as object),
+  });
   return catalog?.churchId ?? null;
 }
 
@@ -33,8 +34,8 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const membership = session.user.memberships.find(
-    (m) => m.churchId === churchId && m.status === "ACTIVE",
+  const membership = session.user.memberships?.find(
+    (m: SessionMembership) => m.churchId === churchId && m.status === "ACTIVE",
   );
   if (!membership) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -50,12 +51,9 @@ export async function POST(
   }
 
   const catalogItem = await db.catalogItem.create({
-    data: {
-      catalogId,
-      itemId: body.itemId as string,
-    },
-    _bypassTenancyCheck: true,
-  } as Parameters<typeof db.catalogItem.create>[0]);
+    data: { catalogId, itemId: body.itemId as string },
+    ...({ _bypassTenancyCheck: true } as object),
+  });
 
   return NextResponse.json(catalogItem, { status: 201 });
 }
@@ -81,8 +79,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const membership = session.user.memberships.find(
-    (m) => m.churchId === churchId && m.status === "ACTIVE",
+  const membership = session.user.memberships?.find(
+    (m: SessionMembership) => m.churchId === churchId && m.status === "ACTIVE",
   );
   if (!membership) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -99,6 +97,7 @@ export async function DELETE(
 
   await db.catalogItem.delete({
     where: { catalogId_itemId: { catalogId, itemId } },
+    ...({ _bypassTenancyCheck: true } as object),
   });
 
   return new NextResponse(null, { status: 204 });
