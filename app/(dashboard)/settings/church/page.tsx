@@ -32,6 +32,7 @@ export default async function ChurchSettingsPage() {
         timezone: true,
         legalName: true,
         accentColor: true,
+        logoUrl: true,
       },
     }),
     (db.churchSettings.findUnique as Function)({
@@ -73,6 +74,7 @@ export default async function ChurchSettingsPage() {
                 timezone: church.timezone,
                 legalName: church.legalName ?? null,
                 accentColor: church.accentColor ?? null,
+                logoUrl: church.logoUrl ?? null,
               }}
               settings={{
                 replyToEmail: settings?.replyToEmail ?? null,

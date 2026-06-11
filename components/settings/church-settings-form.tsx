@@ -24,6 +24,7 @@ interface ChurchSettingsFormProps {
     timezone: string;
     legalName: string | null;
     accentColor: string | null;
+    logoUrl: string | null;
   };
   settings: {
     replyToEmail: string | null;
@@ -40,6 +41,8 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
   const [slug, setSlug] = useState(church.slug);
   const [timezone, setTimezone] = useState(church.timezone);
   const [legalName, setLegalName] = useState(church.legalName ?? "");
+  const [logoUrl, setLogoUrl] = useState(church.logoUrl ?? "");
+  const [accentColor, setAccentColor] = useState(church.accentColor ?? "#000000");
   const [replyToEmail, setReplyToEmail] = useState(settings.replyToEmail ?? "");
   const [displayName, setDisplayName] = useState(settings.displayName ?? "");
   const [cancelWindowMinutes, setCancelWindowMinutes] = useState(
@@ -69,6 +72,8 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
           slug: slug.trim().toLowerCase(),
           timezone,
           legalName: legalName.trim() || null,
+          logoUrl: logoUrl.trim() || null,
+          accentColor: accentColor || null,
           replyToEmail: replyToEmail.trim() || null,
           displayName: displayName.trim() || null,
           customerSelfCancelWindowMinutes: cancelWindowMinutes,
@@ -114,6 +119,39 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
         />
         <p className="text-xs text-slate-500">
           Used on receipts and official communications, if different from the display name.
+        </p>
+      </div>
+
+      {/* Logo URL */}
+      <div className="space-y-1.5">
+        <Label htmlFor="logo-url">Logo URL</Label>
+        <Input
+          id="logo-url"
+          type="url"
+          value={logoUrl}
+          onChange={(e) => setLogoUrl(e.target.value)}
+          placeholder="https://example.com/logo.png"
+        />
+        <p className="text-xs text-slate-500">
+          URL to your church logo. Shown in the storefront header.
+        </p>
+      </div>
+
+      {/* Accent Color */}
+      <div className="space-y-1.5">
+        <Label htmlFor="accent-color">Accent Color</Label>
+        <div className="flex items-center gap-2">
+          <input
+            id="accent-color"
+            type="color"
+            value={accentColor}
+            onChange={(e) => setAccentColor(e.target.value)}
+            className="h-10 w-10 cursor-pointer rounded-md border border-slate-200 p-1"
+          />
+          <span className="text-sm text-slate-500 font-mono">{accentColor}</span>
+        </div>
+        <p className="text-xs text-slate-500">
+          Used as the brand color on the storefront.
         </p>
       </div>
 
