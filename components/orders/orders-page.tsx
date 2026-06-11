@@ -18,7 +18,7 @@ interface OrdersPageProps {
   range: DateRange;
 }
 
-type FilterTab = "all" | "pending" | "in-progress" | "completed" | "canceled";
+type FilterTab = "all" | "pending" | "in-progress" | "completed" | "canceled" | "scheduled";
 
 // ── Status groups ─────────────────────────────────────────────────────────────
 
@@ -38,6 +38,7 @@ const TAB_LABELS: Record<FilterTab, string> = {
   "in-progress": "In Progress",
   completed: "Completed",
   canceled: "Canceled",
+  scheduled: "Scheduled",
 };
 
 // ── Bulk action config ────────────────────────────────────────────────────────
@@ -65,11 +66,13 @@ const DATE_RANGE_OPTIONS: { label: string; value: DateRange }[] = [
   { label: "Last 7 days", value: "week" },
   { label: "Last 30 days", value: "month" },
   { label: "All time", value: "all" },
+  { label: "Upcoming (Scheduled)", value: "scheduled" },
 ];
 
 // ── Filter helper ─────────────────────────────────────────────────────────────
 
 function filterOrders(orders: OrderRowData[], tab: FilterTab): OrderRowData[] {
+  const now = new Date();
   switch (tab) {
     case "pending":
       return orders.filter((o) => (PENDING_STATUSES as string[]).includes(o.status));
@@ -79,6 +82,16 @@ function filterOrders(orders: OrderRowData[], tab: FilterTab): OrderRowData[] {
       return orders.filter((o) => (COMPLETED_STATUSES as string[]).includes(o.status));
     case "canceled":
       return orders.filter((o) => (CANCELED_STATUSES as string[]).includes(o.status));
+    case "scheduled": {
+      const future = orders.filter(
+        (o) => o.scheduledFor !== null && o.scheduledFor > now,
+      );
+      return [...future].sort((a, b) => {
+        const aTime = (a.scheduledFor as Date).getTime();
+        const bTime = (b.scheduledFor as Date).getTime();
+        return aTime - bTime;
+      });
+    }
     default:
       return orders;
   }
@@ -279,7 +292,7 @@ export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
   const allVisibleSelected = visible.length > 0 && visible.every((o) => selectedIds.has(o.id));
   const someVisibleSelected = visible.some((o) => selectedIds.has(o.id));
 
-  const tabs: FilterTab[] = ["all", "pending", "in-progress", "completed", "canceled"];
+  const tabs: FilterTab[] = ["all", "pending", "in-progress", "completed", "canceled", "scheduled"];
 
   function handleSelectAll(checked: boolean) {
     if (checked) {
