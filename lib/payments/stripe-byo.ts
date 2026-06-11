@@ -16,9 +16,8 @@ import type {
 const STRIPE_API_VERSION = "2025-02-24.acacia" as const;
 
 async function getStripeClientForChurch(churchId: string): Promise<Stripe> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore — Prisma client types are not generated yet; db.apiKey exists at runtime
-  const apiKey = await db.apiKey.findFirst({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const apiKey = await (db.apiKey.findFirst as any)({
     where: { churchId, provider: "stripe", isLive: true },
     select: { encrypted: true },
     _bypassTenancyCheck: true,
@@ -123,20 +122,16 @@ export class StripeBYOAdapter implements PaymentAdapter {
     churchId: string,
   ): Promise<Stripe.Event> {
     // Fetch both the Stripe secret key and webhook secret in parallel
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore — Prisma client types are not generated yet; db.apiKey exists at runtime
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const findFirst = db.apiKey.findFirst as any;
     const [stripeKeyRow, webhookKeyRow] = await Promise.all([
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      db.apiKey.findFirst({
+      findFirst({
         where: { churchId, provider: "stripe", isLive: true },
         select: { encrypted: true },
         _bypassTenancyCheck: true,
       }),
       // Webhook secret is stored as a separate ApiKey row with provider "stripe_webhook"
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      db.apiKey.findFirst({
+      findFirst({
         where: { churchId, provider: "stripe_webhook", isLive: true },
         select: { encrypted: true },
         _bypassTenancyCheck: true,

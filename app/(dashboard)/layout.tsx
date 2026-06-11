@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { Sidebar } from "@/components/layout/sidebar";
+import type { SessionMembership } from "@/lib/auth/types";
 
 export default async function DashboardLayout({
   children,
@@ -12,16 +14,22 @@ export default async function DashboardLayout({
     redirect("/auth/sign-in");
   }
 
-  const hasActiveMembership = session.user.memberships?.some(
-    (m: { status: string }) => m.status === "ACTIVE",
+  const activeMembership = session.user.memberships?.find(
+    (m: SessionMembership) => m.status === "ACTIVE",
   );
-  if (!hasActiveMembership) {
+  if (!activeMembership) {
     redirect("/onboarding");
   }
 
+  const church = await db.church.findUnique({
+    where: { id: activeMembership.churchId },
+    select: { name: true },
+    ...({ _bypassTenancyCheck: true } as object),
+  });
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100">
-      <Sidebar />
+      <Sidebar churchName={church?.name} />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>

@@ -204,7 +204,8 @@ export async function transition(
         fromStatus: from,
         toStatus: to,
         reason: opts.reason,
-        metadata: opts.metadata ? opts.metadata : undefined,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        metadata: opts.metadata ? (opts.metadata as any) : undefined,
       },
     });
   });

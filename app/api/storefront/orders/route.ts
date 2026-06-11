@@ -145,7 +145,8 @@ export async function POST(req: NextRequest) {
             itemName: item.itemName,
             unitPrice,
             quantity: item.quantity,
-            modifierSnapshot: item.modifiers,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            modifierSnapshot: item.modifiers as any,
             subtotal: itemSubtotal,
             tax: 0,
             total: itemSubtotal,
