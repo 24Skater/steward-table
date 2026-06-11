@@ -22,6 +22,11 @@ interface OrderRowProps {
   order: OrderRowData;
 }
 
+/**
+ * Renders the data cells (<td>) for a single order row.
+ * The parent component is responsible for rendering the wrapping <tr> and any
+ * additional columns (e.g. the bulk-selection checkbox column).
+ */
 export function OrderRow({ order }: OrderRowProps) {
   const [inFlight, setInFlight] = useState(false);
   const nextStep = getNextStep(order.status, order.fulfillment);
@@ -43,9 +48,9 @@ export function OrderRow({ order }: OrderRowProps) {
   }
 
   return (
-    <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+    <>
       {/* Order # */}
-      <td className="py-3 pl-4 pr-3">
+      <td className="py-3 pr-3">
         <span className="font-mono font-semibold text-slate-800 tabular-nums text-sm">
           #{order.number}
         </span>
@@ -105,6 +110,6 @@ export function OrderRow({ order }: OrderRowProps) {
           ) : null}
         </div>
       </td>
-    </tr>
+    </>
   );
 }

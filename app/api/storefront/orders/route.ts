@@ -23,6 +23,7 @@ interface OrderRequestBody {
   phone?: string | null;
   notes?: string | null;
   fulfillment?: string;
+  scheduledFor?: string | null;
   items: CartItemPayload[];
 }
 
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { churchSlug, customerName, phone, notes, fulfillment, items } = body;
+  const { churchSlug, customerName, phone, notes, fulfillment, scheduledFor, items } = body;
 
   if (!churchSlug || !customerName?.trim() || !items?.length) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -135,6 +136,7 @@ export async function POST(req: NextRequest) {
       tip: 0,
       total: subtotal,
       notes: notes ?? null,
+      scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
       receiptLanguageVersion: 1,
       items: {
         create: items.map((item) => {

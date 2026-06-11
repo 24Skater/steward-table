@@ -5,7 +5,40 @@ import { TopBar } from "@/components/layout/top-bar";
 import { OrdersPage } from "@/components/orders";
 import type { OrderRowData } from "@/components/orders";
 
-export default async function OrdersPageRoute() {
+export type DateRange = "today" | "week" | "month" | "all";
+
+const VALID_RANGES = new Set<string>(["today", "week", "month", "all"]);
+
+function getRangeStart(range: DateRange): Date | undefined {
+  const now = new Date();
+  switch (range) {
+    case "today": {
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      return start;
+    }
+    case "week": {
+      const start = new Date(now);
+      start.setDate(now.getDate() - 7);
+      start.setHours(0, 0, 0, 0);
+      return start;
+    }
+    case "month": {
+      const start = new Date(now);
+      start.setDate(now.getDate() - 30);
+      start.setHours(0, 0, 0, 0);
+      return start;
+    }
+    case "all":
+      return undefined;
+  }
+}
+
+interface OrdersPageRouteProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function OrdersPageRoute({ searchParams }: OrdersPageRouteProps) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/auth/sign-in");
@@ -20,10 +53,21 @@ export default async function OrdersPageRoute() {
 
   const { churchId } = activeMembership;
 
+  const resolvedParams = await searchParams;
+  const rawRange = resolvedParams.range;
+  const rangeParam = typeof rawRange === "string" && VALID_RANGES.has(rawRange)
+    ? (rawRange as DateRange)
+    : "today";
+
+  const rangeStart = getRangeStart(rangeParam);
+
   const raw = await db.order.findMany({
-    where: { churchId },
+    where: {
+      churchId,
+      ...(rangeStart ? { createdAt: { gte: rangeStart } } : {}),
+    },
     orderBy: { createdAt: "desc" },
-    take: 100,
+    take: 500,
     select: {
       id: true,
       number: true,
@@ -55,7 +99,7 @@ export default async function OrdersPageRoute() {
   return (
     <div className="flex flex-col h-full">
       <TopBar title="Orders" />
-      <OrdersPage orders={orders} churchId={churchId} />
+      <OrdersPage orders={orders} churchId={churchId} range={rangeParam} />
     </div>
   );
 }
