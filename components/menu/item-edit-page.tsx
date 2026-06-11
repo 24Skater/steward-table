@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Plus, X } from "lucide-react";
+import { ArrowLeft, Trash2, Plus, X, ImageIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -500,10 +500,52 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
   );
   const [showAddGroup, setShowAddGroup] = useState(false);
 
+  // ── Image upload state ──
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   // ── Save state ──
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const presignRes = await fetch(
+        `/api/upload/presign?contentType=${encodeURIComponent(file.type)}`,
+      );
+      if (!presignRes.ok) {
+        const data = await presignRes.json().catch(() => ({})) as { error?: string };
+        throw new Error(data.error ?? "Failed to get upload URL");
+      }
+      const { uploadUrl, publicUrl } = await presignRes.json() as {
+        uploadUrl: string;
+        publicUrl: string;
+        key: string;
+      };
+
+      const putRes = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+      if (!putRes.ok) throw new Error("Upload failed");
+
+      setImageUrl(publicUrl);
+    } catch {
+      setUploadError("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -732,25 +774,66 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="item-image">Image URL</Label>
-                    <Input
-                      id="item-image"
-                      type="url"
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                    {imageUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={imageUrl}
-                        alt="Preview"
-                        className="mt-2 h-40 w-full rounded-lg object-cover border border-slate-200"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
+                    <Label>Item image</Label>
+                    <div className="flex flex-col items-start gap-2">
+                      {/* Hidden file input */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handleFileChange}
                       />
-                    )}
+
+                      {/* Image preview / placeholder — click to trigger upload */}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="relative w-[120px] h-[120px] rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center hover:border-slate-400 transition-colors disabled:opacity-60"
+                        aria-label={imageUrl ? "Change image" : "Upload image"}
+                      >
+                        {imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={imageUrl}
+                            alt="Item preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon size={32} className="text-slate-300" />
+                        )}
+                        {uploading && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                            <Loader2 size={20} className="animate-spin text-slate-500" />
+                          </div>
+                        )}
+                      </button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={uploading}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {imageUrl ? "Change image" : "Upload image"}
+                      </Button>
+
+                      {imageUrl && !uploading && (
+                        <button
+                          type="button"
+                          onClick={() => { setImageUrl(""); setUploadError(null); }}
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
+                      )}
+
+                      {uploadError && (
+                        <p className="text-xs text-red-600">{uploadError}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
