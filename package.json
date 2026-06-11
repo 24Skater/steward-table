@@ -2,6 +2,9 @@
   "name": "steward-table",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "schema": "prisma/schema"
+  },
   "scripts": {
     "dev": "next dev --turbo",
     "build": "next build",

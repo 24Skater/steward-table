@@ -212,6 +212,14 @@ export function OrderDetail({ order, auditLogs }: OrderDetailProps) {
             ) : inFlight ? (
               <span className="text-sm text-slate-400">Updating…</span>
             ) : null}
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 px-3 text-sm"
+              onClick={() => window.open(`/orders/${order.id}/print`, "_blank")}
+            >
+              Print receipt
+            </Button>
           </div>
         </div>
       </div>

@@ -1,16 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import type { OrderStatus } from "@prisma/client";
-import { OrderStatusBadge } from "./order-status-badge";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { OrderRow } from "./order-row";
 import type { OrderRowData } from "./order-row";
-import {
-  getNextStep,
-  FULFILLMENT_LABELS,
-  formatOrderTime,
-} from "./order-utils";
+import { OrderStatusBadge } from "./order-status-badge";
+import { FULFILLMENT_LABELS, formatOrderTime, getNextStep } from "./order-utils";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,12 +25,7 @@ const IN_PROGRESS_STATUSES: OrderStatus[] = [
   "AWAITING_PICKUP",
   "OUT_FOR_DELIVERY",
 ];
-const COMPLETED_STATUSES: OrderStatus[] = [
-  "PICKED_UP",
-  "DELIVERED",
-  "SERVED",
-  "COMPLETED",
-];
+const COMPLETED_STATUSES: OrderStatus[] = ["PICKED_UP", "DELIVERED", "SERVED", "COMPLETED"];
 const CANCELED_STATUSES: OrderStatus[] = ["CANCELED", "REFUNDED"];
 
 const TAB_LABELS: Record<FilterTab, string> = {
@@ -50,21 +41,13 @@ const TAB_LABELS: Record<FilterTab, string> = {
 function filterOrders(orders: OrderRowData[], tab: FilterTab): OrderRowData[] {
   switch (tab) {
     case "pending":
-      return orders.filter((o) =>
-        (PENDING_STATUSES as string[]).includes(o.status),
-      );
+      return orders.filter((o) => (PENDING_STATUSES as string[]).includes(o.status));
     case "in-progress":
-      return orders.filter((o) =>
-        (IN_PROGRESS_STATUSES as string[]).includes(o.status),
-      );
+      return orders.filter((o) => (IN_PROGRESS_STATUSES as string[]).includes(o.status));
     case "completed":
-      return orders.filter((o) =>
-        (COMPLETED_STATUSES as string[]).includes(o.status),
-      );
+      return orders.filter((o) => (COMPLETED_STATUSES as string[]).includes(o.status));
     case "canceled":
-      return orders.filter((o) =>
-        (CANCELED_STATUSES as string[]).includes(o.status),
-      );
+      return orders.filter((o) => (CANCELED_STATUSES as string[]).includes(o.status));
     default:
       return orders;
   }
@@ -126,9 +109,7 @@ function MobileOrderCard({ order }: { order: OrderRowData }) {
           {nextStep.label}
         </button>
       )}
-      {inFlight && (
-        <p className="mt-1 text-center text-xs text-slate-400">Updating…</p>
-      )}
+      {inFlight && <p className="mt-1 text-center text-xs text-slate-400">Updating…</p>}
     </div>
   );
 }
@@ -155,10 +136,7 @@ function ExportDropdown() {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
@@ -218,13 +196,7 @@ export function OrdersPage({ orders }: OrdersPageProps) {
       )
     : tabFiltered;
 
-  const tabs: FilterTab[] = [
-    "all",
-    "pending",
-    "in-progress",
-    "completed",
-    "canceled",
-  ];
+  const tabs: FilterTab[] = ["all", "pending", "in-progress", "completed", "canceled"];
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -233,8 +205,7 @@ export function OrdersPage({ orders }: OrdersPageProps) {
         {/* Segmented control */}
         <div className="flex gap-1 p-1 bg-slate-100 rounded-lg w-fit overflow-x-auto">
           {tabs.map((tab) => {
-            const count =
-              tab !== "all" ? filterOrders(orders, tab).length : orders.length;
+            const count = tab !== "all" ? filterOrders(orders, tab).length : orders.length;
             const isActive = activeTab === tab;
             return (
               <button

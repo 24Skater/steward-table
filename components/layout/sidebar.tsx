@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOutAction } from "@/lib/auth/actions";
 import {
   ClipboardList,
   ChefHat,
@@ -15,6 +16,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/layout/notification-bell";
 
 const NAV_ITEMS = [
   { href: "/orders", label: "Orders", icon: ClipboardList },
@@ -23,6 +25,7 @@ const NAV_ITEMS = [
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/drivers", label: "Drivers", icon: Truck },
+  { href: "/deliveries", label: "Deliveries", icon: Truck },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/team", label: "Team", icon: Users2 },
 ] as const;
@@ -75,6 +78,11 @@ export function Sidebar({ churchName }: SidebarProps) {
 
       {/* Bottom nav */}
       <div className="border-t border-slate-800 py-3 px-2 space-y-0.5">
+        {/* Notification bell */}
+        <div className="px-1">
+          <NotificationBell />
+        </div>
+
         {BOTTOM_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href;
           return (
@@ -96,13 +104,7 @@ export function Sidebar({ churchName }: SidebarProps) {
         })}
 
         {/* Sign out */}
-        <form
-          action={async () => {
-            "use server";
-            const { signOut } = await import("@/lib/auth");
-            await signOut({ redirectTo: "/auth/sign-in" });
-          }}
-        >
+        <form action={signOutAction}>
           <button
             type="submit"
             className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors min-h-[44px] w-full text-left text-slate-400 hover:text-slate-100 hover:bg-slate-800/60"

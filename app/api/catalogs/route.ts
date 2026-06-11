@@ -56,9 +56,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const slug = body.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
   const catalog = await db.catalog.create({
     data: {
       name: body.name,
+      slug,
       description: body.description ?? null,
       churchId: body.churchId,
     },

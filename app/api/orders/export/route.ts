@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { OrderStatus } from "@prisma/client";
+import type { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -87,9 +87,7 @@ export async function GET(req: NextRequest) {
   );
 
   for (const order of orders) {
-    const itemSummary = order.items
-      .map((item) => `${item.quantity}x ${item.itemName}`)
-      .join("; ");
+    const itemSummary = order.items.map((item) => `${item.quantity}x ${item.itemName}`).join("; ");
 
     // total is in cents
     const totalUsd = (order.total / 100).toFixed(2);
