@@ -6,7 +6,11 @@ import { TopBar } from "@/components/layout/top-bar";
 import { CustomersPage } from "@/components/customers";
 import type { CustomerRow } from "@/components/customers";
 
-export default async function CustomersPageRoute() {
+interface CustomersPageRouteProps {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}
+
+export default async function CustomersPageRoute({ searchParams }: CustomersPageRouteProps) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/auth/sign-in");
@@ -21,7 +25,7 @@ export default async function CustomersPageRoute() {
 
   const { churchId, roles } = activeMembership;
 
-  const permission = await can("order.read", {
+  const permission = await can("customer.read", {
     userId: session.user.id,
     churchId,
     roles,
@@ -30,9 +34,24 @@ export default async function CustomersPageRoute() {
     redirect("/");
   }
 
-  // Fetch customers with their most recent order date via aggregation
+  const { q } = await searchParams;
+  const searchQuery = q?.trim() ?? "";
+
+  const where = {
+    churchId,
+    ...(searchQuery
+      ? {
+          OR: [
+            { name: { contains: searchQuery, mode: "insensitive" as const } },
+            { email: { contains: searchQuery, mode: "insensitive" as const } },
+            { phone: { contains: searchQuery } },
+          ],
+        }
+      : {}),
+  };
+
   const raw = await db.customer.findMany({
-    where: { churchId, deletedAt: null },
+    where,
     orderBy: { createdAt: "desc" },
     take: 100,
     select: {
@@ -65,7 +84,7 @@ export default async function CustomersPageRoute() {
   return (
     <div className="flex flex-col h-full">
       <TopBar title="Customers" />
-      <CustomersPage customers={customers} />
+      <CustomersPage customers={customers} initialSearch={searchQuery} />
     </div>
   );
 }

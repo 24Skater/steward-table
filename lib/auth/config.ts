@@ -5,6 +5,8 @@ import Resend from "next-auth/providers/resend";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
+import { sendWelcomeEmail } from "@/lib/notifications/email";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -35,9 +37,18 @@ export const authConfig: NextAuthConfig = {
         const parsed = credentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        // TODO: Look up user and verify password hash
-        // Return null for now — implement in auth.pass2 sprint
-        return null;
+        const user = await db.user.findUnique({
+          where: { email: parsed.data.email },
+          // @ts-expect-error _bypassTenancyCheck is custom middleware flag
+          _bypassTenancyCheck: true,
+        });
+
+        if (!user?.passwordHash) return null;
+
+        const isValid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+        if (!isValid) return null;
+
+        return user;
       },
     }),
   ],
@@ -90,8 +101,8 @@ export const authConfig: NextAuthConfig = {
   },
   events: {
     async signIn({ user, isNewUser }) {
-      if (isNewUser) {
-        // TODO: Send welcome email
+      if (isNewUser && user.id) {
+        await sendWelcomeEmail(user.id);
       }
     },
   },
