@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Settings2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -179,6 +179,14 @@ export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerPr
                     </span>
                   )}
                 </span>
+                <Link
+                  href={`/catalog/${catalog.id}/items/${ci.item.id}`}
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                  title={`Manage modifiers for ${ci.item.name}`}
+                >
+                  <Settings2 className="h-4 w-4" />
+                  <span className="sr-only">Manage modifiers for {ci.item.name}</span>
+                </Link>
                 <Button
                   variant="ghost"
                   size="icon"
