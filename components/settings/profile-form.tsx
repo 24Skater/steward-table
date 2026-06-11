@@ -22,6 +22,7 @@ interface ProfileMembership {
 interface ProfileFormProps {
   user: ProfileUser;
   membership: ProfileMembership | null;
+  hasPassword?: boolean;
 }
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -49,11 +50,17 @@ function getInitials(name: string | null, email: string | null): string {
   return "??";
 }
 
-export function ProfileForm({ user, membership }: ProfileFormProps) {
+export function ProfileForm({ user, membership, hasPassword = false }: ProfileFormProps) {
   const [name, setName] = useState(user.name ?? "");
   const [phone, setPhone] = useState(user.phone ?? "");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwSaveState, setPwSaveState] = useState<SaveState>("idle");
+  const [pwError, setPwError] = useState<string | null>(null);
 
   const initials = getInitials(user.name, user.email);
 
@@ -64,6 +71,43 @@ export function ProfileForm({ user, membership }: ProfileFormProps) {
         day: "numeric",
       })
     : null;
+
+  async function handlePasswordSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setPwError(null);
+
+    if (newPassword.length < 8) {
+      setPwError("New password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwError("Passwords do not match.");
+      return;
+    }
+
+    setPwSaveState("saving");
+    try {
+      const res = await fetch("/api/profile/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? "Failed to change password");
+      }
+
+      setPwSaveState("saved");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPwSaveState("idle"), 2500);
+    } catch (err) {
+      setPwSaveState("error");
+      setPwError(err instanceof Error ? err.message : "Something went wrong");
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -165,6 +209,72 @@ export function ProfileForm({ user, membership }: ProfileFormProps) {
           </Button>
         </form>
       </section>
+
+      {/* Password change section — only for credentials users */}
+      {hasPassword && (
+        <section className="border-t border-slate-200 pt-6">
+          <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-4">
+            Change Password
+          </h2>
+          <form onSubmit={(e) => void handlePasswordSubmit(e)} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="current-password">Current Password</Label>
+              <input
+                id="current-password"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="new-password">New Password</Label>
+              <input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+                minLength={8}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <p className="text-xs text-slate-400">Minimum 8 characters.</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+
+            {pwError && (
+              <p className="text-sm text-red-600">{pwError}</p>
+            )}
+
+            <Button type="submit" disabled={pwSaveState === "saving"} variant="outline">
+              {pwSaveState === "saving" && "Saving..."}
+              {pwSaveState === "saved" && (
+                <span className="flex items-center gap-1.5">
+                  <Check size={14} />
+                  Password updated
+                </span>
+              )}
+              {(pwSaveState === "idle" || pwSaveState === "error") && "Update password"}
+            </Button>
+          </form>
+        </section>
+      )}
 
       {/* Church role section */}
       {membership && (

@@ -23,6 +23,7 @@ export default async function ProfilePage() {
         email: true,
         image: true,
         phone: true,
+        passwordHash: true,
       },
       _bypassTenancyCheck: true,
     }) as Promise<{
@@ -31,6 +32,7 @@ export default async function ProfilePage() {
       email: string | null;
       image: string | null;
       phone: string | null;
+      passwordHash: string | null;
     } | null>,
 
     (db.membership.findFirst as Function)({
@@ -59,6 +61,7 @@ export default async function ProfilePage() {
         <div className="max-w-lg">
           <ProfileForm
             user={user}
+            hasPassword={user.passwordHash !== null}
             membership={
               membership
                 ? {
