@@ -102,7 +102,7 @@ export async function sendOrderNotification(
           id: true,
           slug: true,
           name: true,
-          settings: { select: { replyToEmail: true } },
+          settings: { select: { replyToEmail: true, brandTokens: true } },
         },
       },
       items: {
@@ -114,6 +114,14 @@ export async function sendOrderNotification(
   });
 
   if (!order?.customer?.email) return;
+
+  // Check church notification preferences before sending
+  const tokens = order.church.settings?.brandTokens;
+  const prefs = tokens && typeof tokens === "object" ? (tokens as Record<string, unknown>) : {};
+  const isConfirmation = status === "SUBMITTED";
+  const prefKey = isConfirmation ? "emailConfirmationEnabled" : "emailStatusEnabled";
+  const prefEnabled = prefKey in prefs ? prefs[prefKey] !== false : true;
+  if (!prefEnabled) return;
 
   const payload: OrderNotificationPayload = {
     orderId: order.id,
