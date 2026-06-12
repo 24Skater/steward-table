@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/hooks/use-cart";
 
 type FulfillmentType = "PICKUP" | "DELIVERY" | "DINE_IN";
-type PaymentMethod = "pay_online" | "pay_on_pickup";
+type PaymentMethod = "pay_online" | "pay_on_pickup" | "cash" | "zelle";
 
 const FULFILLMENT_LABELS: Record<FulfillmentType, string> = {
   PICKUP: "Pickup",
@@ -72,6 +72,8 @@ export default function CheckoutPage() {
   const [fulfillment, setFulfillment] = useState<FulfillmentType>("PICKUP");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pay_on_pickup");
   const [stripeEnabled, setStripeEnabled] = useState(false);
+  const [acceptCash, setAcceptCash] = useState(true);
+  const [acceptZelle, setAcceptZelle] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [smsOptIn, setSmsOptIn] = useState(false);
@@ -106,9 +108,11 @@ export default function CheckoutPage() {
       });
 
     fetch(`/api/storefront/${churchSlug}/payment-config`)
-      .then((res) => (res.ok ? res.json() : { stripeEnabled: false }))
-      .then((data: { stripeEnabled: boolean }) => {
+      .then((res) => (res.ok ? res.json() : { stripeEnabled: false, acceptCash: true, acceptZelle: false }))
+      .then((data: { stripeEnabled: boolean; acceptCash?: boolean; acceptZelle?: boolean }) => {
         setStripeEnabled(data.stripeEnabled);
+        setAcceptCash(data.acceptCash ?? true);
+        setAcceptZelle(data.acceptZelle ?? false);
       })
       .catch(() => {
         // Silently ignore — payment config is best-effort
@@ -240,7 +244,7 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Pay on pickup — original flow
+    // Cash / Zelle / pay-on-pickup — all go through the same order creation route
     try {
       const res = await fetch(`/api/storefront/orders`, {
         method: "POST",
@@ -272,9 +276,10 @@ export default function CheckoutPage() {
     churchSlug,
     customerName: name.trim(),
     phone: phone.trim() || null,
-    notes: notes.trim() || null,
     email: email.trim() || null,
+    notes: notes.trim() || null,
     fulfillment,
+    paymentMethod,
     zoneId: fulfillment === "DELIVERY" && matchedZone ? matchedZone.id : undefined,
     scheduledFor: fulfillment === "PICKUP" && selectedSlot ? selectedSlot : null,
     smsOptIn: phone.trim() ? smsOptIn : false,
@@ -467,35 +472,70 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {stripeEnabled && (
+        {(stripeEnabled || acceptCash || acceptZelle) && (
           <div>
             <Label className="mb-2 block text-sm font-medium text-slate-700">
               How would you like to pay?
             </Label>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("pay_online")}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                  paymentMethod === "pay_online"
-                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                Pay online (card)
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("pay_on_pickup")}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                  paymentMethod === "pay_on_pickup"
-                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                Pay on pickup
-              </button>
+              {stripeEnabled && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("pay_online")}
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                    paymentMethod === "pay_online"
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  Card (pay now)
+                </button>
+              )}
+              {acceptCash && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("cash")}
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                    paymentMethod === "cash"
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  Cash on pickup
+                </button>
+              )}
+              {acceptZelle && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("zelle")}
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                    paymentMethod === "zelle"
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  Zelle
+                </button>
+              )}
+              {!stripeEnabled && !acceptCash && !acceptZelle && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("pay_on_pickup")}
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                    paymentMethod === "pay_on_pickup"
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  Pay on pickup
+                </button>
+              )}
             </div>
+            {paymentMethod === "zelle" && (
+              <p className="mt-2 text-xs text-slate-500">
+                We&apos;ll email you Zelle payment instructions after placing your order.
+              </p>
+            )}
           </div>
         )}
 

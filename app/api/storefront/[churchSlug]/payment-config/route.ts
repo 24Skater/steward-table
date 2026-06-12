@@ -9,7 +9,10 @@ export async function GET(
 
   const church = await (db.church.findFirst as Function)({
     where: { slug: churchSlug, status: "ACTIVE" },
-    select: { id: true },
+    select: {
+      id: true,
+      settings: { select: { acceptCash: true, acceptZelle: true } },
+    },
     _bypassTenancyCheck: true,
   });
 
@@ -24,6 +27,11 @@ export async function GET(
   });
 
   const stripeEnabled = !!(apiKey?.encrypted && (apiKey.encrypted as Buffer).length > 0);
+  const settings = church.settings as { acceptCash?: boolean; acceptZelle?: boolean } | null;
 
-  return NextResponse.json({ stripeEnabled });
+  return NextResponse.json({
+    stripeEnabled,
+    acceptCash: settings?.acceptCash ?? true,
+    acceptZelle: settings?.acceptZelle ?? true,
+  });
 }
