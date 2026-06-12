@@ -67,6 +67,7 @@ export default function CheckoutPage() {
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [fulfillment, setFulfillment] = useState<FulfillmentType>("PICKUP");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pay_on_pickup");
@@ -274,6 +275,7 @@ export default function CheckoutPage() {
     customerName: name.trim(),
     phone: phone.trim() || null,
     notes: notes.trim() || null,
+    email: email.trim() || null,
     fulfillment,
     zoneId: fulfillment === "DELIVERY" && matchedZone ? matchedZone.id : undefined,
     scheduledFor: fulfillment === "PICKUP" && selectedSlot ? selectedSlot : null,
@@ -329,6 +331,21 @@ export default function CheckoutPage() {
             placeholder="+1 (555) 000-0000"
             autoComplete="tel"
           />
+        </div>
+
+        <div>
+          <Label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">
+            Email <span className="text-slate-400 font-normal">(optional)</span>
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+          />
+          <p className="mt-1 text-xs text-slate-400">For order confirmation emails</p>
         </div>
 
         <div>

@@ -23,6 +23,7 @@ interface CheckoutRequestBody {
   churchSlug: string;
   customerName: string;
   phone?: string | null;
+  email?: string | null;
   notes?: string | null;
   fulfillment?: string;
   zoneId?: string | null;
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { churchSlug, customerName, phone, notes, fulfillment, zoneId, scheduledFor, smsOptIn, tip, items } = body;
+  const { churchSlug, customerName, phone, email, notes, fulfillment, zoneId, scheduledFor, smsOptIn, tip, items } = body;
 
   if (!churchSlug || !customerName?.trim() || !items?.length) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
 
   // Find or create guest customer
   const phoneNormalized = phone?.replace(/\D/g, "") || null;
+  const emailNormalized = email?.trim().toLowerCase() || null;
   let customerId: string;
 
   if (phoneNormalized) {
@@ -107,11 +109,14 @@ export async function POST(req: NextRequest) {
 
     if (existing) {
       customerId = existing.id;
-      if (smsOptIn) {
-        await db.customer.update({
-          where: { id: existing.id },
-          data: { smsOptIn: true },
-        });
+      const updates: Record<string, unknown> = {};
+      if (smsOptIn) updates.smsOptIn = true;
+      if (emailNormalized) {
+        updates.email = email!.trim();
+        updates.emailNormalized = emailNormalized;
+      }
+      if (Object.keys(updates).length > 0) {
+        await db.customer.update({ where: { id: existing.id }, data: updates });
       }
     } else {
       const created = await db.customer.create({
@@ -120,7 +125,29 @@ export async function POST(req: NextRequest) {
           name: customerName.trim(),
           phone: phone ?? null,
           phoneNormalized,
+          email: email?.trim() ?? null,
+          emailNormalized,
           smsOptIn: smsOptIn ?? false,
+        },
+        select: { id: true },
+      });
+      customerId = created.id;
+    }
+  } else if (emailNormalized) {
+    const existing = await db.customer.findFirst({
+      where: { churchId: church.id as string, emailNormalized },
+      select: { id: true },
+    });
+
+    if (existing) {
+      customerId = existing.id;
+    } else {
+      const created = await db.customer.create({
+        data: {
+          churchId: church.id as string,
+          name: customerName.trim(),
+          email: email!.trim(),
+          emailNormalized,
         },
         select: { id: true },
       });
@@ -231,6 +258,7 @@ export async function POST(req: NextRequest) {
     payment_method_types: ["card"],
     line_items: lineItems,
     metadata: { orderId, churchId: church.id as string },
+    ...(emailNormalized ? { customer_email: email!.trim() } : {}),
     success_url: `${baseUrl}/${churchSlug}/checkout/success?session_id={CHECKOUT_SESSION_ID}&orderId=${orderId}`,
     cancel_url: `${baseUrl}/${churchSlug}/checkout/cancel?orderId=${orderId}`,
   });
