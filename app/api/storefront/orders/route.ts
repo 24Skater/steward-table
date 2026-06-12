@@ -20,6 +20,14 @@ interface CartItemPayload {
   totalPrice: number;
 }
 
+interface DeliveryAddressPayload {
+  line1: string;
+  city: string;
+  region: string;
+  postalCode: string;
+  country: string;
+}
+
 interface OrderRequestBody {
   churchSlug: string;
   customerName: string;
@@ -31,6 +39,8 @@ interface OrderRequestBody {
   scheduledFor?: string | null;
   smsOptIn?: boolean;
   tip?: number;
+  zoneId?: string | null;
+  deliveryAddress?: DeliveryAddressPayload | null;
   items: CartItemPayload[];
 }
 
@@ -46,7 +56,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { churchSlug, customerName, phone, email, notes, fulfillment, paymentMethod, scheduledFor, smsOptIn, tip, items } = body;
+  const { churchSlug, customerName, phone, email, notes, fulfillment, paymentMethod, scheduledFor, smsOptIn, tip, zoneId, deliveryAddress, items } = body;
 
   if (!churchSlug || !customerName?.trim() || !items?.length) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -214,6 +224,23 @@ export async function POST(req: NextRequest) {
     },
     select: { id: true, number: true },
   });
+
+  // Create DeliveryInfo for delivery orders
+  if (fulfillmentType === "DELIVERY" && deliveryAddress) {
+    await db.deliveryInfo.create({
+      data: {
+        orderId: order.id,
+        zoneId: zoneId ?? null,
+        recipientName: customerName.trim(),
+        phone: phone ?? "",
+        line1: deliveryAddress.line1,
+        city: deliveryAddress.city,
+        region: deliveryAddress.region,
+        postalCode: deliveryAddress.postalCode,
+        country: deliveryAddress.country,
+      },
+    });
+  }
 
   // Transition DRAFT → SUBMITTED to fire side effects (email, SMS, inventory)
   await transition(order.id, "SUBMITTED", { actorId: "guest", queue: effectQueue });

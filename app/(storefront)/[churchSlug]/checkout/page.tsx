@@ -82,8 +82,11 @@ export default function CheckoutPage() {
   const [smsOptIn, setSmsOptIn] = useState(false);
   const [churchName, setChurchName] = useState<string>("");
 
-  // Delivery zone state
+  // Delivery zone + address state
   const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [addressLine1, setAddressLine1] = useState("");
+  const [addressCity, setAddressCity] = useState("");
+  const [addressRegion, setAddressRegion] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [matchedZone, setMatchedZone] = useState<DeliveryZone | null>(null);
   const [zoneChecked, setZoneChecked] = useState(false);
@@ -216,6 +219,14 @@ export default function CheckoutPage() {
     }
 
     if (fulfillment === "DELIVERY") {
+      if (!addressLine1.trim()) {
+        setError("Please enter your street address.");
+        return;
+      }
+      if (!addressCity.trim()) {
+        setError("Please enter your city.");
+        return;
+      }
       if (!postalCode.trim()) {
         setError("Please enter your postal code for delivery.");
         return;
@@ -297,6 +308,13 @@ export default function CheckoutPage() {
     fulfillment,
     paymentMethod,
     zoneId: fulfillment === "DELIVERY" && matchedZone ? matchedZone.id : undefined,
+    deliveryAddress: fulfillment === "DELIVERY" ? {
+      line1: addressLine1.trim(),
+      city: addressCity.trim(),
+      region: addressRegion.trim() || "",
+      postalCode: postalCode.trim(),
+      country: "US",
+    } : undefined,
     scheduledFor: fulfillment === "PICKUP" && selectedSlot ? selectedSlot : null,
     smsOptIn: phone.trim() ? smsOptIn : false,
     tip: tipCents,
@@ -460,37 +478,84 @@ export default function CheckoutPage() {
         )}
 
         {fulfillment === "DELIVERY" && (
-          <div className="space-y-2">
-            <Label htmlFor="postal-code" className="block text-sm font-medium text-slate-700">
-              Postal code <span className="text-rose-500">*</span>
-            </Label>
-            <Input
-              id="postal-code"
-              type="text"
-              value={postalCode}
-              onChange={(e) => setPostalCode(e.target.value)}
-              placeholder="e.g. 20715"
-              autoComplete="postal-code"
-              className="max-w-xs"
-            />
-            {zoneChecked && postalCode.trim() && (
-              matchedZone ? (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                  <span className="font-medium">{matchedZone.name}</span>
-                  {" — "}
-                  Delivery fee: {formatCents(matchedZone.feeCents)}
-                  {matchedZone.minOrderCents > 0 && (
-                    <span className="text-emerald-700">
-                      {" "}(min. order {formatCents(matchedZone.minOrderCents)})
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-rose-600">
-                  Delivery is not available to your area.
-                </p>
-              )
-            )}
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="address-line1" className="mb-1.5 block text-sm font-medium text-slate-700">
+                Street address <span className="text-rose-500">*</span>
+              </Label>
+              <Input
+                id="address-line1"
+                type="text"
+                value={addressLine1}
+                onChange={(e) => setAddressLine1(e.target.value)}
+                placeholder="123 Main St"
+                autoComplete="address-line1"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="address-city" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  City <span className="text-rose-500">*</span>
+                </Label>
+                <Input
+                  id="address-city"
+                  type="text"
+                  value={addressCity}
+                  onChange={(e) => setAddressCity(e.target.value)}
+                  placeholder="Bowie"
+                  autoComplete="address-level2"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="address-region" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  State
+                </Label>
+                <Input
+                  id="address-region"
+                  type="text"
+                  value={addressRegion}
+                  onChange={(e) => setAddressRegion(e.target.value)}
+                  placeholder="MD"
+                  autoComplete="address-level1"
+                  maxLength={2}
+                  className="uppercase"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="postal-code" className="mb-1.5 block text-sm font-medium text-slate-700">
+                Postal code <span className="text-rose-500">*</span>
+              </Label>
+              <Input
+                id="postal-code"
+                type="text"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+                placeholder="e.g. 20715"
+                autoComplete="postal-code"
+                className="max-w-xs"
+              />
+              {zoneChecked && postalCode.trim() && (
+                matchedZone ? (
+                  <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                    <span className="font-medium">{matchedZone.name}</span>
+                    {" — "}
+                    Delivery fee: {formatCents(matchedZone.feeCents)}
+                    {matchedZone.minOrderCents > 0 && (
+                      <span className="text-emerald-700">
+                        {" "}(min. order {formatCents(matchedZone.minOrderCents)})
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="mt-1 text-sm text-rose-600">
+                    Delivery is not available to your area. You can switch to pickup instead.
+                  </p>
+                )
+              )}
+            </div>
           </div>
         )}
 
