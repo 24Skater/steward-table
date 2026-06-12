@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { CartShell } from "@/components/storefront/cart-shell";
+import { ToastProvider } from "@/components/ui/toast";
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
@@ -28,6 +29,7 @@ export default async function StorefrontLayout({
   }
 
   return (
+    <ToastProvider>
     <div
       className="min-h-screen bg-white"
       data-church-id={church.id}
@@ -57,5 +59,6 @@ export default async function StorefrontLayout({
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8 pb-28">{children}</main>
     </div>
+    </ToastProvider>
   );
 }

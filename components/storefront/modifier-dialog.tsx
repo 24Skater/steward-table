@@ -73,6 +73,7 @@ export function ModifierDialog({
   // Sync state when dialog opens with different initial values (for cart editing)
   useEffect(() => {
     if (!open) return;
+    setAttempted(false);
     setQuantity(initialQuantity);
     if (initialSelections) {
       setSelections(initialSelections);
@@ -90,9 +91,11 @@ export function ModifierDialog({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const allRequiredMet = modifierGroups
-    .filter((g) => g.isRequired)
-    .every((g) => (selections[g.id]?.length ?? 0) >= g.minSelections);
+  const [attempted, setAttempted] = useState(false);
+
+  const unmetGroups = modifierGroups
+    .filter((g) => g.isRequired && (selections[g.id]?.length ?? 0) < Math.max(g.minSelections, 1));
+  const allRequiredMet = unmetGroups.length === 0;
 
   const modifierTotal = Object.entries(selections).reduce((sum, [groupId, selectedIds]) => {
     const group = modifierGroups.find((g) => g.id === groupId);
@@ -117,6 +120,10 @@ export function ModifierDialog({
   }
 
   function handleConfirm() {
+    if (!allRequiredMet) {
+      setAttempted(true);
+      return;
+    }
     const modifiers: CartModifier[] = [];
     for (const group of modifierGroups) {
       const selectedIds = selections[group.id] ?? [];
@@ -193,6 +200,11 @@ export function ModifierDialog({
                   );
                 })}
               </div>
+              {attempted && unmetGroups.some((g) => g.id === group.id) && (
+                <p className="mt-1 text-xs text-rose-600" role="alert">
+                  Please pick {group.name.toLowerCase().replace(/^pick\s+/, "")}.
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -222,9 +234,8 @@ export function ModifierDialog({
             </button>
           </div>
           <Button
-            disabled={!allRequiredMet}
             onClick={handleConfirm}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 py-6 text-base font-semibold disabled:opacity-50"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 py-6 text-base font-semibold"
           >
             {confirmLabel ?? "Add"}{quantity > 1 ? ` ${quantity} × ` : " "}to order — {formatCents((itemBasePrice + modifierTotal) * quantity)}
           </Button>
