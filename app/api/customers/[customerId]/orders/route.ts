@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import type { SessionMembership } from "@/lib/auth/types";
 
 export async function GET(
   _req: NextRequest,
@@ -13,17 +15,24 @@ export async function GET(
 
   const { customerId } = await params;
 
-  const membership = (
-    session.user as {
-      memberships?: Array<{ churchId: string; status: string }>;
-    }
-  ).memberships?.find((m) => m.status === "ACTIVE");
+  const membership = session.user.memberships?.find(
+    (m: SessionMembership) => m.status === "ACTIVE",
+  );
 
   if (!membership) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { churchId } = membership;
+
+  const rbac = await can("customer.read", {
+    userId: session.user.id,
+    churchId,
+    roles: membership.roles,
+  });
+  if (!rbac.allowed) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   // Verify customer belongs to this church (tenancy safety check)
   const customer = await (db.customer.findFirst as Function)({
