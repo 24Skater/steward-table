@@ -223,6 +223,100 @@ function buildSimpleBody(
     </div>`;
 }
 
+export async function sendStaffNewOrderEmail(orderId: string): Promise<void> {
+  if (!resend) return;
+
+  const order = await db.order.findUnique({
+    where: { id: orderId },
+    include: {
+      customer: { select: { name: true, phone: true } },
+      church: {
+        select: {
+          id: true,
+          name: true,
+          settings: {
+            select: {
+              replyToEmail: true,
+              brandTokens: true,
+            },
+          },
+        },
+      },
+      items: { select: { itemName: true, quantity: true } },
+    },
+    // @ts-expect-error — bypass tenancy for notification reads
+    _bypassTenancyCheck: true,
+  });
+
+  if (!order) return;
+
+  const tokens = order.church.settings?.brandTokens;
+  const staffNotifyEnabled =
+    tokens && typeof tokens === "object" && (tokens as Record<string, unknown>).emailStaffOnNewOrder === true;
+  if (!staffNotifyEnabled) return;
+
+  const staffMembers = await db.membership.findMany({
+    where: {
+      churchId: order.church.id,
+      status: "ACTIVE",
+      roles: { hasSome: ["OWNER", "ADMIN", "STAFF"] },
+    },
+    include: {
+      user: { select: { email: true, name: true } },
+    },
+  });
+
+  const staffEmails = staffMembers
+    .map((m) => m.user.email)
+    .filter((e): e is string => typeof e === "string" && e.length > 0);
+
+  if (staffEmails.length === 0) return;
+
+  const itemList = order.items.map((i) => `${i.quantity}× ${i.itemName}`).join(", ");
+  const subject = `New order #${order.number} — ${order.church.name}`;
+  const fromAddress = process.env.RESEND_FROM_EMAIL ?? "orders@table.steward.app";
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 20px;">
+  <div style="max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <div style="background: #0f172a; padding: 24px; text-align: center;">
+      <p style="color: #94a3b8; font-size: 13px; margin: 0;">${order.church.name}</p>
+    </div>
+    <div style="padding: 32px 24px;">
+      <h1 style="font-size: 22px; font-weight: 600; color: #0f172a; margin: 0 0 16px;">New order received</h1>
+      <div style="background: #f1f5f9; border-radius: 8px; padding: 16px 20px;">
+        <p style="color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin: 0 0 8px;">Order #${order.number}</p>
+        <p style="color: #0f172a; font-size: 14px; margin: 0 0 4px;"><strong>Customer:</strong> ${order.customer.name}${order.customer.phone ? ` · ${order.customer.phone}` : ""}</p>
+        <p style="color: #0f172a; font-size: 14px; margin: 0;"><strong>Items:</strong> ${itemList}</p>
+      </div>
+    </div>
+    <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0;">
+      <p style="color: #94a3b8; font-size: 12px; margin: 0; text-align: center;">Powered by Steward Table</p>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+
+  const sendOptions: Parameters<typeof resend.emails.send>[0] = {
+    from: fromAddress,
+    to: staffEmails,
+    subject,
+    html,
+  };
+  if (order.church.settings?.replyToEmail) {
+    sendOptions.replyTo = order.church.settings.replyToEmail;
+  }
+
+  try {
+    await resend.emails.send(sendOptions);
+  } catch {
+    // Best-effort — never throw
+  }
+}
+
 export async function sendWelcomeEmail(userId: string): Promise<void> {
   if (!resend) return;
 

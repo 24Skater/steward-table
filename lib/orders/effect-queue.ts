@@ -1,5 +1,5 @@
 import { handleInventoryEffect } from "@/lib/inventory/handler";
-import { sendOrderNotification } from "@/lib/notifications/email";
+import { sendOrderNotification, sendStaffNewOrderEmail } from "@/lib/notifications/email";
 import { handleSmsEffect } from "@/lib/notifications/sms";
 import type { OrderStatus } from "@prisma/client";
 import type { SideEffect, SideEffectQueue } from "./transitions";
@@ -29,7 +29,12 @@ async function dispatch(effect: SideEffect): Promise<void> {
       }
       return;
     }
-    // notify.*, reporting.*, stripe.refund — log and skip for now
+
+    if (effect.kind === "notify.staff_new_order") {
+      await sendStaffNewOrderEmail(effect.orderId);
+      return;
+    }
+    // reporting.*, stripe.refund — log and skip for now
   } catch (err) {
     console.error("[effect-queue] dispatch failed", {
       kind: effect.kind,
