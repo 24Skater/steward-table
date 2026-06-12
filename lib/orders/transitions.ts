@@ -71,12 +71,15 @@ const VALID_TRANSITIONS: ReadonlySet<TransitionEdge> = new Set([
   "CONFIRMED->IN_KITCHEN",
   "CONFIRMED->CANCELED",
   "IN_KITCHEN->READY",
+  "IN_KITCHEN->CANCELED",
   "READY->AWAITING_PICKUP",
   "READY->OUT_FOR_DELIVERY",
   "READY->SERVED",
+  "READY->CANCELED",
   "AWAITING_PICKUP->PICKED_UP",
   "AWAITING_PICKUP->CANCELED",
   "OUT_FOR_DELIVERY->DELIVERED",
+  "OUT_FOR_DELIVERY->CANCELED",
   "PICKED_UP->COMPLETED",
   "DELIVERED->COMPLETED",
   "SERVED->COMPLETED",
@@ -107,7 +110,10 @@ function getSideEffects(from: OrderStatus, to: OrderStatus, orderId: string): Si
 
     case "SUBMITTED->CANCELED":
     case "CONFIRMED->CANCELED":
+    case "IN_KITCHEN->CANCELED":
+    case "READY->CANCELED":
     case "AWAITING_PICKUP->CANCELED":
+    case "OUT_FOR_DELIVERY->CANCELED":
       return [
         key("email.order_canceled"),
         key("inventory.restock"),
