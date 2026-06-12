@@ -17,8 +17,25 @@ function sseMessage(event: string, data: unknown): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
-async function fetchKitchenOrders(churchId: string) {
-  return db.order.findMany({
+interface KitchenSettings {
+  kitchenDisplayMode: string;
+  prepLeadTimeMinutes: number;
+}
+
+async function getKitchenSettings(churchId: string): Promise<KitchenSettings> {
+  const settings = await (db.churchSettings.findUnique as Function)({
+    where: { churchId },
+    select: { kitchenDisplayMode: true, prepLeadTimeMinutes: true },
+    _bypassTenancyCheck: true,
+  }) as KitchenSettings | null;
+  return {
+    kitchenDisplayMode: settings?.kitchenDisplayMode ?? "IMMEDIATE",
+    prepLeadTimeMinutes: settings?.prepLeadTimeMinutes ?? 30,
+  };
+}
+
+async function fetchKitchenOrders(churchId: string, settings: KitchenSettings) {
+  const all = await db.order.findMany({
     where: {
       churchId,
       status: { in: KITCHEN_STATUSES },
@@ -31,9 +48,7 @@ async function fetchKitchenOrders(churchId: string) {
       scheduledFor: true,
       createdAt: true,
       notes: true,
-      customer: {
-        select: { name: true },
-      },
+      customer: { select: { name: true } },
       items: {
         select: {
           id: true,
@@ -43,8 +58,18 @@ async function fetchKitchenOrders(churchId: string) {
         },
       },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ scheduledFor: "asc" }, { createdAt: "asc" }],
   });
+
+  // JUST_IN_TIME: filter out orders not yet within the prep window
+  if (settings.kitchenDisplayMode === "JUST_IN_TIME") {
+    const cutoff = Date.now() + settings.prepLeadTimeMinutes * 60 * 1000;
+    return all.filter(
+      (o) => !o.scheduledFor || o.scheduledFor.getTime() <= cutoff,
+    );
+  }
+
+  return all;
 }
 
 type RawOrder = Awaited<ReturnType<typeof fetchKitchenOrders>>[number];
@@ -104,8 +129,10 @@ export async function GET(req: NextRequest) {
         }
       }
 
+      const settings = await getKitchenSettings(churchId);
+
       async function fetchAndSend() {
-        const orders = await fetchKitchenOrders(churchId);
+        const orders = await fetchKitchenOrders(churchId, settings);
 
         // Auto-transition CONFIRMED orders to IN_KITCHEN on first kitchen view
         const confirmedOrders = orders.filter((o) => o.status === "CONFIRMED");
@@ -116,7 +143,7 @@ export async function GET(req: NextRequest) {
             ),
           );
           // Re-fetch so the sent snapshot reflects the new IN_KITCHEN status
-          const updated = await fetchKitchenOrders(churchId);
+          const updated = await fetchKitchenOrders(churchId, settings);
           send("orders", updated.map(shapeOrder));
         } else {
           send("orders", orders.map(shapeOrder));
