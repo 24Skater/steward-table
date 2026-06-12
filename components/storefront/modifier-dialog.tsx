@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Minus, Plus } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -33,7 +34,7 @@ interface ModifierDialogProps {
   itemDescription?: string | null;
   itemBasePrice: number;
   modifierGroups: ModifierGroup[];
-  onConfirm: (modifiers: CartModifier[], totalPrice: number) => void;
+  onConfirm: (modifiers: CartModifier[], unitPrice: number, quantity: number) => void;
 }
 
 function formatCents(cents: number): string {
@@ -49,6 +50,7 @@ export function ModifierDialog({
   modifierGroups,
   onConfirm,
 }: ModifierDialogProps) {
+  const [quantity, setQuantity] = useState(1);
   const [selections, setSelections] = useState<Record<string, string[]>>(() => {
     const initial: Record<string, string[]> = {};
     for (const group of modifierGroups) {
@@ -102,7 +104,8 @@ export function ModifierDialog({
         }
       }
     }
-    onConfirm(modifiers, itemBasePrice + modifierTotal);
+    onConfirm(modifiers, itemBasePrice + modifierTotal, quantity);
+    setQuantity(1);
   }
 
   return (
@@ -167,13 +170,36 @@ export function ModifierDialog({
           ))}
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-slate-100 px-5 pb-8 pt-4">
+        <div className="sticky bottom-0 bg-white border-t border-slate-100 px-5 pb-8 pt-4 space-y-3">
+          {/* Quantity stepper */}
+          <div className="flex items-center justify-center gap-4">
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              aria-label="Decrease quantity"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40"
+              disabled={quantity <= 1}
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+            <span className="w-8 text-center text-lg font-semibold text-slate-800">
+              {quantity}
+            </span>
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => q + 1)}
+              aria-label="Increase quantity"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
           <Button
             disabled={!allRequiredMet}
             onClick={handleConfirm}
             className="w-full bg-emerald-600 hover:bg-emerald-700 py-6 text-base font-semibold disabled:opacity-50"
           >
-            Add to order — {formatCents(itemBasePrice + modifierTotal)}
+            Add {quantity > 1 ? `${quantity} × ` : ""}to order — {formatCents((itemBasePrice + modifierTotal) * quantity)}
           </Button>
         </div>
       </SheetContent>

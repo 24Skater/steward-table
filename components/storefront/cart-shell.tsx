@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ShoppingCart, Minus, Plus, Trash2, X } from "lucide-react";
 import {
@@ -20,8 +20,21 @@ function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isDesktop;
+}
+
 export function CartShell({ churchSlug }: CartShellProps) {
   const [open, setOpen] = useState(false);
+  const isDesktop = useIsDesktop();
   const { items, removeItem, updateQuantity, total } = useCart();
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
@@ -65,18 +78,24 @@ export function CartShell({ churchSlug }: CartShellProps) {
         </div>
       )}
 
-      {/* Cart bottom-sheet drawer */}
+      {/* Cart drawer — bottom-sheet on mobile, right-side panel on desktop */}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
-          side="bottom"
-          className="max-h-[85vh] overflow-y-auto rounded-t-2xl px-0 pb-0 pt-0"
+          side={isDesktop ? "right" : "bottom"}
+          className={
+            isDesktop
+              ? "w-[420px] max-w-full overflow-y-auto px-0 pb-0 pt-0"
+              : "max-h-[90vh] overflow-y-auto rounded-t-2xl px-0 pb-0 pt-0"
+          }
         >
-          {/* Drag handle */}
-          <div className="flex justify-center pb-2 pt-3">
-            <div className="h-1 w-10 rounded-full bg-slate-200" />
-          </div>
+          {/* Drag handle — mobile only */}
+          {!isDesktop && (
+            <div className="flex justify-center pb-2 pt-3">
+              <div className="h-1 w-10 rounded-full bg-slate-200" />
+            </div>
+          )}
 
-          <SheetHeader className="px-5 pb-3">
+          <SheetHeader className={`px-5 pb-3 ${isDesktop ? "pt-6" : ""}`}>
             <SheetTitle className="text-left text-lg font-bold text-slate-800">
               Your order
             </SheetTitle>
