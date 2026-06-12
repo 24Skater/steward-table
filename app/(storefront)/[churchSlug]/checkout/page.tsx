@@ -206,10 +206,8 @@ export default function CheckoutPage() {
       }
     }
 
-    if (fulfillment === "PICKUP" && !selectedSlot) {
-      setError("Please select a pickup time.");
-      return;
-    }
+    // selectedSlot can be null if customer chose "ASAP" (no specific time)
+    // The slot grid still works — null means ASAP, string means a specific slot
 
     setSubmitting(true);
 
@@ -373,8 +371,21 @@ export default function CheckoutPage() {
         {fulfillment === "PICKUP" && (
           <div className="space-y-3">
             <Label className="block text-sm font-medium text-slate-700">
-              Pickup time <span className="text-rose-500">*</span>
+              Pickup time
             </Label>
+
+            {/* ASAP option */}
+            <button
+              type="button"
+              onClick={() => setSelectedSlot(null)}
+              className={`w-full rounded-lg border px-4 py-2.5 text-sm font-medium text-left transition-colors ${
+                selectedSlot === null
+                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              As soon as possible (ASAP)
+            </button>
 
             {/* Date selector — horizontal scroll */}
             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -385,7 +396,7 @@ export default function CheckoutPage() {
                   onClick={() => setSelectedDate(day.value)}
                   className={`flex-none rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
                     selectedDate === day.value
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      ? "border-slate-800 bg-slate-800 text-white"
                       : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -398,7 +409,7 @@ export default function CheckoutPage() {
             {slotsLoading ? (
               <p className="text-sm text-slate-500">Loading available times…</p>
             ) : timeSlots.length === 0 ? (
-              <p className="text-sm text-slate-500">No available pickup times for this date.</p>
+              <p className="text-sm text-slate-500">No specific slots available for this date.</p>
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 {timeSlots.map((slot) => (
