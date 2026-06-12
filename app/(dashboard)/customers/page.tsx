@@ -34,6 +34,12 @@ export default async function CustomersPageRoute({ searchParams }: CustomersPage
     redirect("/");
   }
 
+  const exportPermission = await can("customer.export", {
+    userId: session.user.id,
+    churchId,
+    roles,
+  });
+
   const { q } = await searchParams;
   const searchQuery = q?.trim() ?? "";
 
@@ -84,7 +90,7 @@ export default async function CustomersPageRoute({ searchParams }: CustomersPage
   return (
     <div className="flex flex-col h-full">
       <TopBar title="Customers" />
-      <CustomersPage customers={customers} initialSearch={searchQuery} />
+      <CustomersPage customers={customers} initialSearch={searchQuery} canExport={exportPermission.allowed} />
     </div>
   );
 }
