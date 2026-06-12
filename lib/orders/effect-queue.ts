@@ -2,6 +2,7 @@ import { handleInventoryEffect } from "@/lib/inventory/handler";
 import { sendOrderNotification, sendStaffNewOrderEmail } from "@/lib/notifications/email";
 import { handleSmsEffect } from "@/lib/notifications/sms";
 import { handleStripeRefundEffect } from "@/lib/payments/stripe-refund";
+import { db } from "@/lib/db";
 import type { OrderStatus } from "@prisma/client";
 import type { SideEffect, SideEffectQueue } from "./transitions";
 
@@ -40,6 +41,11 @@ async function dispatch(effect: SideEffect): Promise<void> {
       await handleStripeRefundEffect(effect.orderId);
       return;
     }
+
+    if (effect.kind === "notify.customer_order_status") {
+      await handleCustomerStatusNotification(effect.orderId);
+      return;
+    }
     // reporting.* — log and skip for now
   } catch (err) {
     console.error("[effect-queue] dispatch failed", {
@@ -55,3 +61,46 @@ export const effectQueue: SideEffectQueue = {
     void dispatch(effect);
   },
 };
+
+const STATUS_NOTIFICATION_BODY: Partial<Record<string, string>> = {
+  CONFIRMED: "Your order has been confirmed.",
+  READY: "Your order is ready for pickup!",
+  OUT_FOR_DELIVERY: "Your order is out for delivery.",
+  CANCELED: "Your order has been canceled.",
+};
+
+async function handleCustomerStatusNotification(orderId: string): Promise<void> {
+  const order = await (db.order.findUnique as Function)({
+    where: { id: orderId },
+    select: {
+      id: true,
+      number: true,
+      status: true,
+      churchId: true,
+      customer: { select: { userId: true } },
+    },
+    _bypassTenancyCheck: true,
+  }) as {
+    id: string;
+    number: number;
+    status: string;
+    churchId: string;
+    customer: { userId: string | null } | null;
+  } | null;
+
+  const userId = order?.customer?.userId;
+  if (!userId || !order) return;
+
+  const body = STATUS_NOTIFICATION_BODY[order.status];
+  if (!body) return;
+
+  await db.notification.create({
+    data: {
+      churchId: order.churchId,
+      userId,
+      type: "order_status",
+      body: `Order #${order.number}: ${body}`,
+      link: `/order/${order.id}`,
+    },
+  });
+}
