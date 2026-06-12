@@ -47,6 +47,13 @@ async function handleStatusChange(
       actorId: session.user.id,
       queue: effectQueue,
     });
+
+    // Auto-advance terminal pickup/delivery states to COMPLETED
+    const AUTO_COMPLETE: ReadonlySet<string> = new Set(["PICKED_UP", "DELIVERED", "SERVED"]);
+    if (AUTO_COMPLETE.has(targetStatus)) {
+      await transition(orderId, "COMPLETED", { queue: effectQueue });
+    }
+
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof InvalidTransitionError) {
