@@ -66,20 +66,26 @@ type TransitionEdge = `${OrderStatus}->${OrderStatus}`;
 
 const VALID_TRANSITIONS: ReadonlySet<TransitionEdge> = new Set([
   "DRAFT->SUBMITTED",
+  "DRAFT->CANCELED",
   "SUBMITTED->CONFIRMED",
   "SUBMITTED->CANCELED",
   "CONFIRMED->IN_KITCHEN",
   "CONFIRMED->CANCELED",
+  "CONFIRMED->REFUNDED",
   "IN_KITCHEN->READY",
   "IN_KITCHEN->CANCELED",
+  "IN_KITCHEN->REFUNDED",
   "READY->AWAITING_PICKUP",
   "READY->OUT_FOR_DELIVERY",
   "READY->SERVED",
   "READY->CANCELED",
+  "READY->REFUNDED",
   "AWAITING_PICKUP->PICKED_UP",
   "AWAITING_PICKUP->CANCELED",
+  "AWAITING_PICKUP->REFUNDED",
   "OUT_FOR_DELIVERY->DELIVERED",
   "OUT_FOR_DELIVERY->CANCELED",
+  "OUT_FOR_DELIVERY->REFUNDED",
   "PICKED_UP->COMPLETED",
   "DELIVERED->COMPLETED",
   "SERVED->COMPLETED",
@@ -140,10 +146,16 @@ function getSideEffects(from: OrderStatus, to: OrderStatus, orderId: string): Si
     case "SERVED->COMPLETED":
       return [key("reporting.order_completed")];
 
+    case "CONFIRMED->REFUNDED":
+    case "IN_KITCHEN->REFUNDED":
+    case "READY->REFUNDED":
+    case "AWAITING_PICKUP->REFUNDED":
+    case "OUT_FOR_DELIVERY->REFUNDED":
     case "COMPLETED->REFUNDED":
       return [
         key("stripe.refund"),
         key("inventory.restock"),
+        key("notify.customer_order_status"),
       ];
 
     default:
