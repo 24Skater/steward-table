@@ -253,6 +253,18 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // Add tip as a separate line item if applicable
+  if (tipAmount > 0) {
+    lineItems.push({
+      price_data: {
+        currency: (church.currency as string).toLowerCase(),
+        product_data: { name: "Tip" },
+        unit_amount: tipAmount,
+      },
+      quantity: 1,
+    });
+  }
+
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     payment_method_types: ["card"],
