@@ -67,22 +67,28 @@ export function ItemCard({
     }
   }
 
-  function handleModifierConfirm(modifiers: CartModifier[], unitPrice: number) {
+  function handleModifierConfirm(modifiers: CartModifier[], unitPrice: number, qty: number) {
     addItem({
       itemId,
       catalogId,
       itemName: name,
-      quantity: 1,
+      quantity: qty,
       basePrice: price,
       modifiers,
-      totalPrice: unitPrice,
+      totalPrice: unitPrice * qty,
     });
     setDialogOpen(false);
   }
 
   return (
     <>
-      <div className="group flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md overflow-hidden">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleAddClick}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleAddClick(); }}
+        className="group flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md overflow-hidden cursor-pointer"
+      >
         {imageUrl && (
           <div className="h-36 w-full overflow-hidden bg-slate-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -102,13 +108,12 @@ export function ItemCard({
           </div>
           <div className="mt-4 flex items-center justify-between">
             <span className="text-base font-semibold text-emerald-700">{formatCents(price)}</span>
-            <Button
-              size="sm"
-              onClick={handleAddClick}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            <div
+              className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
+              aria-hidden="true"
             >
               {hasRequiredModifiers ? "Customize" : "Add"}
-            </Button>
+            </div>
           </div>
         </div>
       </div>
