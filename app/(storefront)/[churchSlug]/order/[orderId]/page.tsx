@@ -95,9 +95,11 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
     ? order.customer.phone.replace(/(\+?\d{1,3})\d+(\d{2})$/, "$1•••••$2")
     : "";
 
+  // Customers can only self-cancel DRAFT or SUBMITTED orders within the window
+  // (CONFIRMED and beyond require STAFF+ per STATE_MACHINE §8)
   const showCancelButton =
     selfCancelWindowMs > 0 &&
-    (order.status === "SUBMITTED" || order.status === "CONFIRMED") &&
+    (order.status === "DRAFT" || order.status === "SUBMITTED") &&
     Date.now() - order.createdAt.getTime() < selfCancelWindowMs;
 
   return (
