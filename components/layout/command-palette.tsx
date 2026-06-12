@@ -27,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { group: "Settings", label: "Delivery Zones", href: "/settings/delivery" },
   { group: "Settings", label: "Notifications", href: "/settings/notifications" },
   { group: "Settings", label: "Staff & Roles", href: "/settings/staff" },
+  { group: "Settings", label: "Receipt & Tax", href: "/settings/receipt" },
   { group: "Settings", label: "Audit Log", href: "/settings/audit" },
   { group: "Settings", label: "My Profile", href: "/profile" },
 ];

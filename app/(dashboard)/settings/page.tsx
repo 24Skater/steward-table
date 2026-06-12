@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import type { Route } from "next";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
@@ -132,6 +133,12 @@ export default async function SettingsRoute() {
             className="text-sm text-slate-600 hover:text-slate-900 hover:underline"
           >
             Manage delivery zones →
+          </Link>
+          <Link
+            href={"/settings/receipt" as Route}
+            className="text-sm text-slate-600 hover:text-slate-900 hover:underline"
+          >
+            Receipt &amp; tax settings →
           </Link>
           <Link
             href="/settings/webhooks"
