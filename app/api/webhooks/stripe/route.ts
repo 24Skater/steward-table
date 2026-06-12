@@ -123,9 +123,17 @@ async function handleCheckoutCompleted(
     });
   }
 
-  // Transition DRAFT → SUBMITTED to fire side effects (email, SMS, inventory)
+  // For Stripe orders: payment capture = automatic confirmation
   if (order.status === "DRAFT") {
     await transition(orderId, "SUBMITTED", {
+      actorId: "stripe-webhook",
+      reason: "Payment captured via Stripe",
+      queue: effectQueue,
+    });
+  }
+
+  if (order.status === "DRAFT" || order.status === "SUBMITTED") {
+    await transition(orderId, "CONFIRMED", {
       actorId: "stripe-webhook",
       reason: "Payment captured via Stripe",
       queue: effectQueue,
