@@ -16,6 +16,7 @@ import {
   BarChart3,
   LogOut,
   UserCircle,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/layout/notification-bell";
@@ -52,6 +53,22 @@ export function Sidebar({ churchName }: SidebarProps) {
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wider truncate">
           {churchName ?? "Steward Table"}
         </p>
+      </div>
+
+      {/* Command palette trigger */}
+      <div className="px-2 py-2 border-b border-slate-800">
+        <button
+          onClick={() => {
+            const evt = new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true });
+            window.dispatchEvent(evt);
+          }}
+          className="flex w-full items-center gap-2 rounded-md bg-slate-800/60 px-3 py-2 text-xs text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
+          aria-label="Open command palette (Ctrl+K)"
+        >
+          <Search size={13} strokeWidth={2} aria-hidden="true" />
+          <span className="flex-1 text-left">Search…</span>
+          <kbd className="font-mono text-[10px] opacity-60">⌘K</kbd>
+        </button>
       </div>
 
       {/* Main nav */}
