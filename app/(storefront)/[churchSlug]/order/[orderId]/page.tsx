@@ -174,7 +174,7 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
         >
           Place another order
         </Link>
-        {session?.user?.email && (
+        {session?.user && (
           <Link
             href={`/${churchSlug}/orders`}
             className="text-sm text-slate-400 underline-offset-2 hover:text-slate-600 hover:underline"
