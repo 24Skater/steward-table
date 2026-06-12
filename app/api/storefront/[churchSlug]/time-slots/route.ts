@@ -129,13 +129,51 @@ export async function GET(
     cursor.setSeconds(0, 0);
   }
 
+  // Capacity limit (0 = unlimited)
+  const maxOrdersPerSlot =
+    typeof brandTokens.maxOrdersPerSlot === "number" ? brandTokens.maxOrdersPerSlot : 0;
+
+  // Count existing orders per slot if capacity enforcement is on
+  let slotCounts: Record<string, number> = {};
+  if (maxOrdersPerSlot > 0) {
+    const dayStart = new Date(
+      targetDate.getFullYear(),
+      targetDate.getMonth(),
+      targetDate.getDate(),
+      0, 0, 0, 0,
+    );
+    const dayEnd = new Date(
+      targetDate.getFullYear(),
+      targetDate.getMonth(),
+      targetDate.getDate(),
+      23, 59, 59, 999,
+    );
+    const ordersOnDay = await db.order.findMany({
+      where: {
+        churchId: church.id,
+        scheduledFor: { gte: dayStart, lte: dayEnd },
+        status: { notIn: ["CANCELED", "REFUNDED"] },
+      },
+      select: { scheduledFor: true },
+    });
+
+    for (const order of ordersOnDay) {
+      if (!order.scheduledFor) continue;
+      const key = toISOLocalString(order.scheduledFor);
+      slotCounts[key] = (slotCounts[key] ?? 0) + 1;
+    }
+  }
+
   const slots: TimeSlot[] = [];
 
   while (cursor < windowEnd) {
+    const slotKey = toISOLocalString(cursor);
+    const count = slotCounts[slotKey] ?? 0;
+    const available = maxOrdersPerSlot === 0 || count < maxOrdersPerSlot;
     slots.push({
-      value: toISOLocalString(cursor),
+      value: slotKey,
       label: formatLabel(cursor),
-      available: true,
+      available,
     });
     cursor = new Date(cursor.getTime() + intervalMinutes * 60 * 1000);
   }

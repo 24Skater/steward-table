@@ -26,6 +26,7 @@ interface SettingsPageProps {
     pickupWindowStartHour: number;
     pickupWindowEndHour: number;
     slotIntervalMinutes: number;
+    maxOrdersPerSlot: number;
   };
 }
 
@@ -96,6 +97,7 @@ export function SettingsPage({ church, payments, fulfillment }: SettingsPageProp
               pickupWindowStartHour={fulfillment.pickupWindowStartHour}
               pickupWindowEndHour={fulfillment.pickupWindowEndHour}
               slotIntervalMinutes={fulfillment.slotIntervalMinutes}
+              maxOrdersPerSlot={fulfillment.maxOrdersPerSlot}
             />
           </div>
         </TabsContent>

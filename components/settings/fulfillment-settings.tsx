@@ -17,6 +17,7 @@ interface FulfillmentSettingsProps {
   pickupWindowStartHour: number;
   pickupWindowEndHour: number;
   slotIntervalMinutes: number;
+  maxOrdersPerSlot: number;
 }
 
 function formatHour(hour: number): string {
@@ -36,6 +37,7 @@ export function FulfillmentSettings({
   pickupWindowStartHour: initialStartHour,
   pickupWindowEndHour: initialEndHour,
   slotIntervalMinutes: initialInterval,
+  maxOrdersPerSlot: initialMaxOrders,
 }: FulfillmentSettingsProps) {
   const [pickupEnabled, setPickupEnabled] = useState(initialPickup);
   const [deliveryEnabled, setDeliveryEnabled] = useState(initialDelivery);
@@ -47,6 +49,7 @@ export function FulfillmentSettings({
   const [pickupWindowStartHour, setPickupWindowStartHour] = useState(initialStartHour);
   const [pickupWindowEndHour, setPickupWindowEndHour] = useState(initialEndHour);
   const [slotIntervalMinutes, setSlotIntervalMinutes] = useState(initialInterval);
+  const [maxOrdersPerSlot, setMaxOrdersPerSlot] = useState(initialMaxOrders);
 
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -75,6 +78,7 @@ export function FulfillmentSettings({
           pickupWindowStartHour,
           pickupWindowEndHour,
           slotIntervalMinutes,
+          maxOrdersPerSlot,
         }),
       });
 
@@ -173,6 +177,24 @@ export function FulfillmentSettings({
                 </select>
               </div>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="max-orders-per-slot">Order Capacity per Slot</Label>
+            <Input
+              id="max-orders-per-slot"
+              type="number"
+              min={0}
+              max={999}
+              step={1}
+              value={maxOrdersPerSlot}
+              onChange={(e) => setMaxOrdersPerSlot(Number(e.target.value))}
+              placeholder="0"
+              className="max-w-xs"
+            />
+            <p className="text-xs text-slate-500">
+              Maximum number of orders per time slot. Set to 0 for no limit.
+            </p>
           </div>
         </div>
       )}

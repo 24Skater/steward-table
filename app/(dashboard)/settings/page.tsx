@@ -15,11 +15,12 @@ function parseFulfillmentPrefs(brandTokens: unknown) {
       pickupEnabled: true,
       deliveryEnabled: false,
       dineInEnabled: false,
-      deliveryRadiusMiles: null,
-      pickupInstructions: null,
+      deliveryRadiusMiles: null as number | null,
+      pickupInstructions: null as string | null,
       pickupWindowStartHour: 10,
       pickupWindowEndHour: 20,
       slotIntervalMinutes: 30,
+      maxOrdersPerSlot: 0,
     };
   }
   const raw = brandTokens as Record<string, unknown>;
@@ -37,6 +38,8 @@ function parseFulfillmentPrefs(brandTokens: unknown) {
       typeof raw.pickupWindowEndHour === "number" ? raw.pickupWindowEndHour : 20,
     slotIntervalMinutes:
       typeof raw.slotIntervalMinutes === "number" ? raw.slotIntervalMinutes : 30,
+    maxOrdersPerSlot:
+      typeof raw.maxOrdersPerSlot === "number" ? raw.maxOrdersPerSlot : 0,
   };
 }
 
@@ -139,6 +142,12 @@ export default async function SettingsRoute() {
             className="text-sm text-slate-600 hover:text-slate-900 hover:underline"
           >
             Receipt &amp; tax settings →
+          </Link>
+          <Link
+            href={"/settings/tips" as Route}
+            className="text-sm text-slate-600 hover:text-slate-900 hover:underline"
+          >
+            Tip settings →
           </Link>
           <Link
             href="/settings/webhooks"

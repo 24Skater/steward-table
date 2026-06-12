@@ -87,6 +87,11 @@ export default function CheckoutPage() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
+  // Tip state
+  const [tipEnabled, setTipEnabled] = useState(false);
+  const [tipPercentages, setTipPercentages] = useState<number[]>([10, 15, 20]);
+  const [selectedTipPct, setSelectedTipPct] = useState<number | null>(null);
+
   const churchSlug = params.churchSlug;
   const nextSevenDays = getNextSevenDays();
 
@@ -106,6 +111,16 @@ export default function CheckoutPage() {
       })
       .catch(() => {
         // Silently ignore — payment config is best-effort
+      });
+
+    fetch(`/api/storefront/${churchSlug}/tip-config`)
+      .then((res) => (res.ok ? res.json() : { tipEnabled: false, tipPercentages: [] }))
+      .then((data: { tipEnabled: boolean; tipPercentages: number[] }) => {
+        setTipEnabled(data.tipEnabled);
+        if (data.tipPercentages.length > 0) setTipPercentages(data.tipPercentages);
+      })
+      .catch(() => {
+        // Silently ignore — tip config is best-effort
       });
   }, [churchSlug]);
 
@@ -169,26 +184,6 @@ export default function CheckoutPage() {
       </div>
     );
   }
-
-  const cartPayload = {
-    churchSlug,
-    customerName: name.trim(),
-    phone: phone.trim() || null,
-    notes: notes.trim() || null,
-    fulfillment,
-    zoneId: fulfillment === "DELIVERY" && matchedZone ? matchedZone.id : undefined,
-    scheduledFor: fulfillment === "PICKUP" && selectedSlot ? selectedSlot : null,
-    smsOptIn: phone.trim() ? smsOptIn : false,
-    items: items.map((item) => ({
-      itemId: item.itemId,
-      catalogId: item.catalogId,
-      itemName: item.itemName,
-      quantity: item.quantity,
-      basePrice: item.basePrice,
-      modifiers: item.modifiers,
-      totalPrice: item.totalPrice,
-    })),
-  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -271,7 +266,29 @@ export default function CheckoutPage() {
   }
 
   const deliveryFee = fulfillment === "DELIVERY" && matchedZone ? matchedZone.feeCents : 0;
-  const orderTotal = total + deliveryFee;
+  const tipCents = selectedTipPct !== null ? Math.round(total * selectedTipPct / 100) : 0;
+  const orderTotal = total + deliveryFee + tipCents;
+
+  const cartPayload = {
+    churchSlug,
+    customerName: name.trim(),
+    phone: phone.trim() || null,
+    notes: notes.trim() || null,
+    fulfillment,
+    zoneId: fulfillment === "DELIVERY" && matchedZone ? matchedZone.id : undefined,
+    scheduledFor: fulfillment === "PICKUP" && selectedSlot ? selectedSlot : null,
+    smsOptIn: phone.trim() ? smsOptIn : false,
+    tip: tipCents,
+    items: items.map((item) => ({
+      itemId: item.itemId,
+      catalogId: item.catalogId,
+      itemName: item.itemName,
+      quantity: item.quantity,
+      basePrice: item.basePrice,
+      modifiers: item.modifiers,
+      totalPrice: item.totalPrice,
+    })),
+  };
 
   return (
     <div className="mx-auto max-w-lg">
@@ -482,16 +499,59 @@ export default function CheckoutPage() {
           />
         </div>
 
-        {deliveryFee > 0 && (
+        {tipEnabled && (
+          <div>
+            <Label className="mb-2 block text-sm font-medium text-slate-700">
+              Add a tip? <span className="text-slate-400 font-normal">(optional)</span>
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {tipPercentages.map((pct) => (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => setSelectedTipPct(selectedTipPct === pct ? null : pct)}
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                    selectedTipPct === pct
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {pct}% ({formatCents(Math.round(total * pct / 100))})
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setSelectedTipPct(null)}
+                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                  selectedTipPct === null
+                    ? "border-slate-800 bg-slate-800 text-white"
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                No tip
+              </button>
+            </div>
+          </div>
+        )}
+
+        {(deliveryFee > 0 || tipCents > 0) && (
           <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm space-y-1">
             <div className="flex justify-between text-slate-600">
               <span>Subtotal</span>
               <span>{formatCents(total)}</span>
             </div>
-            <div className="flex justify-between text-slate-600">
-              <span>Delivery fee</span>
-              <span>{formatCents(deliveryFee)}</span>
-            </div>
+            {deliveryFee > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>Delivery fee</span>
+                <span>{formatCents(deliveryFee)}</span>
+              </div>
+            )}
+            {tipCents > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>Tip ({selectedTipPct}%)</span>
+                <span>{formatCents(tipCents)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-semibold text-slate-900 border-t border-slate-100 pt-1 mt-1">
               <span>Total</span>
               <span>{formatCents(orderTotal)}</span>

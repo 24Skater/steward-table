@@ -28,6 +28,7 @@ interface CheckoutRequestBody {
   zoneId?: string | null;
   scheduledFor?: string | null;
   smsOptIn?: boolean;
+  tip?: number;
   items: CartItemPayload[];
 }
 
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { churchSlug, customerName, phone, notes, fulfillment, zoneId, scheduledFor, smsOptIn, items } = body;
+  const { churchSlug, customerName, phone, notes, fulfillment, zoneId, scheduledFor, smsOptIn, tip, items } = body;
 
   if (!churchSlug || !customerName?.trim() || !items?.length) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -145,7 +146,8 @@ export async function POST(req: NextRequest) {
   });
 
   const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-  const orderTotal = subtotal + deliveryFeeCents;
+  const tipAmount = typeof tip === "number" && tip >= 0 ? Math.round(tip) : 0;
+  const orderTotal = subtotal + deliveryFeeCents + tipAmount;
 
   // Create a DRAFT order so we have an orderId before redirecting to Stripe
   const order = await db.order.create({
@@ -160,7 +162,7 @@ export async function POST(req: NextRequest) {
       currency: church.currency as string,
       subtotal,
       tax: 0,
-      tip: 0,
+      tip: tipAmount,
       total: orderTotal,
       notes: notes ?? null,
       scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
