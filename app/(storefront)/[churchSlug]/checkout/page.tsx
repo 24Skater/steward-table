@@ -74,6 +74,9 @@ export default function CheckoutPage() {
   const [stripeEnabled, setStripeEnabled] = useState(false);
   const [acceptCash, setAcceptCash] = useState(true);
   const [acceptZelle, setAcceptZelle] = useState(false);
+  const [pickupEnabled, setPickupEnabled] = useState(true);
+  const [deliveryEnabled, setDeliveryEnabled] = useState(false);
+  const [dineInEnabled, setDineInEnabled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [smsOptIn, setSmsOptIn] = useState(false);
@@ -109,10 +112,21 @@ export default function CheckoutPage() {
 
     fetch(`/api/storefront/${churchSlug}/payment-config`)
       .then((res) => (res.ok ? res.json() : { stripeEnabled: false, acceptCash: true, acceptZelle: false }))
-      .then((data: { stripeEnabled: boolean; acceptCash?: boolean; acceptZelle?: boolean }) => {
+      .then((data: { stripeEnabled: boolean; acceptCash?: boolean; acceptZelle?: boolean; pickupEnabled?: boolean; deliveryEnabled?: boolean; dineInEnabled?: boolean }) => {
         setStripeEnabled(data.stripeEnabled);
         setAcceptCash(data.acceptCash ?? true);
         setAcceptZelle(data.acceptZelle ?? false);
+        const pickup = data.pickupEnabled ?? true;
+        const delivery = data.deliveryEnabled ?? false;
+        const dineIn = data.dineInEnabled ?? false;
+        setPickupEnabled(pickup);
+        setDeliveryEnabled(delivery);
+        setDineInEnabled(dineIn);
+        // Auto-select first available fulfillment type
+        if (!pickup) {
+          if (delivery) setFulfillment("DELIVERY");
+          else if (dineIn) setFulfillment("DINE_IN");
+        }
       })
       .catch(() => {
         // Silently ignore — payment config is best-effort
@@ -356,20 +370,26 @@ export default function CheckoutPage() {
             How would you like to receive your order?
           </Label>
           <div className="flex flex-wrap gap-2">
-            {(Object.keys(FULFILLMENT_LABELS) as FulfillmentType[]).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setFulfillment(type)}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                  fulfillment === type
-                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                {FULFILLMENT_LABELS[type]}
-              </button>
-            ))}
+            {(Object.keys(FULFILLMENT_LABELS) as FulfillmentType[])
+              .filter((type) =>
+                type === "PICKUP" ? pickupEnabled
+                : type === "DELIVERY" ? deliveryEnabled
+                : dineInEnabled
+              )
+              .map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setFulfillment(type)}
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                    fulfillment === type
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {FULFILLMENT_LABELS[type]}
+                </button>
+              ))}
           </div>
         </div>
 
