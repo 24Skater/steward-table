@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import type { DateRange } from "@/app/(dashboard)/orders/page";
 import { NewOrderDialog } from "./new-order-dialog";
 import { OrderRow } from "./order-row";
-import type { OrderRowData } from "./order-row";
+import type { OrderRowData, DriverOption } from "./order-row";
 import { OrderStatusBadge } from "./order-status-badge";
 import { FULFILLMENT_LABELS, formatOrderTime, getNextStep } from "./order-utils";
 
@@ -17,6 +17,7 @@ interface OrdersPageProps {
   orders: OrderRowData[];
   churchId: string;
   range: DateRange;
+  drivers?: DriverOption[];
 }
 
 type FilterTab = "all" | "pending" | "in-progress" | "completed" | "canceled" | "scheduled";
@@ -288,7 +289,7 @@ function BulkActionBar({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
+export function OrdersPage({ orders, churchId, range, drivers = [] }: OrdersPageProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
@@ -502,6 +503,9 @@ export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
                       <th className="py-2.5 px-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
                         Time
                       </th>
+                      <th className="py-2.5 px-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                        Driver
+                      </th>
                       <th className="py-2.5 pl-3 pr-4 text-xs font-medium text-slate-500 uppercase tracking-wide text-right">
                         Action
                       </th>
@@ -529,7 +533,7 @@ export function OrdersPage({ orders, churchId, range }: OrdersPageProps) {
                           />
                         </td>
                         {/* Delegate remaining cells to OrderRow (rendered inline) */}
-                        <OrderRow order={order} />
+                        <OrderRow order={order} drivers={drivers} />
                       </tr>
                     ))}
                   </tbody>
