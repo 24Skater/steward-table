@@ -29,6 +29,7 @@ export interface MenuItemData {
   category: string | null;
   imageUrl: string | null;
   isAvailable?: boolean;
+  maxQuantityPerOrder?: number | null;
   modifierGroups: ModifierGroup[];
 }
 

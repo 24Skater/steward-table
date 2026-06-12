@@ -250,6 +250,15 @@ export function DriverHome({ assigned, available }: DriverHomeProps) {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-8">
+      <div className="flex justify-end">
+        <Link
+          href="/d/history"
+          className="text-sm text-slate-500 hover:text-slate-700 underline underline-offset-2"
+        >
+          View history
+        </Link>
+      </div>
+
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white text-sm font-medium px-4 py-3 rounded-lg shadow-xl max-w-xs text-center">
           {toast}

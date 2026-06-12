@@ -32,6 +32,7 @@ export interface ItemCardProps {
   imageUrl: string | null;
   modifierGroups: ModifierGroup[];
   isAvailable?: boolean;
+  maxQuantityPerOrder?: number | null;
 }
 
 function formatCents(cents: number): string {
@@ -47,6 +48,7 @@ export function ItemCard({
   imageUrl,
   modifierGroups,
   isAvailable = true,
+  maxQuantityPerOrder,
 }: ItemCardProps) {
   const { addItem } = useCart();
   const { toast } = useToast();
@@ -149,6 +151,7 @@ export function ItemCard({
           itemDescription={description}
           itemBasePrice={price}
           modifierGroups={modifierGroups}
+          maxQuantity={maxQuantityPerOrder ?? undefined}
           onConfirm={handleModifierConfirm}
         />
       )}

@@ -40,6 +40,7 @@ export default async function CatalogPage({ params, searchParams }: CatalogPageP
         select: {
           isAvailable: true,
           priceOverride: true,
+          maxQuantityPerOrder: true,
           item: {
             select: {
               id: true,
@@ -105,6 +106,7 @@ export default async function CatalogPage({ params, searchParams }: CatalogPageP
     category: (ci.item.station as string | null) ?? null,
     imageUrl: (ci.item.imageUrl as string | null) ?? null,
     isAvailable: (ci.isAvailable as boolean) ?? true,
+    maxQuantityPerOrder: (ci.maxQuantityPerOrder as number | null) ?? null,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     modifierGroups: (ci.item.modifierGroups as any[]).map((img: any) => ({
       id: img.group.id as string,
