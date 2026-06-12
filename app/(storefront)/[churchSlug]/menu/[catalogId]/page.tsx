@@ -6,10 +6,15 @@ import type { MenuItemData } from "@/components/storefront/menu-page";
 
 interface CatalogPageProps {
   params: Promise<{ churchSlug: string; catalogId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default async function CatalogPage({ params }: CatalogPageProps) {
+export default async function CatalogPage({ params, searchParams }: CatalogPageProps) {
   const { churchSlug, catalogId } = await params;
+  const resolvedSearch = await searchParams;
+  const langParam = typeof resolvedSearch.lang === "string"
+    ? resolvedSearch.lang.toUpperCase()
+    : null;
 
   const church = await db.church.findFirst({
     where: { slug: churchSlug, status: "ACTIVE" },
@@ -83,8 +88,9 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
     notFound();
   }
 
+  const churchDefault: "EN" | "ES" = (church.locale as string) === "ES" ? "ES" : "EN";
   const locale: "EN" | "ES" =
-    (church.locale as string) === "ES" ? "ES" : "EN";
+    langParam === "EN" || langParam === "ES" ? langParam : churchDefault;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const items: MenuItemData[] = (catalog.items as any[]).map((ci: any) => ({
