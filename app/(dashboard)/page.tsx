@@ -222,7 +222,7 @@ export default async function DashboardHomePage() {
                 </h3>
               </div>
               <ul className="divide-y divide-slate-100">
-                <QuickActionItem href={"/orders/new" as Route} label="New Order" />
+                <QuickActionItem href={"/orders" as Route} label="New Order" />
                 <QuickActionItem href={"/kitchen" as Route} label="View Kitchen" />
                 <QuickActionItem href={"/reports" as Route} label="Reports" />
                 <QuickActionItem href={"/menu" as Route} label="Manage Menu" />
