@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react";
 import { OrderStatusRefresher } from "@/components/storefront/order-status-refresher";
 import { OrderProgress } from "@/components/storefront/order-progress";
 import { CancelOrderButton } from "@/components/storefront/cancel-order-button";
+import { MagicLinkPrompt } from "@/components/storefront/magic-link-prompt";
 import { auth } from "@/lib/auth";
 
 interface OrderStatusPageProps {
@@ -66,6 +67,7 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
       fulfillment: true,
       notes: true,
       createdAt: true,
+      customer: { select: { phone: true, userId: true } },
       items: {
         select: {
           itemName: true,
@@ -83,6 +85,15 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
   }
 
   const statusLabel = STATUS_LABELS[order.status] ?? order.status;
+
+  const showMagicLinkPrompt =
+    !session?.user &&
+    !!order.customer?.phone &&
+    !order.customer?.userId;
+
+  const maskedPhone = order.customer?.phone
+    ? order.customer.phone.replace(/(\+?\d{1,3})\d+(\d{2})$/, "$1•••••$2")
+    : "";
 
   const showCancelButton =
     selfCancelWindowMs > 0 &&
@@ -147,6 +158,14 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
       )}
 
       {showCancelButton && <CancelOrderButton orderId={order.id} />}
+
+      {showMagicLinkPrompt && (
+        <MagicLinkPrompt
+          churchSlug={churchSlug}
+          orderId={order.id}
+          maskedPhone={maskedPhone}
+        />
+      )}
 
       <div className="mt-6 flex flex-col items-center gap-2 text-center">
         <Link
