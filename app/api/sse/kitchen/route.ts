@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth/index";
 import { db } from "@/lib/db";
+import { effectQueue } from "@/lib/orders/effect-queue";
+import { transition } from "@/lib/orders/transitions";
 import { OrderStatus } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -102,10 +104,28 @@ export async function GET(req: NextRequest) {
         }
       }
 
+      async function fetchAndSend() {
+        const orders = await fetchKitchenOrders(churchId);
+
+        // Auto-transition CONFIRMED orders to IN_KITCHEN on first kitchen view
+        const confirmedOrders = orders.filter((o) => o.status === "CONFIRMED");
+        if (confirmedOrders.length > 0) {
+          await Promise.allSettled(
+            confirmedOrders.map((o) =>
+              transition(o.id, "IN_KITCHEN", { queue: effectQueue }),
+            ),
+          );
+          // Re-fetch so the sent snapshot reflects the new IN_KITCHEN status
+          const updated = await fetchKitchenOrders(churchId);
+          send("orders", updated.map(shapeOrder));
+        } else {
+          send("orders", orders.map(shapeOrder));
+        }
+      }
+
       // Send initial snapshot
       try {
-        const orders = await fetchKitchenOrders(churchId);
-        send("orders", orders.map(shapeOrder));
+        await fetchAndSend();
       } catch {
         controller.close();
         return;
@@ -114,8 +134,7 @@ export async function GET(req: NextRequest) {
       // Poll loop — push updated snapshot every POLL_INTERVAL_MS
       const interval = setInterval(async () => {
         try {
-          const orders = await fetchKitchenOrders(churchId);
-          send("orders", orders.map(shapeOrder));
+          await fetchAndSend();
         } catch {
           clearInterval(interval);
           try {
