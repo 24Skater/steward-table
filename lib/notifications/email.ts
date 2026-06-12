@@ -16,6 +16,7 @@ interface OrderNotificationPayload {
   orderId: string;
   status: string;
   churchId: string;
+  churchSlug: string;
   churchName: string;
   customerEmail: string;
   customerName: string;
@@ -99,6 +100,7 @@ export async function sendOrderNotification(
       church: {
         select: {
           id: true,
+          slug: true,
           name: true,
           settings: { select: { replyToEmail: true } },
         },
@@ -117,6 +119,7 @@ export async function sendOrderNotification(
     orderId: order.id,
     status,
     churchId: order.church.id,
+    churchSlug: order.church.slug,
     churchName: order.church.name,
     customerEmail: order.customer.email,
     customerName: order.customer.name,
@@ -191,6 +194,17 @@ function buildItemsTable(items: OrderItemDetail[]): string {
     </table>`;
 }
 
+function buildOrderCta(payload: OrderNotificationPayload): string {
+  const baseUrl = process.env.NEXTAUTH_URL ?? "https://table.steward.app";
+  const orderUrl = `${baseUrl}/${payload.churchSlug}/order/${payload.orderId}`;
+  return `
+    <div style="text-align: center; margin-top: 20px;">
+      <a href="${orderUrl}" style="display: inline-block; background: #059669; color: #ffffff; font-size: 14px; font-weight: 600; padding: 10px 24px; border-radius: 8px; text-decoration: none;">
+        View order status
+      </a>
+    </div>`;
+}
+
 function buildConfirmedBody(payload: OrderNotificationPayload): string {
   const fulfillmentLabel =
     payload.fulfillment === "DELIVERY" ? "Delivery" : "Pickup";
@@ -208,7 +222,8 @@ function buildConfirmedBody(payload: OrderNotificationPayload): string {
         <span style="color: #0f172a; font-size: 15px; font-weight: 700;">${total}</span>
       </div>
       <p style="color: #64748b; font-size: 13px; margin: 12px 0 0;">Fulfillment: ${fulfillmentLabel}</p>
-    </div>`;
+    </div>
+    ${buildOrderCta(payload)}`;
 }
 
 function buildSimpleBody(
@@ -220,7 +235,8 @@ function buildSimpleBody(
     <div style="background: #f1f5f9; border-radius: 8px; padding: 16px;">
       <p style="color: #475569; font-size: 13px; margin: 0 0 4px;">Order number</p>
       <p style="color: #0f172a; font-size: 20px; font-weight: 700; font-family: monospace; margin: 0;">#${payload.orderNumber}</p>
-    </div>`;
+    </div>
+    ${buildOrderCta(payload)}`;
 }
 
 export async function sendStaffNewOrderEmail(orderId: string): Promise<void> {
