@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { TopBar } from "@/components/layout/top-bar";
 import { OrdersPage } from "@/components/orders";
-import type { OrderRowData } from "@/components/orders";
+import type { OrderRowData, DriverOption } from "@/components/orders";
 
 export type DateRange = "today" | "week" | "month" | "all" | "scheduled";
 
@@ -64,33 +64,59 @@ export default async function OrdersPageRoute({ searchParams }: OrdersPageRouteP
 
   const now = new Date();
 
-  const raw = await db.order.findMany({
-    where: {
-      churchId,
-      ...(rangeParam === "scheduled"
-        ? { scheduledFor: { not: null, gte: now } }
-        : rangeStart
-          ? { createdAt: { gte: rangeStart } }
-          : {}),
-    },
-    orderBy: rangeParam === "scheduled" ? { scheduledFor: "asc" } : { createdAt: "desc" },
-    take: 500,
-    select: {
-      id: true,
-      number: true,
-      status: true,
-      fulfillment: true,
-      createdAt: true,
-      scheduledFor: true,
-      total: true,
-      customer: {
-        select: { name: true },
+  const [raw, driverMemberships] = await Promise.all([
+    db.order.findMany({
+      where: {
+        churchId,
+        ...(rangeParam === "scheduled"
+          ? { scheduledFor: { not: null, gte: now } }
+          : rangeStart
+            ? { createdAt: { gte: rangeStart } }
+            : {}),
       },
-      _count: {
-        select: { items: true },
+      orderBy: rangeParam === "scheduled" ? { scheduledFor: "asc" } : { createdAt: "desc" },
+      take: 500,
+      select: {
+        id: true,
+        number: true,
+        status: true,
+        fulfillment: true,
+        createdAt: true,
+        scheduledFor: true,
+        total: true,
+        customer: {
+          select: { name: true },
+        },
+        _count: {
+          select: { items: true },
+        },
+        deliveryInfo: {
+          select: {
+            driverId: true,
+            driver: { select: { id: true, name: true } },
+          },
+        },
       },
-    },
-  });
+    }),
+    // Fetch active DRIVER members for the assignment dropdown
+    (db.membership.findMany as Function)({
+      where: {
+        churchId,
+        status: "ACTIVE",
+        roles: { has: "DRIVER" },
+      },
+      select: {
+        userId: true,
+        user: { select: { name: true } },
+      },
+      _bypassTenancyCheck: true,
+    }) as Promise<Array<{ userId: string; user: { name: string | null } }>>,
+  ]);
+
+  const drivers: DriverOption[] = driverMemberships.map((m) => ({
+    id: m.userId,
+    name: m.user.name ?? "Driver",
+  }));
 
   // Dates arrive as Date objects from Prisma; pass as-is (serialized by Next.js)
   const orders: OrderRowData[] = raw.map((o: (typeof raw)[number]) => ({
@@ -103,12 +129,18 @@ export default async function OrdersPageRoute({ searchParams }: OrdersPageRouteP
     total: o.total,
     customer: { name: o.customer.name },
     _count: { items: o._count.items },
+    deliveryInfo: o.deliveryInfo
+      ? {
+          driverId: o.deliveryInfo.driverId,
+          driverName: o.deliveryInfo.driver?.name ?? null,
+        }
+      : null,
   }));
 
   return (
     <div className="flex flex-col h-full">
       <TopBar title="Orders" />
-      <OrdersPage orders={orders} churchId={churchId} range={rangeParam} />
+      <OrdersPage orders={orders} churchId={churchId} range={rangeParam} drivers={drivers} />
     </div>
   );
 }

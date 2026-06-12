@@ -8,6 +8,11 @@ import { OrderStatusBadge } from "./order-status-badge";
 import { getNextStep, FULFILLMENT_LABELS, formatOrderTime } from "./order-utils";
 import type { OrderStatus, FulfillmentType } from "@prisma/client";
 
+export interface DriverOption {
+  id: string;
+  name: string;
+}
+
 export interface OrderRowData {
   id: string;
   number: number;
@@ -18,10 +23,15 @@ export interface OrderRowData {
   total: number;
   customer: { name: string };
   _count: { items: number };
+  deliveryInfo?: {
+    driverId: string | null;
+    driverName: string | null;
+  } | null;
 }
 
 interface OrderRowProps {
   order: OrderRowData;
+  drivers?: DriverOption[];
 }
 
 /**
@@ -33,9 +43,10 @@ function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-export function OrderRow({ order }: OrderRowProps) {
+export function OrderRow({ order, drivers = [] }: OrderRowProps) {
   const router = useRouter();
   const [inFlight, setInFlight] = useState(false);
+  const [driverInFlight, setDriverInFlight] = useState(false);
   const nextStep = getNextStep(order.status, order.fulfillment);
   const displayTime = order.scheduledFor ?? order.createdAt;
   const isFutureScheduled =
@@ -53,6 +64,23 @@ export function OrderRow({ order }: OrderRowProps) {
       router.refresh();
     } catch {
       setInFlight(false);
+    }
+  }
+
+  async function handleDriverChange(driverId: string) {
+    if (driverInFlight) return;
+    setDriverInFlight(true);
+    try {
+      await fetch(`/api/orders/${order.id}/driver`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ driverId: driverId || null }),
+      });
+      router.refresh();
+    } catch {
+      // ignore
+    } finally {
+      setDriverInFlight(false);
     }
   }
 
@@ -106,6 +134,30 @@ export function OrderRow({ order }: OrderRowProps) {
         >
           {formatOrderTime(displayTime)}
         </span>
+      </td>
+
+      {/* Driver (DELIVERY orders only) */}
+      <td className="py-3 px-3">
+        {order.fulfillment === "DELIVERY" && drivers.length > 0 ? (
+          <select
+            value={order.deliveryInfo?.driverId ?? ""}
+            onChange={(e) => handleDriverChange(e.target.value)}
+            disabled={driverInFlight}
+            className="text-xs rounded border border-slate-200 bg-white px-1.5 py-1 text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-300 disabled:opacity-50 max-w-[120px]"
+            aria-label={`Assign driver for order #${order.number}`}
+          >
+            <option value="">Unassigned</option>
+            {drivers.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        ) : order.fulfillment === "DELIVERY" && order.deliveryInfo?.driverName ? (
+          <span className="text-xs text-slate-500">{order.deliveryInfo.driverName}</span>
+        ) : (
+          <span className="text-xs text-slate-300">—</span>
+        )}
       </td>
 
       {/* Next step */}
