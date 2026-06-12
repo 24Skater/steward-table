@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { CartShell } from "@/components/storefront/cart-shell";
 import { ToastProvider } from "@/components/ui/toast";
 import { StorefrontMenu } from "@/components/storefront/storefront-menu";
+import { LangSwitcher } from "@/components/storefront/lang-switcher";
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
@@ -115,6 +116,9 @@ export default async function StorefrontLayout({
             )}
           </Link>
           <div className="flex items-center gap-1">
+            <Suspense>
+              <LangSwitcher churchSlug={churchSlug} />
+            </Suspense>
             <CartShell churchSlug={churchSlug} />
             <StorefrontMenu
               churchSlug={churchSlug}
