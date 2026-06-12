@@ -33,10 +33,15 @@ interface ItemModifierGroup {
   group: ModifierGroup;
 }
 
+interface ItemTranslations {
+  es?: { name?: string; description?: string };
+}
+
 interface Item {
   id: string;
   name: string;
   description: string | null;
+  translations?: unknown;
   defaultPrice: number;
   status: string;
   modifierGroups: ItemModifierGroup[];
@@ -69,6 +74,11 @@ export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerPr
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const effectivePrice = (ci: CatalogItem) => ci.priceOverride ?? ci.item.defaultPrice;
+
+  const missingEsCount = catalog.items.filter((ci) => {
+    const t = ci.item.translations as ItemTranslations | null;
+    return !t?.es?.name?.trim();
+  }).length;
 
   async function handleRemove() {
     if (!removeTarget) return;
@@ -112,10 +122,18 @@ export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerPr
               {catalog.status.toLowerCase()}
             </Badge>
           </div>
-          <p className="text-sm text-slate-500">
-            {catalog.items.length}{" "}
-            {catalog.items.length === 1 ? "item" : "items"}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm text-slate-500">
+              {catalog.items.length}{" "}
+              {catalog.items.length === 1 ? "item" : "items"}
+            </p>
+            {missingEsCount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-200">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                {missingEsCount} {missingEsCount === 1 ? "item" : "items"} missing Spanish
+              </span>
+            )}
+          </div>
         </div>
 
         <Button onClick={() => setCreateDialogOpen(true)}>
@@ -144,6 +162,9 @@ export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerPr
                   <span className="font-medium text-slate-900 text-sm truncate">
                     {ci.item.name}
                   </span>
+                  {!(ci.item.translations as ItemTranslations | null)?.es?.name?.trim() && (
+                    <span title="Missing Spanish translation" className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                  )}
                   <Badge
                     variant={
                       ci.isAvailable && ci.item.status === "ACTIVE"

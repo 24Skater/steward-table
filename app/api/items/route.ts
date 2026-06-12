@@ -51,6 +51,8 @@ export async function POST(req: NextRequest) {
       churchId: body.churchId as string,
       imageUrl:
         typeof body.imageUrl === "string" && body.imageUrl.trim() ? body.imageUrl.trim() : null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ...(body.translations != null && { translations: body.translations as any }),
     },
   });
 
