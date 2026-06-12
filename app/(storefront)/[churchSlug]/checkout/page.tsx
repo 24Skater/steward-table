@@ -80,6 +80,7 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [smsOptIn, setSmsOptIn] = useState(false);
+  const [churchName, setChurchName] = useState<string>("");
 
   // Delivery zone state
   const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
@@ -112,10 +113,11 @@ export default function CheckoutPage() {
 
     fetch(`/api/storefront/${churchSlug}/payment-config`)
       .then((res) => (res.ok ? res.json() : { stripeEnabled: false, acceptCash: true, acceptZelle: false }))
-      .then((data: { stripeEnabled: boolean; acceptCash?: boolean; acceptZelle?: boolean; pickupEnabled?: boolean; deliveryEnabled?: boolean; dineInEnabled?: boolean }) => {
+      .then((data: { stripeEnabled: boolean; acceptCash?: boolean; acceptZelle?: boolean; pickupEnabled?: boolean; deliveryEnabled?: boolean; dineInEnabled?: boolean; churchName?: string }) => {
         setStripeEnabled(data.stripeEnabled);
         setAcceptCash(data.acceptCash ?? true);
         setAcceptZelle(data.acceptZelle ?? false);
+        if (data.churchName) setChurchName(data.churchName);
         const pickup = data.pickupEnabled ?? true;
         const delivery = data.deliveryEnabled ?? false;
         const dineIn = data.dineInEnabled ?? false;
@@ -569,7 +571,7 @@ export default function CheckoutPage() {
               className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-emerald-600 cursor-pointer"
             />
             <label htmlFor="sms-opt-in" className="text-xs text-slate-600 cursor-pointer leading-relaxed">
-              By checking this box and providing your phone number, you agree to receive transactional SMS messages about your order. Message frequency varies. Message and data rates may apply. Reply HELP for help, STOP to unsubscribe. Consent is not a condition of purchase.
+              By checking this box and providing your phone number, you agree to receive transactional SMS messages from {churchName || "this church"} about your order via Steward. Message frequency varies. Message and data rates may apply. Reply HELP for help, STOP to unsubscribe. Consent is not a condition of purchase.
             </label>
           </div>
         )}
