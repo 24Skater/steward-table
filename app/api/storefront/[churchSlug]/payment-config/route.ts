@@ -11,6 +11,7 @@ export async function GET(
     where: { slug: churchSlug, status: "ACTIVE" },
     select: {
       id: true,
+      name: true,
       settings: { select: { acceptCash: true, acceptZelle: true, brandTokens: true } },
     },
     _bypassTenancyCheck: true,
@@ -41,5 +42,6 @@ export async function GET(
     pickupEnabled: typeof tokens.pickupEnabled === "boolean" ? tokens.pickupEnabled : true,
     deliveryEnabled: typeof tokens.deliveryEnabled === "boolean" ? tokens.deliveryEnabled : false,
     dineInEnabled: typeof tokens.dineInEnabled === "boolean" ? tokens.dineInEnabled : false,
+    churchName: (church as { name: string }).name,
   });
 }
