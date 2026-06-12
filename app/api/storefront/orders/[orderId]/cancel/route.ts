@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { effectQueue } from "@/lib/orders/effect-queue"
 import { transition } from "@/lib/orders/transitions"
 
 const CANCELABLE_STATUSES = ["SUBMITTED", "CONFIRMED"] as const
@@ -57,6 +58,7 @@ export async function POST(
 
   await transition(orderId, "CANCELED", {
     reason: "Customer canceled within self-cancel window",
+    queue: effectQueue,
   })
 
   return NextResponse.json({ success: true, message: "Order canceled" })
