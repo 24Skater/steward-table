@@ -3,7 +3,8 @@ import { db } from "@/lib/db"
 import { effectQueue } from "@/lib/orders/effect-queue"
 import { transition } from "@/lib/orders/transitions"
 
-const CANCELABLE_STATUSES = ["SUBMITTED", "CONFIRMED"] as const
+// Per STATE_MACHINE §8: customers can only self-cancel DRAFT or SUBMITTED orders
+const CANCELABLE_STATUSES = ["DRAFT", "SUBMITTED"] as const
 type CancelableStatus = (typeof CANCELABLE_STATUSES)[number]
 
 function isCancelable(status: string): status is CancelableStatus {
