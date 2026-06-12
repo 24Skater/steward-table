@@ -16,10 +16,10 @@ export async function POST(
 
   const { orderId } = await params;
 
-  // Fetch order to get churchId
+  // Fetch order to get churchId and fulfillment for auto-advance
   const order = await db.order.findUnique({
     where: { id: orderId },
-    select: { id: true, churchId: true, status: true },
+    select: { id: true, churchId: true, status: true, fulfillment: true },
     // @ts-expect-error bypass tenancy for system read
     _bypassTenancyCheck: true,
   });
@@ -50,6 +50,13 @@ export async function POST(
 
   try {
     await transition(orderId, "READY", { actorId: session.user.id, queue: effectQueue });
+
+    // Auto-advance based on fulfillment type
+    if (order.fulfillment === "PICKUP") {
+      // PICKUP: auto-advance to AWAITING_PICKUP so the "ready for pickup" notification fires
+      await transition(orderId, "AWAITING_PICKUP", { queue: effectQueue });
+    }
+
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof Error && err.message.includes("Invalid order transition")) {
