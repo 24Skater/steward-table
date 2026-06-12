@@ -30,9 +30,10 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
       name: true,
       description: true,
       items: {
-        where: { isAvailable: true, deletedAt: null },
+        where: { deletedAt: null },
         orderBy: { sortOrder: "asc" },
         select: {
+          isAvailable: true,
           priceOverride: true,
           item: {
             select: {
@@ -97,6 +98,7 @@ export default async function CatalogPage({ params }: CatalogPageProps) {
     price: (ci.priceOverride ?? ci.item.defaultPrice) as number,
     category: (ci.item.station as string | null) ?? null,
     imageUrl: (ci.item.imageUrl as string | null) ?? null,
+    isAvailable: (ci.isAvailable as boolean) ?? true,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     modifierGroups: (ci.item.modifierGroups as any[]).map((img: any) => ({
       id: img.group.id as string,
