@@ -132,6 +132,12 @@ export default async function SettingsRoute() {
 
         <div className="mt-6 pt-6 border-t border-slate-200 flex flex-col gap-2">
           <Link
+            href="/settings/church"
+            className="text-sm text-slate-600 hover:text-slate-900 hover:underline"
+          >
+            Church profile &amp; branding →
+          </Link>
+          <Link
             href={"/settings/payment" as Route}
             className="text-sm text-slate-600 hover:text-slate-900 hover:underline"
           >
