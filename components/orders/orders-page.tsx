@@ -357,7 +357,7 @@ export function OrdersPage({ orders, churchId, range, drivers = [] }: OrdersPage
       });
       setSelectedIds(new Set());
       router.refresh();
-    } catch {
+    } finally {
       setIsBulkLoading(false);
     }
   }
