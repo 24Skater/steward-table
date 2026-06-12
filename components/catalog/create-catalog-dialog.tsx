@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,14 @@ interface CreateCatalogDialogProps {
   onCreated: (catalog: CreatedCatalog) => void;
 }
 
+interface ExistingCatalog {
+  id: string;
+  name: string;
+  _count: { items: number };
+}
+
+type CreateMode = "blank" | "template" | "clone";
+
 const BLANK_TEMPLATE_KEY = "__blank__";
 
 export function CreateCatalogDialog({
@@ -39,35 +47,76 @@ export function CreateCatalogDialog({
   churchId,
   onCreated,
 }: CreateCatalogDialogProps) {
+  const [mode, setMode] = useState<CreateMode>("blank");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>(BLANK_TEMPLATE_KEY);
+  const [sourceCatalogId, setSourceCatalogId] = useState<string>("");
+  const [existingCatalogs, setExistingCatalogs] = useState<ExistingCatalog[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (open && mode === "clone") {
+      void fetch(`/api/catalogs?churchId=${churchId}`)
+        .then((r) => r.json())
+        .then((data: ExistingCatalog[]) => {
+          setExistingCatalogs(data);
+          if (data.length > 0 && !sourceCatalogId) {
+            setSourceCatalogId(data[0]?.id ?? "");
+          }
+        })
+        .catch(() => null);
+    }
+  }, [open, mode, churchId, sourceCatalogId]);
+
   function handleTemplateSelect(key: string) {
     setSelectedTemplateKey(key);
-    if (key !== BLANK_TEMPLATE_KEY) {
-      const template = CATALOG_TEMPLATES.find((t) => t.key === key);
-      if (template && !name.trim()) {
-        setName(template.name);
-      }
+    const template = CATALOG_TEMPLATES.find((t) => t.key === key);
+    if (template && !name.trim()) {
+      setName(template.name);
+    }
+  }
+
+  function handleModeChange(newMode: CreateMode) {
+    setMode(newMode);
+    setError(null);
+    if (newMode === "clone" && existingCatalogs.length === 0) {
+      void fetch(`/api/catalogs?churchId=${churchId}`)
+        .then((r) => r.json())
+        .then((data: ExistingCatalog[]) => {
+          setExistingCatalogs(data);
+          if (data.length > 0) setSourceCatalogId(data[0]?.id ?? "");
+        })
+        .catch(() => null);
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+    if (mode === "clone" && !sourceCatalogId) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const isTemplate = selectedTemplateKey !== BLANK_TEMPLATE_KEY;
-      const endpoint = isTemplate ? "/api/catalogs/from-template" : "/api/catalogs";
-      const payload = isTemplate
-        ? { catalogName: name.trim(), templateKey: selectedTemplateKey, churchId }
-        : { name: name.trim(), description: description.trim() || null, churchId };
+      let endpoint: string;
+      let payload: Record<string, unknown>;
+      let itemCount = 0;
+
+      if (mode === "template") {
+        endpoint = "/api/catalogs/from-template";
+        payload = { catalogName: name.trim(), templateKey: selectedTemplateKey, churchId };
+        itemCount = CATALOG_TEMPLATES.find((t) => t.key === selectedTemplateKey)?.items.length ?? 0;
+      } else if (mode === "clone") {
+        endpoint = "/api/catalogs/clone";
+        payload = { sourceCatalogId, name: name.trim(), churchId };
+        itemCount = existingCatalogs.find((c) => c.id === sourceCatalogId)?._count.items ?? 0;
+      } else {
+        endpoint = "/api/catalogs";
+        payload = { name: name.trim(), description: description.trim() || null, churchId };
+      }
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -81,20 +130,25 @@ export function CreateCatalogDialog({
       }
 
       const data = await res.json();
-      const catalogId: string = isTemplate ? (data as { catalogId: string }).catalogId : (data as { id: string }).id;
+      const catalogId: string =
+        mode === "blank"
+          ? (data as { id: string }).id
+          : (data as { catalogId: string }).catalogId;
 
       onCreated({
         id: catalogId,
         name: name.trim(),
-        description: description.trim() || null,
+        description: mode === "blank" ? description.trim() || null : null,
         isActive: false,
         status: "DRAFT",
-        _count: { items: isTemplate ? CATALOG_TEMPLATES.find((t) => t.key === selectedTemplateKey)?.items.length ?? 0 : 0 },
+        _count: { items: itemCount },
       });
 
       setName("");
       setDescription("");
       setSelectedTemplateKey(BLANK_TEMPLATE_KEY);
+      setSourceCatalogId("");
+      setMode("blank");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -109,22 +163,28 @@ export function CreateCatalogDialog({
           <DialogTitle>New Catalog</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>Start from template</Label>
-            <div className="grid grid-cols-2 gap-2">
+          {/* Mode tabs */}
+          <div className="flex rounded-md border border-border overflow-hidden text-sm">
+            {(["blank", "template", "clone"] as CreateMode[]).map((m) => (
               <button
+                key={m}
                 type="button"
-                onClick={() => setSelectedTemplateKey(BLANK_TEMPLATE_KEY)}
+                onClick={() => handleModeChange(m)}
                 className={cn(
-                  "rounded-md border px-3 py-2 text-left text-sm transition-colors",
-                  selectedTemplateKey === BLANK_TEMPLATE_KEY
-                    ? "border-primary bg-primary/5 font-medium"
-                    : "border-border hover:border-primary/50",
+                  "flex-1 py-1.5 font-medium capitalize transition-colors",
+                  mode === m
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted",
                 )}
               >
-                <span className="block font-medium">Blank</span>
-                <span className="block text-xs text-muted-foreground">Start from scratch</span>
+                {m}
               </button>
+            ))}
+          </div>
+
+          {/* Template grid */}
+          {mode === "template" && (
+            <div className="grid grid-cols-2 gap-2">
               {CATALOG_TEMPLATES.map((template) => (
                 <button
                   key={template.key}
@@ -142,7 +202,31 @@ export function CreateCatalogDialog({
                 </button>
               ))}
             </div>
-          </div>
+          )}
+
+          {/* Clone source picker */}
+          {mode === "clone" && (
+            <div className="space-y-2">
+              <Label htmlFor="source-catalog">Clone from</Label>
+              {existingCatalogs.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No existing catalogs to clone.</p>
+              ) : (
+                <select
+                  id="source-catalog"
+                  value={sourceCatalogId}
+                  onChange={(e) => setSourceCatalogId(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {existingCatalogs.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c._count.items} items)
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="catalog-name">Name</Label>
             <Input
@@ -153,7 +237,7 @@ export function CreateCatalogDialog({
               required
             />
           </div>
-          {selectedTemplateKey === BLANK_TEMPLATE_KEY && (
+          {mode === "blank" && (
             <div className="space-y-2">
               <Label htmlFor="catalog-desc">Description (optional)</Label>
               <Textarea
@@ -170,7 +254,15 @@ export function CreateCatalogDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !name.trim()}>
+            <Button
+              type="submit"
+              disabled={
+                loading ||
+                !name.trim() ||
+                (mode === "clone" && !sourceCatalogId) ||
+                (mode === "template" && selectedTemplateKey === BLANK_TEMPLATE_KEY)
+              }
+            >
               {loading ? "Creating..." : "Create Catalog"}
             </Button>
           </DialogFooter>
