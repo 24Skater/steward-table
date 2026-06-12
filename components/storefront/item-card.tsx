@@ -118,6 +118,7 @@ export function ItemCard({
           open={dialogOpen}
           onClose={() => setDialogOpen(false)}
           itemName={name}
+          itemDescription={description}
           itemBasePrice={price}
           modifierGroups={modifierGroups}
           onConfirm={handleModifierConfirm}
