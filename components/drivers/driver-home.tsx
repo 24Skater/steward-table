@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { AssignedDelivery, AvailableDelivery } from "@/app/(driver)/d/page";
@@ -200,6 +200,46 @@ export function DriverHome({ assigned, available }: DriverHomeProps) {
   const router = useRouter();
   const [actionInFlight, setActionInFlight] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [disconnected, setDisconnected] = useState(false);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let es: EventSource | null = null;
+    let retryDelay = 2000;
+
+    function connect() {
+      es = new EventSource("/api/driver/stream");
+
+      es.addEventListener("update", () => {
+        router.refresh();
+      });
+
+      es.addEventListener("heartbeat", () => {
+        setDisconnected(false);
+      });
+
+      es.onopen = () => {
+        setDisconnected(false);
+        retryDelay = 2000;
+      };
+
+      es.onerror = () => {
+        setDisconnected(true);
+        es?.close();
+        retryTimeoutRef.current = setTimeout(() => {
+          retryDelay = Math.min(retryDelay * 2, 30_000);
+          connect();
+        }, retryDelay);
+      };
+    }
+
+    connect();
+
+    return () => {
+      es?.close();
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+    };
+  }, [router]);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -250,6 +290,12 @@ export function DriverHome({ assigned, available }: DriverHomeProps) {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-8">
+      {disconnected && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-rose-600 text-white text-sm font-semibold text-center py-2">
+          Reconnecting…
+        </div>
+      )}
+
       <div className="flex justify-end">
         <Link
           href="/d/history"
