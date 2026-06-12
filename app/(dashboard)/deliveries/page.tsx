@@ -188,16 +188,50 @@ export default async function DeliveriesPage() {
                     <p className="text-sm text-slate-500">{address}</p>
                   )}
 
-                  {/* Mark Delivered */}
-                  <form method="POST" action={`/api/orders/${delivery.id}/status`}>
-                    <input type="hidden" name="status" value="DELIVERED" />
-                    <button
-                      type="submit"
-                      className="w-full py-2 px-4 bg-slate-800 text-white text-sm font-medium rounded-md hover:bg-slate-700 active:bg-slate-900 transition-colors min-h-[44px]"
-                    >
-                      Mark Delivered
-                    </button>
-                  </form>
+                  {/* Navigate + Call row */}
+                  <div className="flex gap-2">
+                    {address && (
+                      <a
+                        href={`https://maps.google.com/?q=${encodeURIComponent(address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 inline-flex items-center justify-center py-2 px-3 bg-slate-100 text-slate-700 text-sm font-medium rounded-md hover:bg-slate-200 transition-colors min-h-[44px]"
+                      >
+                        Navigate
+                      </a>
+                    )}
+                    {delivery.customer.phone && (
+                      <a
+                        href={`tel:${delivery.customer.phone}`}
+                        className="flex-1 inline-flex items-center justify-center py-2 px-3 bg-slate-100 text-slate-700 text-sm font-medium rounded-md hover:bg-slate-200 transition-colors min-h-[44px]"
+                      >
+                        Call
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Primary action — status-aware */}
+                  {delivery.status === "READY" ? (
+                    <form method="POST" action={`/api/orders/${delivery.id}/status`}>
+                      <input type="hidden" name="status" value="OUT_FOR_DELIVERY" />
+                      <button
+                        type="submit"
+                        className="w-full py-2 px-4 bg-slate-800 text-white text-sm font-medium rounded-md hover:bg-slate-700 active:bg-slate-900 transition-colors min-h-[44px]"
+                      >
+                        Mark Picked Up
+                      </button>
+                    </form>
+                  ) : (
+                    <form method="POST" action={`/api/orders/${delivery.id}/status`}>
+                      <input type="hidden" name="status" value="DELIVERED" />
+                      <button
+                        type="submit"
+                        className="w-full py-2 px-4 bg-emerald-700 text-white text-sm font-medium rounded-md hover:bg-emerald-800 active:bg-emerald-900 transition-colors min-h-[44px]"
+                      >
+                        Mark Delivered
+                      </button>
+                    </form>
+                  )}
                 </li>
               );
             })}
