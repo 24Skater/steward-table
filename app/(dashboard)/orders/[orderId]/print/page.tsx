@@ -66,35 +66,45 @@ export default async function PrintReceiptPage({
   const { churchId } = activeMembership;
   const { orderId } = await params;
 
-  const order = await db.order.findFirst({
-    where: { id: orderId, churchId },
-    include: {
-      items: {
-        orderBy: { createdAt: "asc" },
-      },
-      customer: {
-        select: {
-          name: true,
-          email: true,
-          phone: true,
+  const [order, churchSettings] = await Promise.all([
+    db.order.findFirst({
+      where: { id: orderId, churchId },
+      include: {
+        items: {
+          orderBy: { createdAt: "asc" },
+        },
+        customer: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        payments: {
+          select: {
+            method: true,
+            status: true,
+            amount: true,
+          },
+        },
+        deliveryInfo: true,
+        church: {
+          select: {
+            name: true,
+            slug: true,
+            ein: true,
+          },
         },
       },
-      payments: {
-        select: {
-          method: true,
-          status: true,
-          amount: true,
-        },
+    }),
+    db.churchSettings.findUnique({
+      where: { churchId },
+      select: {
+        receiptLanguage: true,
+        receiptCustomFooter: true,
       },
-      deliveryInfo: true,
-      church: {
-        select: {
-          name: true,
-          slug: true,
-        },
-      },
-    },
-  });
+    }),
+  ]);
 
   if (!order) {
     return (
@@ -382,7 +392,24 @@ export default async function PrintReceiptPage({
           {/* Footer */}
           <div className="footer">
             <p>Thank you!</p>
-            <p>Powered by Steward Table</p>
+            {churchSettings?.receiptLanguage === "US_501C3" && (
+              <>
+                <p style={{ marginTop: "0.5rem" }}>
+                  {order.church.name} is a 501(c)(3) nonprofit organization.
+                  {order.church.ein && ` EIN: ${order.church.ein}.`}
+                </p>
+                <p style={{ fontSize: "11px", marginTop: "0.25rem" }}>
+                  No goods or services were provided in exchange for this contribution,
+                  making the full amount tax-deductible to the extent allowed by law.
+                </p>
+              </>
+            )}
+            {churchSettings?.receiptLanguage === "CUSTOM" && churchSettings.receiptCustomFooter && (
+              <p style={{ marginTop: "0.5rem", whiteSpace: "pre-wrap" }}>
+                {churchSettings.receiptCustomFooter}
+              </p>
+            )}
+            <p style={{ marginTop: "0.5rem" }}>Powered by Steward Table</p>
           </div>
         </div>
       </div>
