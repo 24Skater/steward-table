@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import type { CartModifier } from "@/hooks/use-cart";
 
@@ -31,6 +30,7 @@ interface ModifierDialogProps {
   open: boolean;
   onClose: () => void;
   itemName: string;
+  itemDescription?: string | null;
   itemBasePrice: number;
   modifierGroups: ModifierGroup[];
   onConfirm: (modifiers: CartModifier[], totalPrice: number) => void;
@@ -44,6 +44,7 @@ export function ModifierDialog({
   open,
   onClose,
   itemName,
+  itemDescription,
   itemBasePrice,
   modifierGroups,
   onConfirm,
@@ -63,6 +64,15 @@ export function ModifierDialog({
   const allRequiredMet = modifierGroups
     .filter((g) => g.isRequired)
     .every((g) => (selections[g.id]?.length ?? 0) >= g.minSelections);
+
+  const modifierTotal = Object.entries(selections).reduce((sum, [groupId, selectedIds]) => {
+    const group = modifierGroups.find((g) => g.id === groupId);
+    if (!group) return sum;
+    return sum + selectedIds.reduce((s, optId) => {
+      const opt = group.options.find((o) => o.id === optId);
+      return s + (opt?.priceDelta ?? 0);
+    }, 0);
+  }, 0);
 
   function toggleOption(group: ModifierGroup, optionId: string) {
     const current = selections[group.id] ?? [];
@@ -92,18 +102,30 @@ export function ModifierDialog({
         }
       }
     }
-    const modifierTotal = modifiers.reduce((s, m) => s + m.priceDelta, 0);
     onConfirm(modifiers, itemBasePrice + modifierTotal);
   }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{itemName}</DialogTitle>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <SheetContent
+        side="bottom"
+        className="max-h-[90vh] overflow-y-auto rounded-t-2xl px-0 pb-0 pt-0"
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pb-2 pt-3">
+          <div className="h-1 w-10 rounded-full bg-slate-200" />
+        </div>
 
-        <div className="space-y-6 py-2">
+        <SheetHeader className="px-5 pb-4">
+          <SheetTitle className="text-left text-lg font-bold text-slate-800">
+            {itemName}
+          </SheetTitle>
+          {itemDescription && (
+            <p className="mt-1 text-sm text-slate-500">{itemDescription}</p>
+          )}
+        </SheetHeader>
+
+        <div className="space-y-6 px-5 pb-4">
           {modifierGroups.map((group) => (
             <div key={group.id}>
               <div className="mb-2 flex items-baseline justify-between">
@@ -119,7 +141,7 @@ export function ModifierDialog({
                   return (
                     <label
                       key={option.id}
-                      className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 transition-colors hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50"
+                      className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 transition-colors hover:bg-slate-50 has-checked:border-emerald-500 has-checked:bg-emerald-50"
                     >
                       <div className="flex items-center gap-3">
                         <input
@@ -145,25 +167,16 @@ export function ModifierDialog({
           ))}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
+        <div className="sticky bottom-0 bg-white border-t border-slate-100 px-5 pb-8 pt-4">
           <Button
             disabled={!allRequiredMet}
             onClick={handleConfirm}
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 py-6 text-base font-semibold disabled:opacity-50"
           >
-            Add to order — {formatCents(itemBasePrice + Object.values(selections).flat().reduce((s, id) => {
-              for (const g of modifierGroups) {
-                const opt = g.options.find((o) => o.id === id);
-                if (opt) return s + opt.priceDelta;
-              }
-              return s;
-            }, 0))}
+            Add to order — {formatCents(itemBasePrice + modifierTotal)}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
