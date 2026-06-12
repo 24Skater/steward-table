@@ -97,6 +97,23 @@ export async function POST(
     );
   }
 
+  // Enforce STAFF refund cap — ADMIN/OWNER are exempt
+  const isAdminOrOwner = activeMembership.roles.some((r) => r === "ADMIN" || r === "OWNER");
+  if (!isAdminOrOwner) {
+    const settings = await (db.churchSettings.findUnique as Function)({
+      where: { churchId },
+      select: { staffRefundCapCents: true },
+      _bypassTenancyCheck: true,
+    });
+    const cap: number = settings?.staffRefundCapCents ?? 5000;
+    if (cap > 0 && resolvedAmount > cap) {
+      return NextResponse.json(
+        { error: `Staff refunds are limited to $${(cap / 100).toFixed(2)}. Contact an admin for larger refunds.` },
+        { status: 403 },
+      );
+    }
+  }
+
   const isStripePayment =
     capturedPayment?.method === "STRIPE_CARD" ||
     capturedPayment?.method === "STRIPE_OTHER";
