@@ -18,6 +18,7 @@ export function LangSwitcher({ churchSlug }: { churchSlug: string }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    // Resolution order: URL param → stored locale → browser Accept-Language → default (EN)
     const fromParam = searchParams.get("lang")?.toUpperCase();
     if (fromParam === "EN" || fromParam === "ES") {
       setLocale(fromParam);
@@ -27,6 +28,13 @@ export function LangSwitcher({ churchSlug }: { churchSlug: string }) {
     const stored = localStorage.getItem(LOCALE_STORAGE_KEY + "-" + churchSlug);
     if (stored === "EN" || stored === "ES") {
       setLocale(stored);
+      return;
+    }
+    // Detect browser language — prefer Spanish if any Spanish variant present
+    const browserLangs = navigator.languages ?? [navigator.language];
+    const hasSpanish = browserLangs.some((l) => l.toLowerCase().startsWith("es"));
+    if (hasSpanish) {
+      setLocale("ES");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
