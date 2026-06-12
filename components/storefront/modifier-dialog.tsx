@@ -36,6 +36,7 @@ interface ModifierDialogProps {
   modifierGroups: ModifierGroup[];
   initialSelections?: Record<string, string[]>;
   initialQuantity?: number;
+  maxQuantity?: number;
   confirmLabel?: string;
   onConfirm: (modifiers: CartModifier[], unitPrice: number, quantity: number) => void;
 }
@@ -53,6 +54,7 @@ export function ModifierDialog({
   modifierGroups,
   initialSelections,
   initialQuantity = 1,
+  maxQuantity,
   confirmLabel,
   onConfirm,
 }: ModifierDialogProps) {
@@ -226,9 +228,10 @@ export function ModifierDialog({
             </span>
             <button
               type="button"
-              onClick={() => setQuantity((q) => q + 1)}
+              onClick={() => setQuantity((q) => Math.min(maxQuantity ?? 99, q + 1))}
               aria-label="Increase quantity"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
+              disabled={maxQuantity != null && quantity >= maxQuantity}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40"
             >
               <Plus className="h-4 w-4" />
             </button>
