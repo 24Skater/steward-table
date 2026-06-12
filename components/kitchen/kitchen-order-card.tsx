@@ -68,6 +68,12 @@ export function KitchenOrderCard({ order, currentTime, onMarkReady }: KitchenOrd
     ? formatOrderTime(order.scheduledFor)
     : formatOrderTime(order.createdAt);
 
+  // "In kitchen 1h+" badge — only for IN_KITCHEN orders
+  const inKitchenMs = order.status === "IN_KITCHEN"
+    ? currentTime.getTime() - new Date(order.createdAt).getTime()
+    : 0;
+  const showStalebadge = inKitchenMs > 60 * 60 * 1000;
+
   function handleMarkReady() {
     startTransition(async () => {
       await onMarkReady(order.id);
@@ -84,7 +90,14 @@ export function KitchenOrderCard({ order, currentTime, onMarkReady }: KitchenOrd
         <span className="text-white font-semibold text-lg tabular-nums">
           #{order.number}
         </span>
-        <time className="text-slate-300 text-sm">{displayTime}</time>
+        <div className="flex items-center gap-2">
+          {showStalebadge && (
+            <span className="text-xs font-semibold bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded">
+              ⏱ 1h+
+            </span>
+          )}
+          <time className="text-slate-300 text-sm">{displayTime}</time>
+        </div>
       </header>
 
       <div className="flex flex-col flex-1 divide-y divide-slate-800">
