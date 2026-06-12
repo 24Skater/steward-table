@@ -1,15 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { AlertTriangle } from "lucide-react";
 import { KitchenOrderCard } from "./kitchen-order-card";
 import { KitchenTopBar } from "./kitchen-top-bar";
-import {
-  KitchenFilters,
-  applyFilters,
-  type StatusFilter,
-  type FulfillmentFilter,
-} from "./kitchen-filters";
 
 export interface KitchenOrderItem {
   id: string;
@@ -24,7 +18,7 @@ export interface KitchenOrderItem {
 export interface KitchenOrder {
   id: string;
   number: number;
-  status: "CONFIRMED" | "IN_KITCHEN" | "READY";
+  status: "CONFIRMED" | "IN_KITCHEN" | "READY" | "CANCELED" | "REFUNDED";
   fulfillment: "PICKUP" | "DELIVERY" | "DINE_IN";
   scheduledFor: string | null;
   createdAt: string;
@@ -33,14 +27,16 @@ export interface KitchenOrder {
   items: KitchenOrderItem[];
 }
 
+const CANCELED_DISPLAY_MS = 30_000;
+
 export function KitchenDisplay() {
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
+  const [canceledOrders, setCanceledOrders] = useState<Map<string, KitchenOrder>>(new Map());
   const [connected, setConnected] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL_ACTIVE");
-  const [fulfillmentFilter, setFulfillmentFilter] = useState<FulfillmentFilter>("ALL");
   const [markingAllReady, setMarkingAllReady] = useState(false);
   const [kitchenError, setKitchenError] = useState<string | null>(null);
+  const cancelTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Wakelock: keep screen awake on kitchen tablet
   useEffect(() => {
@@ -77,6 +73,20 @@ export function KitchenDisplay() {
     return () => clearInterval(interval);
   }, []);
 
+  function scheduleCanceledRemoval(orderId: string) {
+    const existing = cancelTimers.current.get(orderId);
+    if (existing) clearTimeout(existing);
+    const timer = setTimeout(() => {
+      setCanceledOrders((prev) => {
+        const next = new Map(prev);
+        next.delete(orderId);
+        return next;
+      });
+      cancelTimers.current.delete(orderId);
+    }, CANCELED_DISPLAY_MS);
+    cancelTimers.current.set(orderId, timer);
+  }
+
   // SSE connection for real-time order updates
   useEffect(() => {
     let es: EventSource;
@@ -96,18 +106,17 @@ export function KitchenDisplay() {
         }
       });
 
-      es.addEventListener("order_update", (e) => {
+      es.addEventListener("canceled_orders", (e) => {
         try {
-          const updated = JSON.parse(e.data) as KitchenOrder;
-          setOrders((prev) => {
-            const activeStatuses = new Set(["CONFIRMED", "IN_KITCHEN", "READY"]);
-            if (!activeStatuses.has(updated.status)) {
-              return prev.filter((o) => o.id !== updated.id);
+          const data = JSON.parse(e.data) as KitchenOrder[];
+          setCanceledOrders((prev) => {
+            const next = new Map(prev);
+            for (const order of data) {
+              if (!next.has(order.id)) {
+                next.set(order.id, order);
+                scheduleCanceledRemoval(order.id);
+              }
             }
-            const idx = prev.findIndex((o) => o.id === updated.id);
-            if (idx === -1) return [...prev, updated];
-            const next = [...prev];
-            next[idx] = updated;
             return next;
           });
         } catch {
@@ -126,7 +135,12 @@ export function KitchenDisplay() {
     return () => {
       es.close();
       clearTimeout(reconnectTimeout);
+      // Clear all cancel timers on unmount
+      for (const timer of cancelTimers.current.values()) {
+        clearTimeout(timer);
+      }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleMarkReady = useCallback(async (orderId: string) => {
@@ -162,7 +176,8 @@ export function KitchenDisplay() {
   }, [orders]);
 
   const inKitchenCount = orders.filter((o) => o.status === "IN_KITCHEN").length;
-  const visibleOrders = applyFilters(orders, statusFilter, fulfillmentFilter);
+  const canceledList = Array.from(canceledOrders.values());
+  const totalVisible = orders.length + canceledList.length;
 
   return (
     <div className="flex flex-col h-screen bg-slate-950 overflow-hidden">
@@ -181,31 +196,20 @@ export function KitchenDisplay() {
         markingAllReady={markingAllReady}
       />
 
-      <KitchenFilters
-        orders={orders}
-        statusFilter={statusFilter}
-        fulfillmentFilter={fulfillmentFilter}
-        onStatusChange={setStatusFilter}
-        onFulfillmentChange={setFulfillmentFilter}
-      />
-
-      {visibleOrders.length === 0 ? (
+      {totalVisible === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-2">
-            <p className="text-slate-400 text-xl font-medium">
-              {orders.length === 0 ? "No active orders" : "No orders match the current filters"}
-            </p>
-            <p className="text-slate-600 text-sm">
-              {orders.length === 0
-                ? "Orders will appear here automatically"
-                : "Try adjusting the status or fulfillment filters"}
-            </p>
+            <p className="text-slate-400 text-xl font-medium">No active orders</p>
+            <p className="text-slate-600 text-sm">Orders will appear here automatically</p>
           </div>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-4">
           <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {visibleOrders.map((order) => (
+            {canceledList.map((order) => (
+              <CanceledOrderOverlay key={`canceled-${order.id}`} order={order} />
+            ))}
+            {orders.map((order) => (
               <KitchenOrderCard
                 key={order.id}
                 order={order}
@@ -217,5 +221,40 @@ export function KitchenDisplay() {
         </div>
       )}
     </div>
+  );
+}
+
+function CanceledOrderOverlay({ order }: { order: KitchenOrder }) {
+  return (
+    <article
+      className="flex flex-col rounded-lg border-2 border-red-500 overflow-hidden bg-slate-900 relative"
+      aria-label={`Order #${order.number} CANCELED`}
+    >
+      {/* Red CANCELED — STOP banner */}
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-red-950/90 gap-3">
+        <div className="text-red-300 text-4xl font-black tracking-widest animate-pulse">
+          STOP
+        </div>
+        <div className="text-white text-lg font-bold text-center px-4">
+          Order #{order.number}
+        </div>
+        <div className="text-red-300 text-sm font-semibold uppercase tracking-widest">
+          {order.status === "REFUNDED" ? "REFUNDED" : "CANCELED"}
+        </div>
+      </div>
+
+      {/* Ghost content behind overlay (gives card the right height) */}
+      <header className="flex items-center justify-between px-4 py-3 bg-slate-800 opacity-30">
+        <span className="text-white font-semibold text-lg">#{order.number}</span>
+      </header>
+      <div className="px-4 py-3 space-y-2 opacity-30">
+        {order.items.map((item) => (
+          <p key={item.id} className="text-white font-medium text-xl">
+            {item.quantity} &times; {item.itemName}
+          </p>
+        ))}
+      </div>
+      <div className="py-5 opacity-0" style={{ minHeight: "88px" }} />
+    </article>
   );
 }
