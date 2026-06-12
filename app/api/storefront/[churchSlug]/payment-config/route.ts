@@ -11,7 +11,7 @@ export async function GET(
     where: { slug: churchSlug, status: "ACTIVE" },
     select: {
       id: true,
-      settings: { select: { acceptCash: true, acceptZelle: true } },
+      settings: { select: { acceptCash: true, acceptZelle: true, brandTokens: true } },
     },
     _bypassTenancyCheck: true,
   });
@@ -27,11 +27,19 @@ export async function GET(
   });
 
   const stripeEnabled = !!(apiKey?.encrypted && (apiKey.encrypted as Buffer).length > 0);
-  const settings = church.settings as { acceptCash?: boolean; acceptZelle?: boolean } | null;
+  const settings = church.settings as { acceptCash?: boolean; acceptZelle?: boolean; brandTokens?: unknown } | null;
+
+  const tokens =
+    settings?.brandTokens && typeof settings.brandTokens === "object"
+      ? (settings.brandTokens as Record<string, unknown>)
+      : {};
 
   return NextResponse.json({
     stripeEnabled,
     acceptCash: settings?.acceptCash ?? true,
     acceptZelle: settings?.acceptZelle ?? true,
+    pickupEnabled: typeof tokens.pickupEnabled === "boolean" ? tokens.pickupEnabled : true,
+    deliveryEnabled: typeof tokens.deliveryEnabled === "boolean" ? tokens.deliveryEnabled : false,
+    dineInEnabled: typeof tokens.dineInEnabled === "boolean" ? tokens.dineInEnabled : false,
   });
 }
