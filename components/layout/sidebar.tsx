@@ -29,7 +29,6 @@ const NAV_ITEMS = [
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/drivers", label: "Drivers", icon: Truck },
-  { href: "/deliveries", label: "Deliveries", icon: Truck },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/team", label: "Team", icon: Users2 },
 ] as const;
