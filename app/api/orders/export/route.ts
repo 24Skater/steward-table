@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import type { SessionMembership } from "@/lib/auth/types";
 import type { OrderStatus, Prisma } from "@prisma/client";
 import type { NextRequest } from "next/server";
 
@@ -9,8 +11,19 @@ export async function GET(req: NextRequest) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const membership = session.user.memberships?.find((m) => m.status === "ACTIVE");
+  const membership = session.user.memberships?.find(
+    (m: SessionMembership) => m.status === "ACTIVE",
+  );
   if (!membership) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
+  const rbac = await can("report.read", {
+    userId: session.user.id,
+    churchId: membership.churchId,
+    roles: membership.roles,
+  });
+  if (!rbac.allowed) {
     return new Response("Forbidden", { status: 403 });
   }
 
