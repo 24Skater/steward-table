@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -307,15 +307,74 @@ interface StepCustomerProps {
   onNext: () => void;
 }
 
+interface LookupResult {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  totalOrders: number;
+}
+
 function StepCustomer({ info, onChange, onBack, onNext }: StepCustomerProps) {
   const canProceed = info.name.trim().length > 0;
+  const [lookupResult, setLookupResult] = useState<LookupResult | null>(null);
+  const lookupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function set(field: keyof CustomerInfo, value: string) {
     onChange({ ...info, [field]: value });
   }
 
+  function handlePhoneChange(value: string) {
+    set("phone", value);
+    setLookupResult(null);
+    if (lookupTimer.current) clearTimeout(lookupTimer.current);
+    const digits = value.replace(/\D/g, "");
+    if (digits.length >= 7) {
+      lookupTimer.current = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/customers/lookup?phone=${encodeURIComponent(digits)}`);
+          if (res.ok) {
+            const data = (await res.json()) as { customer: LookupResult | null };
+            setLookupResult(data.customer);
+          }
+        } catch {
+          // non-fatal
+        }
+      }, 400);
+    }
+  }
+
+  function applyLookup() {
+    if (!lookupResult) return;
+    onChange({
+      ...info,
+      name: lookupResult.name,
+      phone: lookupResult.phone ?? info.phone,
+      email: lookupResult.email ?? info.email,
+    });
+    setLookupResult(null);
+  }
+
   return (
     <div className="flex flex-col gap-4">
+      {lookupResult && (
+        <button
+          type="button"
+          onClick={applyLookup}
+          className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-left text-sm text-emerald-800 hover:bg-emerald-100 transition-colors"
+        >
+          <span className="flex-1">
+            <span className="font-medium">Returning customer:</span> {lookupResult.name}
+            {lookupResult.totalOrders > 0 && (
+              <span className="text-xs text-emerald-600 ml-1">
+                ({lookupResult.totalOrders} order{lookupResult.totalOrders !== 1 ? "s" : ""})
+              </span>
+            )}
+          </span>
+          <span className="shrink-0 text-xs font-medium text-emerald-700">Pre-fill →</span>
+        </button>
+      )}
+
       <div>
         <label className="text-xs font-medium text-slate-500 mb-1 block" htmlFor="cust-name">
           Name <span className="text-red-500">*</span>
@@ -338,7 +397,7 @@ function StepCustomer({ info, onChange, onBack, onNext }: StepCustomerProps) {
           id="cust-phone"
           type="tel"
           value={info.phone}
-          onChange={(e) => set("phone", e.target.value)}
+          onChange={(e) => handlePhoneChange(e.target.value)}
           placeholder="(555) 000-0000"
           className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
         />
