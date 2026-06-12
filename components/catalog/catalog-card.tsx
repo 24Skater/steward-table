@@ -19,6 +19,7 @@ export interface Catalog {
   id: string;
   name: string;
   description: string | null;
+  translations?: unknown;
   isActive: boolean;
   status: string;
   _count: { items: number };
