@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import type { PaymentMethod } from "@prisma/client";
 import { db } from "@/lib/db";
 import { effectQueue } from "@/lib/orders/effect-queue";
 import { transition } from "@/lib/orders/transitions";
@@ -26,6 +27,7 @@ interface OrderRequestBody {
   email?: string | null;
   notes?: string | null;
   fulfillment?: string;
+  paymentMethod?: string;
   scheduledFor?: string | null;
   smsOptIn?: boolean;
   tip?: number;
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { churchSlug, customerName, phone, email, notes, fulfillment, scheduledFor, smsOptIn, tip, items } = body;
+  const { churchSlug, customerName, phone, email, notes, fulfillment, paymentMethod, scheduledFor, smsOptIn, tip, items } = body;
 
   if (!churchSlug || !customerName?.trim() || !items?.length) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -160,6 +162,12 @@ export async function POST(req: NextRequest) {
 
   const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
   const tipAmount = typeof tip === "number" && tip >= 0 ? Math.round(tip) : 0;
+  const orderTotal = subtotal + tipAmount;
+
+  const resolvedPaymentMethod: PaymentMethod =
+    paymentMethod === "cash" ? "CASH"
+    : paymentMethod === "zelle" ? "ZELLE"
+    : "PAY_ON_PICKUP";
 
   const order = await db.order.create({
     data: {
@@ -174,7 +182,7 @@ export async function POST(req: NextRequest) {
       subtotal,
       tax: 0,
       tip: tipAmount,
-      total: subtotal + tipAmount,
+      total: orderTotal,
       notes: notes ?? null,
       scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
       receiptLanguageVersion: 1,
@@ -194,6 +202,14 @@ export async function POST(req: NextRequest) {
             total: itemSubtotal,
           };
         }),
+      },
+      payments: {
+        create: {
+          method: resolvedPaymentMethod,
+          status: "PENDING",
+          amount: orderTotal,
+          currency: church.currency,
+        },
       },
     },
     select: { id: true, number: true },
