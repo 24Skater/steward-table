@@ -1,4 +1,6 @@
 import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac/can";
+import type { SessionMembership } from "@/lib/auth/types";
 import { getPresignedUploadUrl } from "@/lib/storage";
 import { nanoid } from "nanoid";
 import { type NextRequest, NextResponse } from "next/server";
@@ -16,6 +18,22 @@ export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
+  }
+
+  const membership = session.user.memberships?.find(
+    (m: SessionMembership) => m.status === "ACTIVE",
+  );
+  if (!membership) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const rbac = await can("catalog.edit", {
+    userId: session.user.id,
+    churchId: membership.churchId,
+    roles: membership.roles,
+  });
+  if (!rbac.allowed) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const contentType = req.nextUrl.searchParams.get("contentType");
