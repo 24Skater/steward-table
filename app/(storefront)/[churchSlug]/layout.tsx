@@ -1,6 +1,7 @@
 import React from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { CartShell } from "@/components/storefront/cart-shell";
 import { ToastProvider } from "@/components/ui/toast";
@@ -9,6 +10,54 @@ import { StorefrontMenu } from "@/components/storefront/storefront-menu";
 interface StorefrontLayoutProps {
   children: React.ReactNode;
   params: Promise<{ churchSlug: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ churchSlug: string }>;
+}): Promise<Metadata> {
+  const { churchSlug } = await params;
+
+  const church = await db.church.findFirst({
+    where: { slug: churchSlug, status: "ACTIVE" },
+    select: { name: true, logoUrl: true },
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore bypass tenancy for metadata generation
+    _bypassTenancyCheck: true,
+  });
+
+  if (!church) return {};
+
+  const catalog = await db.catalog.findFirst({
+    where: {
+      church: { slug: churchSlug },
+      status: "OPEN",
+    },
+    select: { name: true },
+  });
+
+  const title = catalog ? `${church.name} — ${catalog.name}` : church.name;
+  const description = catalog
+    ? `Order from ${church.name}: ${catalog.name}`
+    : `Order from ${church.name}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: church.logoUrl ? [{ url: church.logoUrl }] : [],
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+      images: church.logoUrl ? [church.logoUrl] : [],
+    },
+  };
 }
 
 export default async function StorefrontLayout({
