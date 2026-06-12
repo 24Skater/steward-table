@@ -10,9 +10,10 @@ import type { CustomerRow } from "./customer-detail-drawer";
 interface CustomersPageProps {
   customers: CustomerRow[];
   initialSearch?: string;
+  canExport?: boolean;
 }
 
-export function CustomersPage({ customers, initialSearch = "" }: CustomersPageProps) {
+export function CustomersPage({ customers, initialSearch = "", canExport = false }: CustomersPageProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null);
@@ -58,13 +59,24 @@ export function CustomersPage({ customers, initialSearch = "" }: CustomersPagePr
           </Badge>
         </div>
 
-        <input
-          type="search"
-          placeholder="Search by name, phone, or email..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="h-8 w-full sm:w-72 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="search"
+            placeholder="Search by name, phone, or email..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="h-8 w-full sm:w-72 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
+          />
+          {canExport && (
+            <a
+              href={`/api/customers/export${searchInput.trim() ? `?q=${encodeURIComponent(searchInput.trim())}` : ""}`}
+              download
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 h-8 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              Export CSV
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Content */}
