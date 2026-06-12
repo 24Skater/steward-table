@@ -18,9 +18,9 @@ async function handleStatusChange(
 
   const order = (await (db.order.findUnique as Function)({
     where: { id: orderId },
-    select: { id: true, churchId: true, status: true },
+    select: { id: true, churchId: true, status: true, createdAt: true },
     _bypassTenancyCheck: true,
-  })) as { id: string; churchId: string; status: OrderStatus } | null;
+  })) as { id: string; churchId: string; status: OrderStatus; createdAt: Date } | null;
 
   if (!order) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -33,10 +33,14 @@ async function handleStatusChange(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const result = await can("order.update", {
+  // Use the correct RBAC action: order.cancel has different conditions than order.update
+  const action = targetStatus === "CANCELED" ? "order.cancel" : "order.update";
+  const result = await can(action, {
     userId: session.user.id,
     churchId: order.churchId,
     roles: membership.roles,
+    orderStatus: order.status,
+    orderCreatedAt: order.createdAt,
   });
   if (!result.allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
