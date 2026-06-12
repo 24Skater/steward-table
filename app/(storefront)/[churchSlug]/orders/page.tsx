@@ -69,7 +69,7 @@ export default async function OrderHistoryPage({
     notFound();
   }
 
-  if (!session?.user?.email) {
+  if (!session?.user) {
     return (
       <div className="mx-auto max-w-lg">
         <h1 className="mb-2 text-2xl font-bold text-slate-800">Your Orders</h1>
@@ -86,10 +86,20 @@ export default async function OrderHistoryPage({
     );
   }
 
+  // Look up customer by userId (covers both email and phone-based magic-link sessions)
+  // Fall back to email lookup for backwards compatibility
+  const userId = (session.user as { id?: string }).id;
   const email = session.user.email;
 
   const customer = await db.customer.findFirst({
-    where: { churchId: church.id, emailNormalized: email.toLowerCase() },
+    where: {
+      churchId: church.id,
+      ...(userId
+        ? { userId }
+        : email
+        ? { emailNormalized: email.toLowerCase() }
+        : { id: "never" }),
+    },
     include: {
       orders: {
         orderBy: { createdAt: "desc" },
