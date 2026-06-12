@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { AssignedDelivery, AvailableDelivery } from "@/app/(driver)/d/page";
 
 function formatScheduled(iso: string | null): string {
@@ -47,7 +48,12 @@ function AssignedCard({ delivery, onAction, inFlight }: AssignedCardProps) {
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       {/* Status chip */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <span className="font-semibold text-slate-800">Order #{delivery.number}</span>
+        <Link
+          href={`/d/${delivery.id}`}
+          className="font-semibold text-slate-800 hover:underline underline-offset-2"
+        >
+          Order #{delivery.number}
+        </Link>
         <span
           className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
             isReady
