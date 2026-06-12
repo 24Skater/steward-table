@@ -13,6 +13,9 @@ const POLL_INTERVAL_MS = 5_000;
 // Active order statuses shown in kitchen
 const KITCHEN_STATUSES: OrderStatus[] = ["CONFIRMED", "IN_KITCHEN", "READY"];
 
+// How long (ms) to keep showing a recently-canceled order overlay
+const CANCELED_WINDOW_MS = 35_000;
+
 function sseMessage(event: string, data: unknown): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
@@ -131,6 +134,32 @@ export async function GET(req: NextRequest) {
 
       const settings = await getKitchenSettings(churchId);
 
+      async function fetchRecentlyCanceled(churchId: string) {
+        const since = new Date(Date.now() - CANCELED_WINDOW_MS);
+        const rows = await (db.order.findMany as Function)({
+          where: {
+            churchId,
+            status: { in: ["CANCELED", "REFUNDED"] },
+            updatedAt: { gte: since },
+          },
+          select: {
+            id: true,
+            number: true,
+            status: true,
+            fulfillment: true,
+            scheduledFor: true,
+            createdAt: true,
+            notes: true,
+            customer: { select: { name: true } },
+            items: {
+              select: { id: true, quantity: true, itemName: true, modifierSnapshot: true },
+            },
+          },
+          _bypassTenancyCheck: true,
+        });
+        return (rows as RawOrder[]).map(shapeOrder);
+      }
+
       async function fetchAndSend() {
         const orders = await fetchKitchenOrders(churchId, settings);
 
@@ -147,6 +176,12 @@ export async function GET(req: NextRequest) {
           send("orders", updated.map(shapeOrder));
         } else {
           send("orders", orders.map(shapeOrder));
+        }
+
+        // Also push recently canceled/refunded orders so the client can show the overlay
+        const canceled = await fetchRecentlyCanceled(churchId);
+        if (canceled.length > 0) {
+          send("canceled_orders", canceled);
         }
       }
 
