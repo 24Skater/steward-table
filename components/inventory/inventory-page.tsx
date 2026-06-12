@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InventoryTable } from "./inventory-table";
@@ -18,6 +18,11 @@ export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryRow | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [stocktakeMode, setStocktakeMode] = useState(false);
+  const [stocktakeCounts, setStocktakeCounts] = useState<Record<string, number>>({});
+  const [stocktakeSaving, setStocktakeSaving] = useState(false);
+  const [stocktakeError, setStocktakeError] = useState<string | null>(null);
+  const firstInputRef = useRef<HTMLInputElement | null>(null);
 
   async function handleQuantityChange(
     inventoryItemId: string,
@@ -79,6 +84,53 @@ export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
     setItems((prev) => [newItem, ...prev]);
   }
 
+  function enterStocktake() {
+    const counts: Record<string, number> = {};
+    for (const item of items) {
+      counts[item.id] = item.quantityOnHand;
+    }
+    setStocktakeCounts(counts);
+    setStocktakeMode(true);
+    setStocktakeError(null);
+    // Focus first input on next tick
+    setTimeout(() => firstInputRef.current?.focus(), 50);
+  }
+
+  async function saveStocktake() {
+    setStocktakeSaving(true);
+    setStocktakeError(null);
+
+    const updates = Object.entries(stocktakeCounts);
+    const results = await Promise.allSettled(
+      updates.map(async ([id, qty]) => {
+        const res = await fetch(`/api/inventory/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quantityOnHand: qty }),
+        });
+        if (!res.ok) throw new Error(`Failed to update ${id}`);
+        return { id, qty };
+      }),
+    );
+
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed > 0) {
+      setStocktakeError(`${failed} item(s) failed to save. Please retry.`);
+      setStocktakeSaving(false);
+      return;
+    }
+
+    setItems((prev) =>
+      prev.map((item) =>
+        stocktakeCounts[item.id] !== undefined
+          ? { ...item, quantityOnHand: stocktakeCounts[item.id] ?? item.quantityOnHand }
+          : item,
+      ),
+    );
+    setStocktakeMode(false);
+    setStocktakeSaving(false);
+  }
+
   const lowStockCount = items.filter(
     (item) =>
       item.lowStockThreshold !== null &&
@@ -114,18 +166,48 @@ export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
           )}
         </div>
 
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          Add Item
-        </Button>
+        <div className="flex items-center gap-2">
+          {stocktakeMode ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setStocktakeMode(false)}
+                disabled={stocktakeSaving}
+              >
+                Cancel
+              </Button>
+              <Button size="sm" onClick={() => void saveStocktake()} disabled={stocktakeSaving}>
+                {stocktakeSaving ? "Saving…" : "Save counts"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button size="sm" variant="outline" onClick={enterStocktake}>
+                Stocktake
+              </Button>
+              <Button size="sm" onClick={() => setCreateOpen(true)}>
+                Add Item
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
+      {/* Stocktake banner */}
+      {stocktakeMode && (
+        <div className="mx-6 mt-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-800">
+          Stocktake mode — update quantities for all items, then tap <strong>Save counts</strong>.
+        </div>
+      )}
+
       {/* Error banner */}
-      {deleteError && (
+      {(deleteError ?? stocktakeError) && (
         <div className="mx-6 mt-3 rounded bg-red-50 px-4 py-2 text-sm text-red-700 border border-red-200 flex items-center justify-between">
-          <span>{deleteError}</span>
+          <span>{deleteError ?? stocktakeError}</span>
           <button
             type="button"
-            onClick={() => setDeleteError(null)}
+            onClick={() => { setDeleteError(null); setStocktakeError(null); }}
             className="ml-3 text-red-500 hover:text-red-700 font-medium"
           >
             Dismiss
@@ -136,12 +218,48 @@ export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
       {/* Content */}
       <div className="flex-1 overflow-y-auto bg-slate-50">
         <div className="px-6 py-4">
-          <InventoryTable
-            items={items}
-            onQuantityChange={handleQuantityChange}
-            onEdit={handleEdit}
-            onDelete={(item) => void handleDelete(item)}
-          />
+          {stocktakeMode ? (
+            <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Item</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wide w-32">Count</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {items.map((item, idx) => (
+                    <tr key={item.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-2.5 text-slate-700 font-medium">{item.itemName}</td>
+                      <td className="px-4 py-2.5">
+                        <input
+                          ref={idx === 0 ? firstInputRef : undefined}
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={stocktakeCounts[item.id] ?? item.quantityOnHand}
+                          onChange={(e) =>
+                            setStocktakeCounts((prev) => ({
+                              ...prev,
+                              [item.id]: Math.max(0, parseInt(e.target.value, 10) || 0),
+                            }))
+                          }
+                          className="w-24 rounded-md border border-slate-200 px-2 py-1 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <InventoryTable
+              items={items}
+              onQuantityChange={handleQuantityChange}
+              onEdit={handleEdit}
+              onDelete={(item) => void handleDelete(item)}
+            />
+          )}
         </div>
       </div>
 

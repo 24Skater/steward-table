@@ -13,6 +13,7 @@ interface FulfillmentPrefs {
   pickupWindowStartHour: number;
   pickupWindowEndHour: number;
   slotIntervalMinutes: number;
+  maxOrdersPerSlot: number;
 }
 
 function parseFulfillmentPrefs(brandTokens: unknown): FulfillmentPrefs {
@@ -26,6 +27,7 @@ function parseFulfillmentPrefs(brandTokens: unknown): FulfillmentPrefs {
       pickupWindowStartHour: 10,
       pickupWindowEndHour: 20,
       slotIntervalMinutes: 30,
+      maxOrdersPerSlot: 0,
     };
   }
   const raw = brandTokens as Record<string, unknown>;
@@ -43,6 +45,8 @@ function parseFulfillmentPrefs(brandTokens: unknown): FulfillmentPrefs {
       typeof raw.pickupWindowEndHour === "number" ? raw.pickupWindowEndHour : 20,
     slotIntervalMinutes:
       typeof raw.slotIntervalMinutes === "number" ? raw.slotIntervalMinutes : 30,
+    maxOrdersPerSlot:
+      typeof raw.maxOrdersPerSlot === "number" ? raw.maxOrdersPerSlot : 0,
   };
 }
 
@@ -124,6 +128,7 @@ export async function PATCH(req: NextRequest) {
     pickupWindowStartHour: body.pickupWindowStartHour ?? current.pickupWindowStartHour,
     pickupWindowEndHour: body.pickupWindowEndHour ?? current.pickupWindowEndHour,
     slotIntervalMinutes: body.slotIntervalMinutes ?? current.slotIntervalMinutes,
+    maxOrdersPerSlot: body.maxOrdersPerSlot ?? current.maxOrdersPerSlot,
   };
 
   // Merge with existing brandTokens to preserve non-fulfillment data
