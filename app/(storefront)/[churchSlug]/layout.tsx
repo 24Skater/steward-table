@@ -103,7 +103,7 @@ export default async function StorefrontLayout({
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link
             href={`/${churchSlug}/menu`}
-            className="text-lg font-semibold text-slate-800 hover:text-slate-600"
+            className="flex items-center gap-2.5 text-lg font-semibold text-slate-800 hover:text-slate-600"
           >
             {church.logoUrl ? (
               <img
@@ -112,7 +112,16 @@ export default async function StorefrontLayout({
                 style={{ height: 32, width: "auto", maxWidth: 160 }}
               />
             ) : (
-              church.name
+              <>
+                <span
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                  style={{ backgroundColor: church.accentColor ?? "#10b981" }}
+                  aria-hidden="true"
+                >
+                  {church.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="truncate max-w-[160px]">{church.name}</span>
+              </>
             )}
           </Link>
           <div className="flex items-center gap-1">
