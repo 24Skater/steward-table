@@ -4,6 +4,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { CartShell } from "@/components/storefront/cart-shell";
 import { ToastProvider } from "@/components/ui/toast";
+import { StorefrontMenu } from "@/components/storefront/storefront-menu";
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
@@ -18,7 +19,11 @@ export default async function StorefrontLayout({
 
   const church = await db.church.findFirst({
     where: { slug: churchSlug, status: "ACTIVE" },
-    select: { id: true, name: true, slug: true, currency: true, locale: true, logoUrl: true, accentColor: true },
+    select: {
+      id: true, name: true, slug: true, currency: true, locale: true,
+      logoUrl: true, accentColor: true,
+      settings: { select: { replyToEmail: true } },
+    },
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore bypass tenancy for public storefront church lookup
     _bypassTenancyCheck: true,
@@ -27,6 +32,12 @@ export default async function StorefrontLayout({
   if (!church) {
     notFound();
   }
+
+  const openCatalog = await db.catalog.findFirst({
+    where: { churchId: church.id, status: "OPEN" },
+    select: { name: true, description: true },
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <ToastProvider>
@@ -54,7 +65,15 @@ export default async function StorefrontLayout({
               church.name
             )}
           </Link>
-          <CartShell churchSlug={churchSlug} />
+          <div className="flex items-center gap-1">
+            <CartShell churchSlug={churchSlug} />
+            <StorefrontMenu
+              churchSlug={churchSlug}
+              catalogName={openCatalog?.name}
+              catalogDescription={openCatalog?.description}
+              replyToEmail={church.settings?.replyToEmail}
+            />
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8 pb-28">{children}</main>
