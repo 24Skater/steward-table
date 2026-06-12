@@ -76,6 +76,7 @@ export function ItemCard({
       basePrice: price,
       modifiers,
       totalPrice: unitPrice * qty,
+      modifierGroupDefs: modifierGroups.length > 0 ? modifierGroups : undefined,
     });
     setDialogOpen(false);
   }

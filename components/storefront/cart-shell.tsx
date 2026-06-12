@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ShoppingCart, Minus, Plus, Trash2, X } from "lucide-react";
+import { ShoppingCart, Minus, Plus, X } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -10,7 +10,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/hooks/use-cart";
+import { ModifierDialog } from "@/components/storefront/modifier-dialog";
+import { useCart, type CartItem } from "@/hooks/use-cart";
+import type { CartModifier } from "@/hooks/use-cart";
 
 interface CartShellProps {
   churchSlug: string;
@@ -34,8 +36,27 @@ function useIsDesktop() {
 
 export function CartShell({ churchSlug }: CartShellProps) {
   const [open, setOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<CartItem | null>(null);
   const isDesktop = useIsDesktop();
-  const { items, removeItem, updateQuantity, total } = useCart();
+  const { items, removeItem, updateQuantity, updateItem, total } = useCart();
+
+  function buildInitialSelections(item: CartItem): Record<string, string[]> {
+    if (!item.modifierGroupDefs || item.modifiers.length === 0) return {};
+    const result: Record<string, string[]> = {};
+    for (const group of item.modifierGroupDefs) {
+      const selectedOptionIds = item.modifiers
+        .map((mod) => group.options.find((opt) => opt.name === mod.optionName && opt.priceDelta === mod.priceDelta)?.id)
+        .filter((id): id is string => id !== undefined);
+      if (selectedOptionIds.length > 0) result[group.id] = selectedOptionIds;
+    }
+    return result;
+  }
+
+  function handleEditConfirm(modifiers: CartModifier[], unitPrice: number, qty: number) {
+    if (!editingItem) return;
+    updateItem(editingItem.id, modifiers, unitPrice, qty);
+    setEditingItem(null);
+  }
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
   return (
@@ -78,6 +99,21 @@ export function CartShell({ churchSlug }: CartShellProps) {
         </div>
       )}
 
+      {/* Edit modifier drawer — opens on top of the cart drawer */}
+      {editingItem?.modifierGroupDefs && (
+        <ModifierDialog
+          open={!!editingItem}
+          onClose={() => setEditingItem(null)}
+          itemName={editingItem.itemName}
+          itemBasePrice={editingItem.basePrice}
+          modifierGroups={editingItem.modifierGroupDefs}
+          initialSelections={buildInitialSelections(editingItem)}
+          initialQuantity={editingItem.quantity}
+          confirmLabel="Update"
+          onConfirm={handleEditConfirm}
+        />
+      )}
+
       {/* Cart drawer — bottom-sheet on mobile, right-side panel on desktop */}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
@@ -114,52 +150,67 @@ export function CartShell({ churchSlug }: CartShellProps) {
           ) : (
             <>
               <ul className="divide-y divide-slate-100 px-5">
-                {items.map((item) => (
-                  <li key={item.id} className="py-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate font-medium text-slate-800">{item.itemName}</p>
-                        {item.modifiers.length > 0 && (
-                          <p className="mt-0.5 truncate text-xs text-slate-400">
-                            {item.modifiers.map((m) => m.optionName).join(", ")}
-                          </p>
-                        )}
+                {items.map((item) => {
+                  const canEdit = !!item.modifierGroupDefs?.length;
+                  return (
+                    <li key={item.id} className="py-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div
+                          className={`flex-1 min-w-0 ${canEdit ? "cursor-pointer" : ""}`}
+                          onClick={canEdit ? () => setEditingItem(item) : undefined}
+                          role={canEdit ? "button" : undefined}
+                          tabIndex={canEdit ? 0 : undefined}
+                          onKeyDown={canEdit ? (e) => { if (e.key === "Enter" || e.key === " ") setEditingItem(item); } : undefined}
+                          aria-label={canEdit ? `Edit ${item.itemName}` : undefined}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <p className="truncate font-medium text-slate-800">{item.itemName}</p>
+                            {canEdit && (
+                              <span className="shrink-0 text-xs text-slate-400 underline underline-offset-2">Edit</span>
+                            )}
+                          </div>
+                          {item.modifiers.length > 0 && (
+                            <p className="mt-0.5 truncate text-xs text-slate-400">
+                              {item.modifiers.map((m) => m.optionName).join(", ")}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-sm font-semibold text-slate-700">
+                            {formatCents(item.totalPrice)}
+                          </span>
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            aria-label="Remove item"
+                            className="text-slate-300 transition-colors hover:text-rose-400"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-sm font-semibold text-slate-700">
-                          {formatCents(item.totalPrice)}
+
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          aria-label="Decrease quantity"
+                          className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="w-5 text-center text-sm font-medium text-slate-800">
+                          {item.quantity}
                         </span>
                         <button
-                          onClick={() => removeItem(item.id)}
-                          aria-label="Remove item"
-                          className="text-slate-300 transition-colors hover:text-rose-400"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          aria-label="Increase quantity"
+                          className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
                         >
-                          <X className="h-4 w-4" />
+                          <Plus className="h-3 w-3" />
                         </button>
                       </div>
-                    </div>
-
-                    <div className="mt-2 flex items-center gap-2">
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        aria-label="Decrease quantity"
-                        className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <span className="w-5 text-center text-sm font-medium text-slate-800">
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        aria-label="Increase quantity"
-                        className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
 
               {/* Subtotal + checkout */}

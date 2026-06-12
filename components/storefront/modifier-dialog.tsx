@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Minus, Plus } from "lucide-react";
 import {
   Sheet,
@@ -34,6 +34,9 @@ interface ModifierDialogProps {
   itemDescription?: string | null;
   itemBasePrice: number;
   modifierGroups: ModifierGroup[];
+  initialSelections?: Record<string, string[]>;
+  initialQuantity?: number;
+  confirmLabel?: string;
   onConfirm: (modifiers: CartModifier[], unitPrice: number, quantity: number) => void;
 }
 
@@ -48,10 +51,14 @@ export function ModifierDialog({
   itemDescription,
   itemBasePrice,
   modifierGroups,
+  initialSelections,
+  initialQuantity = 1,
+  confirmLabel,
   onConfirm,
 }: ModifierDialogProps) {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [selections, setSelections] = useState<Record<string, string[]>>(() => {
+    if (initialSelections) return initialSelections;
     const initial: Record<string, string[]> = {};
     for (const group of modifierGroups) {
       const defaults = group.options
@@ -62,6 +69,26 @@ export function ModifierDialog({
     }
     return initial;
   });
+
+  // Sync state when dialog opens with different initial values (for cart editing)
+  useEffect(() => {
+    if (!open) return;
+    setQuantity(initialQuantity);
+    if (initialSelections) {
+      setSelections(initialSelections);
+    } else {
+      const initial: Record<string, string[]> = {};
+      for (const group of modifierGroups) {
+        const defaults = group.options
+          .filter((o) => o.isDefault)
+          .map((o) => o.id)
+          .slice(0, group.maxSelections);
+        initial[group.id] = defaults;
+      }
+      setSelections(initial);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const allRequiredMet = modifierGroups
     .filter((g) => g.isRequired)
@@ -199,7 +226,7 @@ export function ModifierDialog({
             onClick={handleConfirm}
             className="w-full bg-emerald-600 hover:bg-emerald-700 py-6 text-base font-semibold disabled:opacity-50"
           >
-            Add {quantity > 1 ? `${quantity} × ` : ""}to order — {formatCents((itemBasePrice + modifierTotal) * quantity)}
+            {confirmLabel ?? "Add"}{quantity > 1 ? ` ${quantity} × ` : " "}to order — {formatCents((itemBasePrice + modifierTotal) * quantity)}
           </Button>
         </div>
       </SheetContent>
