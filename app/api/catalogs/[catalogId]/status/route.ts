@@ -48,7 +48,8 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const result = await can("catalog.edit", {
+  const action = status === "OPEN" ? "catalog.publish" : "catalog.edit";
+  const result = await can(action, {
     userId: session.user.id,
     churchId: catalog.churchId,
     roles: membership.roles,
