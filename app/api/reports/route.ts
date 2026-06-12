@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import type { SessionMembership } from "@/lib/auth/types";
 import type { OrderStatus } from "@prisma/client";
 
 // Statuses that represent a successfully fulfilled order
@@ -50,9 +52,18 @@ export async function GET(request: NextRequest) {
 
   // Verify the caller has an active membership for this church
   const membership = session.user.memberships?.find(
-    (m) => m.churchId === churchId && m.status === "ACTIVE",
+    (m: SessionMembership) => m.churchId === churchId && m.status === "ACTIVE",
   );
   if (!membership) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const rbac = await can("report.read", {
+    userId: session.user.id,
+    churchId,
+    roles: membership.roles,
+  });
+  if (!rbac.allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
