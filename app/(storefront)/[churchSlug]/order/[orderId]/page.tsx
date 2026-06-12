@@ -31,8 +31,6 @@ const STATUS_LABELS: Record<string, string> = {
   REFUNDED: "Refunded",
 };
 
-const SELF_CANCEL_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
-
 export default async function OrderStatusPage({ params }: OrderStatusPageProps) {
   const { churchSlug, orderId } = await params;
   const session = await auth();
@@ -48,6 +46,15 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
   if (!church) {
     notFound();
   }
+
+  const churchSettings = await (db.churchSettings.findUnique as Function)({
+    where: { churchId: church.id },
+    select: { customerSelfCancelWindowMinutes: true },
+    _bypassTenancyCheck: true,
+  }) as { customerSelfCancelWindowMinutes: number } | null;
+
+  const selfCancelWindowMs =
+    (churchSettings?.customerSelfCancelWindowMinutes ?? 5) * 60 * 1000;
 
   const order = await db.order.findFirst({
     where: { id: orderId, churchId: church.id },
@@ -78,8 +85,9 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
   const statusLabel = STATUS_LABELS[order.status] ?? order.status;
 
   const showCancelButton =
+    selfCancelWindowMs > 0 &&
     (order.status === "SUBMITTED" || order.status === "CONFIRMED") &&
-    Date.now() - order.createdAt.getTime() < SELF_CANCEL_WINDOW_MS;
+    Date.now() - order.createdAt.getTime() < selfCancelWindowMs;
 
   return (
     <div className="mx-auto max-w-lg">
