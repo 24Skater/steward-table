@@ -13,8 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { ImagePlus, Loader2, X } from "lucide-react";
 import { useRef, useState } from "react";
+
+type LangTab = "EN" | "ES";
 
 interface CreateItemDialogProps {
   open: boolean;
@@ -52,11 +55,17 @@ export function CreateItemDialog({
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [langTab, setLangTab] = useState<LangTab>("EN");
+  const [nameEs, setNameEs] = useState("");
+  const [descriptionEs, setDescriptionEs] = useState("");
 
   function handleClose(nextOpen: boolean) {
     if (!nextOpen) {
       setForm(INITIAL_FORM);
       setError(null);
+      setLangTab("EN");
+      setNameEs("");
+      setDescriptionEs("");
     }
     onOpenChange(nextOpen);
   }
@@ -116,6 +125,10 @@ export function CreateItemDialog({
 
     setIsSubmitting(true);
     try {
+      const translations = nameEs.trim()
+        ? { es: { name: nameEs.trim(), ...(descriptionEs.trim() && { description: descriptionEs.trim() }) } }
+        : null;
+
       // Step 1: create the item
       const itemRes = await fetch("/api/items", {
         method: "POST",
@@ -127,6 +140,7 @@ export function CreateItemDialog({
           isAvailable: form.isAvailable,
           churchId,
           imageUrl: form.imageUrl || null,
+          ...(translations && { translations }),
         }),
       });
 
@@ -171,31 +185,81 @@ export function CreateItemDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="item-name">
-              Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="item-name"
-              placeholder="e.g. Pupusas de queso"
-              value={form.name}
-              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-              disabled={isSubmitting}
-              autoFocus
-            />
+          {/* Language tabs */}
+          <div className="flex rounded-md border border-border overflow-hidden text-sm">
+            {(["EN", "ES"] as LangTab[]).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setLangTab(tab)}
+                className={cn(
+                  "flex-1 py-1.5 font-medium transition-colors relative",
+                  langTab === tab
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted",
+                )}
+              >
+                {tab}
+                {tab === "ES" && !nameEs.trim() && (
+                  <span className="absolute top-1 right-2 h-1.5 w-1.5 rounded-full bg-amber-400" />
+                )}
+              </button>
+            ))}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="item-description">Description</Label>
-            <Textarea
-              id="item-description"
-              placeholder="Optional description visible to customers"
-              value={form.description}
-              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-              disabled={isSubmitting}
-              rows={3}
-            />
-          </div>
+          {langTab === "EN" ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="item-name">
+                  Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="item-name"
+                  placeholder="e.g. Cheese Pupusas"
+                  value={form.name}
+                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                  disabled={isSubmitting}
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="item-description">Description</Label>
+                <Textarea
+                  id="item-description"
+                  placeholder="Optional description visible to customers"
+                  value={form.description}
+                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                  disabled={isSubmitting}
+                  rows={3}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="item-name-es">Name (Spanish)</Label>
+                <Input
+                  id="item-name-es"
+                  placeholder="e.g. Pupusas de queso"
+                  value={nameEs}
+                  onChange={(e) => setNameEs(e.target.value)}
+                  disabled={isSubmitting}
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="item-description-es">Description (Spanish, optional)</Label>
+                <Textarea
+                  id="item-description-es"
+                  placeholder="Descripción opcional para los clientes"
+                  value={descriptionEs}
+                  onChange={(e) => setDescriptionEs(e.target.value)}
+                  disabled={isSubmitting}
+                  rows={3}
+                />
+              </div>
+            </>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="item-price">
