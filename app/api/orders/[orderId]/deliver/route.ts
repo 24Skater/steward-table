@@ -97,7 +97,7 @@ export async function POST(
 
     const isFormSubmit = contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data");
     if (isFormSubmit) {
-      return new NextResponse(null, { status: 303, headers: { Location: "/deliveries" } });
+      return new NextResponse(null, { status: 303, headers: { Location: "/d" } });
     }
 
     return NextResponse.json({ success: true });
