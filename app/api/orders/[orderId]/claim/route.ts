@@ -85,7 +85,7 @@ export async function POST(
   // Redirect for form-based submissions
   const contentType = _req.headers.get("content-type") ?? "";
   if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
-    return new NextResponse(null, { status: 303, headers: { Location: "/deliveries" } });
+    return new NextResponse(null, { status: 303, headers: { Location: "/d" } });
   }
 
   return NextResponse.json({ success: true });
