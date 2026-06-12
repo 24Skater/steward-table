@@ -33,6 +33,7 @@ export default async function ChurchSettingsPage() {
         legalName: true,
         accentColor: true,
         logoUrl: true,
+        locale: true,
       },
     }),
     (db.churchSettings.findUnique as Function)({
@@ -75,6 +76,7 @@ export default async function ChurchSettingsPage() {
                 legalName: church.legalName ?? null,
                 accentColor: church.accentColor ?? null,
                 logoUrl: church.logoUrl ?? null,
+                locale: (church.locale as "EN" | "ES") ?? "EN",
               }}
               settings={{
                 replyToEmail: settings?.replyToEmail ?? null,

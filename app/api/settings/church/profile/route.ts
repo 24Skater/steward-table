@@ -20,6 +20,7 @@ const putSchema = z.object({
   displayName: z.string().max(100).nullable().optional(),
   customerSelfCancelWindowMinutes: z.number().int().min(0).max(1440).optional(),
   smsEnabled: z.boolean().optional(),
+  locale: z.enum(["EN", "ES"]).optional(),
 });
 
 export async function PUT(req: NextRequest) {
@@ -68,6 +69,7 @@ export async function PUT(req: NextRequest) {
     displayName,
     customerSelfCancelWindowMinutes,
     smsEnabled,
+    locale,
   } = parsed.data;
 
   const [updatedChurch] = await Promise.all([
@@ -80,8 +82,9 @@ export async function PUT(req: NextRequest) {
         ...(legalName !== undefined && { legalName }),
         ...(logoUrl !== undefined && { logoUrl }),
         ...(accentColor !== undefined && { accentColor }),
+        ...(locale !== undefined && { locale }),
       },
-      select: { id: true, name: true, slug: true, timezone: true, legalName: true, logoUrl: true, accentColor: true },
+      select: { id: true, name: true, slug: true, timezone: true, legalName: true, logoUrl: true, accentColor: true, locale: true },
     }),
     (db.churchSettings.upsert as Function)({
       where: { churchId: membership.churchId, ...({ _bypassTenancyCheck: true } as object) },

@@ -25,6 +25,7 @@ interface ChurchSettingsFormProps {
     legalName: string | null;
     accentColor: string | null;
     logoUrl: string | null;
+    locale: "EN" | "ES";
   };
   settings: {
     replyToEmail: string | null;
@@ -48,6 +49,7 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
   const [cancelWindowMinutes, setCancelWindowMinutes] = useState(
     settings.customerSelfCancelWindowMinutes,
   );
+  const [locale, setLocale] = useState<"EN" | "ES">(church.locale);
   const [smsEnabled, setSmsEnabled] = useState(settings.smsEnabled);
 
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -76,6 +78,7 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
           accentColor: accentColor || null,
           replyToEmail: replyToEmail.trim() || null,
           displayName: displayName.trim() || null,
+          locale,
           customerSelfCancelWindowMinutes: cancelWindowMinutes,
           smsEnabled,
         }),
@@ -191,6 +194,23 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Default Locale */}
+      <div className="space-y-1.5">
+        <Label htmlFor="locale">Default Language</Label>
+        <select
+          id="locale"
+          value={locale}
+          onChange={(e) => setLocale(e.target.value as "EN" | "ES")}
+          className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2"
+        >
+          <option value="EN">English</option>
+          <option value="ES">Español (Spanish)</option>
+        </select>
+        <p className="text-xs text-slate-500">
+          Sets the default language for your customer-facing storefront.
+        </p>
       </div>
 
       <hr className="border-slate-200" />
