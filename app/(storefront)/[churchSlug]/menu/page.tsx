@@ -6,12 +6,20 @@ interface MenuListPageProps {
   params: Promise<{ churchSlug: string }>;
 }
 
+function formatCatalogDate(d: Date | null) {
+  if (!d) return null;
+  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+
 export default async function MenuListPage({ params }: MenuListPageProps) {
   const { churchSlug } = await params;
 
   const church = await db.church.findFirst({
     where: { slug: churchSlug, status: "ACTIVE" },
-    select: { id: true, name: true },
+    select: {
+      id: true, name: true,
+      settings: { select: { replyToEmail: true } },
+    },
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore bypass tenancy for storefront
     _bypassTenancyCheck: true,
@@ -29,10 +37,45 @@ export default async function MenuListPage({ params }: MenuListPageProps) {
     });
 
   if (catalogs.length === 0) {
+    const upcomingCatalogs = await db.catalog.findMany({
+      where: {
+        churchId: church.id,
+        status: "CLOSED",
+        opensAt: { gt: new Date() },
+      },
+      select: { name: true, opensAt: true },
+      orderBy: { opensAt: "asc" },
+      take: 3,
+    });
+
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center text-slate-400">
-        <p className="text-xl font-semibold text-slate-700">No menu available right now</p>
-        <p className="mt-2 text-sm">Check back soon for upcoming menus.</p>
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <h1 className="text-2xl font-bold text-slate-800">{church.name}</h1>
+        <p className="mt-4 text-base text-slate-600">We&apos;re not running a sale right now.</p>
+        <p className="mt-1 text-sm text-slate-400">Check back soon, or get in touch.</p>
+
+        {upcomingCatalogs.length > 0 && (
+          <div className="mt-8 space-y-2 text-left">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Coming up</p>
+            {upcomingCatalogs.map((c, i) => (
+              <div key={i} className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="font-medium text-slate-800">{c.name}</p>
+                {c.opensAt && (
+                  <p className="text-sm text-slate-500">{formatCatalogDate(c.opensAt)}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {church.settings?.replyToEmail && (
+          <a
+            href={`mailto:${church.settings.replyToEmail}`}
+            className="mt-6 text-sm text-emerald-600 underline-offset-2 hover:underline"
+          >
+            Contact us
+          </a>
+        )}
       </div>
     );
   }
