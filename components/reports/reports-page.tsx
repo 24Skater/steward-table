@@ -221,22 +221,31 @@ export function ReportsPage({ initialData, churchId }: ReportsPageProps) {
 
   return (
     <div className={`flex-1 overflow-y-auto bg-slate-50 p-6 ${loading ? "opacity-60 pointer-events-none" : ""}`}>
-      {/* Range selector */}
-      <div className="mb-6 flex items-center gap-1 rounded-lg bg-white border border-slate-200 p-1 w-fit">
-        {(["today", "week", "month"] as ReportsRange[]).map((r) => (
-          <button
-            key={r}
-            onClick={() => handleRangeChange(r)}
-            className={[
-              "px-4 py-1.5 rounded-md text-sm font-medium transition-colors",
-              range === r
-                ? "bg-slate-900 text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-700",
-            ].join(" ")}
-          >
-            {RANGE_LABELS[r]}
-          </button>
-        ))}
+      {/* Range selector + export */}
+      <div className="mb-6 flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-1 rounded-lg bg-white border border-slate-200 p-1">
+          {(["today", "week", "month"] as ReportsRange[]).map((r) => (
+            <button
+              key={r}
+              onClick={() => handleRangeChange(r)}
+              className={[
+                "px-4 py-1.5 rounded-md text-sm font-medium transition-colors",
+                range === r
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-700",
+              ].join(" ")}
+            >
+              {RANGE_LABELS[r]}
+            </button>
+          ))}
+        </div>
+        <a
+          href={`/api/orders/export?range=${range}`}
+          download
+          className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+        >
+          Export CSV
+        </a>
       </div>
 
       {/* Metric cards — 1col → 2col → 4col */}

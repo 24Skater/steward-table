@@ -73,6 +73,7 @@ export default function CheckoutPage() {
   const [stripeEnabled, setStripeEnabled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [smsOptIn, setSmsOptIn] = useState(false);
 
   // Delivery zone state
   const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
@@ -177,6 +178,7 @@ export default function CheckoutPage() {
     fulfillment,
     zoneId: fulfillment === "DELIVERY" && matchedZone ? matchedZone.id : undefined,
     scheduledFor: fulfillment === "PICKUP" && selectedSlot ? selectedSlot : null,
+    smsOptIn: phone.trim() ? smsOptIn : false,
     items: items.map((item) => ({
       itemId: item.itemId,
       catalogId: item.catalogId,
@@ -449,6 +451,21 @@ export default function CheckoutPage() {
                 Pay on pickup
               </button>
             </div>
+          </div>
+        )}
+
+        {phone.trim() && (
+          <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <input
+              id="sms-opt-in"
+              type="checkbox"
+              checked={smsOptIn}
+              onChange={(e) => setSmsOptIn(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-emerald-600 cursor-pointer"
+            />
+            <label htmlFor="sms-opt-in" className="text-xs text-slate-600 cursor-pointer leading-relaxed">
+              By checking this box and providing your phone number, you agree to receive transactional SMS messages about your order. Message frequency varies. Message and data rates may apply. Reply HELP for help, STOP to unsubscribe. Consent is not a condition of purchase.
+            </label>
           </div>
         )}
 

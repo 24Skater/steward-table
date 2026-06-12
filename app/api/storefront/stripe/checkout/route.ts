@@ -27,6 +27,7 @@ interface CheckoutRequestBody {
   fulfillment?: string;
   zoneId?: string | null;
   scheduledFor?: string | null;
+  smsOptIn?: boolean;
   items: CartItemPayload[];
 }
 
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { churchSlug, customerName, phone, notes, fulfillment, zoneId, scheduledFor, items } = body;
+  const { churchSlug, customerName, phone, notes, fulfillment, zoneId, scheduledFor, smsOptIn, items } = body;
 
   if (!churchSlug || !customerName?.trim() || !items?.length) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -105,6 +106,12 @@ export async function POST(req: NextRequest) {
 
     if (existing) {
       customerId = existing.id;
+      if (smsOptIn) {
+        await db.customer.update({
+          where: { id: existing.id },
+          data: { smsOptIn: true },
+        });
+      }
     } else {
       const created = await db.customer.create({
         data: {
@@ -112,6 +119,7 @@ export async function POST(req: NextRequest) {
           name: customerName.trim(),
           phone: phone ?? null,
           phoneNormalized,
+          smsOptIn: smsOptIn ?? false,
         },
         select: { id: true },
       });
