@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, AlertTriangle } from "lucide-react";
+import { Plus, Search, AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -48,23 +55,303 @@ function hasEsTranslation(item: LibraryItem): boolean {
   return Boolean(item.translations?.es?.name?.trim());
 }
 
+// ── Set-price dialog ───────────────────────────────────────────────────────
+
+interface SetPriceDialogProps {
+  count: number;
+  onConfirm: (mode: "fixed" | "percent", value: number) => Promise<void>;
+  onClose: () => void;
+}
+
+function SetPriceDialog({ count, onConfirm, onClose }: SetPriceDialogProps) {
+  const [mode, setMode] = useState<"fixed" | "percent">("fixed");
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const num = parseFloat(value);
+    if (isNaN(num)) { setError("Enter a valid number"); return; }
+    if (mode === "fixed" && num < 0) { setError("Price must be ≥ 0"); return; }
+    setBusy(true);
+    try {
+      await onConfirm(mode, num);
+      onClose();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Set price for {count} item{count !== 1 ? "s" : ""}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+          <div className="flex gap-2">
+            {(["fixed", "percent"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={`flex-1 py-1.5 rounded-md text-sm font-medium border transition-colors ${
+                  mode === m ? "bg-slate-900 text-white border-slate-900" : "border-slate-200 text-slate-600"
+                }`}
+              >
+                {m === "fixed" ? "Fixed price" : "% adjustment"}
+              </button>
+            ))}
+          </div>
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">
+              {mode === "fixed" ? "New price (USD)" : "Adjustment (e.g. 10 for +10%, -5 for -5%)"}
+            </label>
+            <Input
+              type="number"
+              step={mode === "fixed" ? "0.01" : "0.1"}
+              value={value}
+              onChange={(e) => { setValue(e.target.value); setError(null); }}
+              placeholder={mode === "fixed" ? "3.00" : "10"}
+              autoFocus
+            />
+            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Apply"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Set-tax-category dialog ────────────────────────────────────────────────
+
+interface SetTaxCategoryDialogProps {
+  count: number;
+  onConfirm: (taxCategory: string | null) => Promise<void>;
+  onClose: () => void;
+}
+
+function SetTaxCategoryDialog({ count, onConfirm, onClose }: SetTaxCategoryDialogProps) {
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await onConfirm(value.trim() || null);
+      onClose();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Set tax category for {count} item{count !== 1 ? "s" : ""}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+          <div>
+            <label className="text-sm text-slate-600 mb-1 block">Tax category (leave blank to clear)</label>
+            <Input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="e.g. FOOD, TAX_EXEMPT"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Apply"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Bulk action bar ────────────────────────────────────────────────────────
+
+interface BulkActionBarProps {
+  selected: Set<string>;
+  items: LibraryItem[];
+  onClearSelection: () => void;
+  onBulkUpdate: (updatedIds: string[], patch: Partial<LibraryItem>) => void;
+  onBulkRemove: (removedIds: string[]) => void;
+}
+
+function BulkActionBar({ selected, items, onClearSelection, onBulkUpdate, onBulkRemove }: BulkActionBarProps) {
+  const [dialog, setDialog] = useState<"price" | "tax" | null>(null);
+  const [busy, setBusy] = useState(false);
+  const count = selected.size;
+  const selectedIds = Array.from(selected);
+
+  async function callBulk(body: object) {
+    const res = await fetch("/api/menu/items/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...body, itemIds: selectedIds }),
+    });
+    if (!res.ok) throw new Error("Bulk operation failed");
+  }
+
+  async function handleSetStatus(value: "ACTIVE" | "INACTIVE") {
+    setBusy(true);
+    try {
+      await callBulk({ action: "set_status", value });
+      onBulkUpdate(selectedIds, { status: value });
+      onClearSelection();
+    } catch { /* show nothing — user can retry */ }
+    finally { setBusy(false); }
+  }
+
+  async function handleArchive() {
+    if (!confirm(`Archive ${count} item${count !== 1 ? "s" : ""}? They will be hidden from all views.`)) return;
+    setBusy(true);
+    try {
+      await callBulk({ action: "archive" });
+      onBulkRemove(selectedIds);
+      onClearSelection();
+    } catch { /* */ }
+    finally { setBusy(false); }
+  }
+
+  async function handleSetPrice(mode: "fixed" | "percent", value: number) {
+    await callBulk({ action: "set_price", mode, value });
+    if (mode === "fixed") {
+      const cents = Math.round(value * 100);
+      onBulkUpdate(selectedIds, { defaultPrice: cents });
+    }
+    onClearSelection();
+  }
+
+  async function handleSetTax(taxCategory: string | null) {
+    await callBulk({ action: "set_tax_category", taxCategory });
+    onBulkUpdate(selectedIds, { taxCategory });
+    onClearSelection();
+  }
+
+  const canDelete = selectedIds.every((id) => {
+    const item = items.find((i) => i.id === id);
+    return item ? item.catalogItems.length === 0 : false;
+  });
+
+  return (
+    <>
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 shadow-2xl shadow-slate-900/30 border border-slate-700">
+        <span className="text-sm text-slate-300 font-medium mr-2 shrink-0">
+          {count} selected
+        </span>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => handleSetStatus("ACTIVE")}
+          className="px-3 py-1.5 text-xs font-medium rounded-md bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors disabled:opacity-40"
+        >
+          Activate
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => handleSetStatus("INACTIVE")}
+          className="px-3 py-1.5 text-xs font-medium rounded-md bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors disabled:opacity-40"
+        >
+          Deactivate
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => setDialog("price")}
+          className="px-3 py-1.5 text-xs font-medium rounded-md bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors disabled:opacity-40"
+        >
+          Set price
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => setDialog("tax")}
+          className="px-3 py-1.5 text-xs font-medium rounded-md bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors disabled:opacity-40"
+        >
+          Set tax
+        </button>
+        {canDelete && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={handleArchive}
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-red-900/60 text-red-300 hover:bg-red-900 transition-colors disabled:opacity-40"
+          >
+            Archive
+          </button>
+        )}
+        <div className="w-px h-4 bg-slate-700 mx-1" />
+        <button
+          type="button"
+          onClick={onClearSelection}
+          className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 transition-colors"
+          aria-label="Clear selection"
+        >
+          <X size={14} />
+        </button>
+      </div>
+
+      {dialog === "price" && (
+        <SetPriceDialog
+          count={count}
+          onConfirm={handleSetPrice}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === "tax" && (
+        <SetTaxCategoryDialog
+          count={count}
+          onConfirm={handleSetTax}
+          onClose={() => setDialog(null)}
+        />
+      )}
+    </>
+  );
+}
+
 // ── Row ────────────────────────────────────────────────────────────────────
 
 interface ItemRowProps {
   item: LibraryItem;
+  selected: boolean;
+  onSelect: (id: string, checked: boolean) => void;
   onToggleStatus: (itemId: string, next: "ACTIVE" | "INACTIVE") => Promise<void>;
   inFlight: boolean;
 }
 
-function ItemRow({ item, onToggleStatus, inFlight }: ItemRowProps) {
+function ItemRow({ item, selected, onSelect, onToggleStatus, inFlight }: ItemRowProps) {
   const missingEs = !hasEsTranslation(item);
   const catalogs = item.catalogItems.map((ci) => ci.catalog);
   const nextStatus: "ACTIVE" | "INACTIVE" = item.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
 
   return (
-    <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+    <tr
+      className={`border-b border-slate-100 transition-colors ${selected ? "bg-blue-50/60" : "hover:bg-slate-50/50"}`}
+    >
+      {/* Checkbox */}
+      <td className="py-3 pl-4 pr-2 w-8">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => onSelect(item.id, e.target.checked)}
+          className="rounded border-slate-300 text-slate-900 focus:ring-slate-500 cursor-pointer"
+          aria-label={`Select ${item.name}`}
+        />
+      </td>
+
       {/* Photo */}
-      <td className="py-3 pl-4 pr-3">
+      <td className="py-3 pr-3">
         <div className="h-10 w-10 rounded-md overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
           {item.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -166,6 +453,7 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
   const [missingEsOnly, setMissingEsOnly] = useState(false);
   const [inFlight, setInFlight] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const missingEsCount = items.filter((i) => !hasEsTranslation(i)).length;
 
@@ -180,6 +468,27 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
     }
     return true;
   });
+
+  const filteredIds = new Set(filtered.map((i) => i.id));
+  const allFilteredSelected = filtered.length > 0 && filtered.every((i) => selected.has(i.id));
+
+  function handleSelectAll(checked: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const id of filteredIds) {
+        if (checked) next.add(id); else next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  function handleSelect(id: string, checked: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  }
 
   async function handleToggleStatus(itemId: string, next: "ACTIVE" | "INACTIVE") {
     setInFlight(itemId);
@@ -196,6 +505,16 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
     } finally {
       setInFlight(null);
     }
+  }
+
+  function handleBulkUpdate(updatedIds: string[], patch: Partial<LibraryItem>) {
+    setItems((prev) =>
+      prev.map((it) => (updatedIds.includes(it.id) ? { ...it, ...patch } : it)),
+    );
+  }
+
+  function handleBulkRemove(removedIds: string[]) {
+    setItems((prev) => prev.filter((it) => !removedIds.includes(it.id)));
   }
 
   return (
@@ -320,7 +639,16 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50">
-                <th className="py-2.5 pl-4 pr-3 text-xs font-semibold text-slate-400 uppercase tracking-wide" />
+                <th className="py-2.5 pl-4 pr-2 w-8">
+                  <input
+                    type="checkbox"
+                    checked={allFilteredSelected}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="rounded border-slate-300 text-slate-900 focus:ring-slate-500 cursor-pointer"
+                    aria-label="Select all"
+                  />
+                </th>
+                <th className="py-2.5 pr-3" />
                 <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Name</th>
                 <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Price</th>
                 <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Tax</th>
@@ -335,6 +663,8 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
                 <ItemRow
                   key={item.id}
                   item={item}
+                  selected={selected.has(item.id)}
+                  onSelect={handleSelect}
                   onToggleStatus={handleToggleStatus}
                   inFlight={inFlight === item.id}
                 />
@@ -342,6 +672,17 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <BulkActionBar
+          selected={selected}
+          items={items}
+          onClearSelection={() => setSelected(new Set())}
+          onBulkUpdate={handleBulkUpdate}
+          onBulkRemove={handleBulkRemove}
+        />
       )}
     </div>
   );
