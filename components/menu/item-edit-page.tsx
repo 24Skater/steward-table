@@ -63,6 +63,7 @@ interface ItemData {
   defaultPrice: number;
   imageUrl: string | null;
   status: string;
+  taxCategory: string | null;
   translations: ItemTranslations | null;
   catalogItems: CatalogItemRef[];
   modifierGroups: ItemModifierGroup[];
@@ -483,6 +484,7 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
   const [description, setDescription] = useState(item.description ?? "");
   const [priceStr, setPriceStr] = useState(centsToDisplay(item.defaultPrice));
   const [isActive, setIsActive] = useState(item.status === "ACTIVE");
+  const [taxCategory, setTaxCategory] = useState(item.taxCategory ?? "");
   const [imageUrl, setImageUrl] = useState(item.imageUrl ?? "");
 
   // ── Bilingual fields ──
@@ -564,6 +566,7 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
           description: description.trim() || null,
           defaultPrice: displayToCents(priceStr),
           status: isActive ? "ACTIVE" : "INACTIVE",
+          taxCategory: taxCategory.trim() || null,
           imageUrl: imageUrl.trim() || null,
           translations: {
             es: {
@@ -748,18 +751,29 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
                     </>
                   )}
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="item-price">Price (USD)</Label>
-                    <Input
-                      id="item-price"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={priceStr}
-                      onChange={(e) => setPriceStr(e.target.value)}
-                      placeholder="0.00"
-                      required
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="item-price">Price (USD)</Label>
+                      <Input
+                        id="item-price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={priceStr}
+                        onChange={(e) => setPriceStr(e.target.value)}
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="item-tax-category">Tax category</Label>
+                      <Input
+                        id="item-tax-category"
+                        value={taxCategory}
+                        onChange={(e) => setTaxCategory(e.target.value)}
+                        placeholder="e.g. food, beverage"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-3">

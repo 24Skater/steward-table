@@ -23,6 +23,7 @@ const patchSchema = z.object({
   defaultPrice: z.number().int().min(0).optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
   imageUrl: z.string().url().nullable().optional(),
+  taxCategory: z.string().max(100).nullable().optional(),
   translations: translationsSchema,
 });
 
@@ -75,7 +76,7 @@ export async function PATCH(
     );
   }
 
-  const { name, description, defaultPrice, status, imageUrl, translations } = parsed.data;
+  const { name, description, defaultPrice, status, imageUrl, taxCategory, translations } = parsed.data;
 
   const updated = await db.item.update({
     where: { id: itemId },
@@ -85,6 +86,7 @@ export async function PATCH(
       ...(defaultPrice !== undefined && { defaultPrice }),
       ...(status !== undefined && { status }),
       ...(imageUrl !== undefined && { imageUrl }),
+      ...(taxCategory !== undefined && { taxCategory }),
       ...(translations !== undefined && {
         translations: translations as Prisma.InputJsonValue,
       }),
@@ -96,6 +98,7 @@ export async function PATCH(
       defaultPrice: true,
       imageUrl: true,
       status: true,
+      taxCategory: true,
     },
   });
 
