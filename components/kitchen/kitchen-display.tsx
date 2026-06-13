@@ -87,15 +87,19 @@ export function KitchenDisplay() {
     cancelTimers.current.set(orderId, timer);
   }
 
-  // SSE connection for real-time order updates
+  // SSE connection with exponential backoff (1s, 2s, 4s, 8s, cap 30s)
   useEffect(() => {
-    let es: EventSource;
+    let es: EventSource | null = null;
     let reconnectTimeout: ReturnType<typeof setTimeout>;
+    let backoffMs = 1000;
 
     function connect() {
       es = new EventSource("/api/sse/kitchen");
 
-      es.onopen = () => setConnected(true);
+      es.onopen = () => {
+        setConnected(true);
+        backoffMs = 1000; // reset on successful connect
+      };
 
       es.addEventListener("orders", (e) => {
         try {
@@ -126,16 +130,18 @@ export function KitchenDisplay() {
 
       es.onerror = () => {
         setConnected(false);
-        es.close();
-        reconnectTimeout = setTimeout(connect, 3000);
+        es?.close();
+        reconnectTimeout = setTimeout(() => {
+          backoffMs = Math.min(backoffMs * 2, 30_000);
+          connect();
+        }, backoffMs);
       };
     }
 
     connect();
     return () => {
-      es.close();
+      es?.close();
       clearTimeout(reconnectTimeout);
-      // Clear all cancel timers on unmount
       for (const timer of cancelTimers.current.values()) {
         clearTimeout(timer);
       }
