@@ -56,13 +56,15 @@ export function OrderRow({ order, drivers = [] }: OrderRowProps) {
     if (!nextStep || inFlight) return;
     setInFlight(true);
     try {
-      await fetch(`/api/orders/${order.id}/status`, {
+      const res = await fetch(`/api/orders/${order.id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStep.targetStatus }),
       });
-      router.refresh();
-    } catch {
+      if (res.ok) {
+        router.refresh();
+      }
+    } finally {
       setInFlight(false);
     }
   }
