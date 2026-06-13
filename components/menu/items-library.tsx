@@ -164,12 +164,14 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
   const [items, setItems] = useState<LibraryItem[]>(initialItems);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
+  const [missingEsOnly, setMissingEsOnly] = useState(false);
   const [inFlight, setInFlight] = useState<string | null>(null);
 
   const missingEsCount = items.filter((i) => !hasEsTranslation(i)).length;
 
   const filtered = items.filter((item) => {
     if (statusFilter !== "ALL" && item.status !== statusFilter) return false;
+    if (missingEsOnly && hasEsTranslation(item)) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
       const enMatch = item.name.toLowerCase().includes(q);
@@ -215,7 +217,7 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
       </div>
 
       {/* Missing translations banner */}
-      {missingEsCount > 0 && (
+      {missingEsCount > 0 && !missingEsOnly && (
         <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
           <AlertTriangle size={16} className="text-amber-600 shrink-0" />
           <p className="text-sm text-amber-800">
@@ -223,17 +225,17 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
             <button
               type="button"
               className="underline underline-offset-2 hover:text-amber-900"
-              onClick={() => setStatusFilter("ALL")}
+              onClick={() => setMissingEsOnly(true)}
             >
-              View all
+              Show only
             </button>
           </p>
         </div>
       )}
 
       {/* Filters */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-xs">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[160px] max-w-xs">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
             value={search}
@@ -242,7 +244,7 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
             className="pl-8 h-9 text-sm"
           />
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
           {(["ALL", "ACTIVE", "INACTIVE"] as const).map((s) => (
             <button
               key={s}
@@ -257,7 +259,29 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
               {s === "ALL" ? "All" : s === "ACTIVE" ? "Active" : "Inactive"}
             </button>
           ))}
+          {missingEsCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setMissingEsOnly((v) => !v)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                missingEsOnly
+                  ? "bg-amber-500 text-white"
+                  : "border border-amber-200 text-amber-600 hover:border-amber-300"
+              }`}
+            >
+              Missing ES
+            </button>
+          )}
         </div>
+        {missingEsOnly && (
+          <button
+            type="button"
+            onClick={() => setMissingEsOnly(false)}
+            className="text-xs text-slate-400 hover:text-slate-600 underline underline-offset-2"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -284,7 +308,7 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
               <button
                 type="button"
                 className="underline underline-offset-2 text-slate-500"
-                onClick={() => { setSearch(""); setStatusFilter("ALL"); }}
+                onClick={() => { setSearch(""); setStatusFilter("ALL"); setMissingEsOnly(false); }}
               >
                 Clear filters
               </button>
