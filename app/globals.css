@@ -50,6 +50,14 @@
     border-color: hsl(var(--border));
   }
 
+  html {
+    /* Belt-and-suspenders for the meta color-scheme tag in layout.tsx.
+       Together they prevent Chrome's black scrollbar-gutter flash on Windows. */
+    color-scheme: light;
+    background-color: white;
+    scrollbar-gutter: stable;
+  }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));

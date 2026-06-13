@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Steward Table",
   description: "Order management and fulfillment for churches and ministries",
+  other: {
+    // Tells Chrome's compositor to use a light canvas before any CSS loads.
+    // Prevents the black scrollbar-gutter flash on Windows Chrome on first paint.
+    "color-scheme": "light",
+  },
 };
 
 export default function RootLayout({
