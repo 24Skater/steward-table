@@ -130,10 +130,11 @@ export function ItemCard({
             )}
           </div>
           <div className="mt-4 flex items-center justify-between">
-            <span className="text-base font-semibold text-emerald-700">{formatCents(price)}</span>
+            <span className="text-base font-semibold text-slate-800">{formatCents(price)}</span>
             {isAvailable && (
               <div
-                className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
+                className="rounded-md px-3 py-1.5 text-sm font-semibold text-white"
+                style={{ backgroundColor: "var(--color-accent, #10b981)" }}
                 aria-hidden="true"
               >
                 {hasRequiredModifiers ? "Customize" : "Add"}

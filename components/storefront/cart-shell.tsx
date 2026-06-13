@@ -71,10 +71,13 @@ export function CartShell({ churchSlug }: CartShellProps) {
         <span>Cart</span>
         {count > 0 && (
           <>
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-600 px-1 text-xs font-semibold text-white">
+            <span
+              className="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold text-white"
+              style={{ backgroundColor: "var(--color-accent, #10b981)" }}
+            >
               {count}
             </span>
-            <span className="hidden text-xs font-semibold text-emerald-700 sm:inline">
+            <span className="hidden text-xs font-semibold sm:inline" style={{ color: "var(--color-accent, #10b981)" }}>
               {formatCents(total)}
             </span>
           </>
@@ -86,7 +89,8 @@ export function CartShell({ churchSlug }: CartShellProps) {
         <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4">
           <button
             onClick={() => setOpen(true)}
-            className="flex w-full items-center justify-between rounded-xl bg-emerald-600 px-4 py-3.5 shadow-lg transition-colors hover:bg-emerald-700"
+            className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 shadow-lg transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "var(--color-accent, #10b981)" }}
           >
             <div className="flex items-center gap-2">
               <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-white/25 px-1.5 text-xs font-bold text-white">
@@ -223,7 +227,10 @@ export function CartShell({ churchSlug }: CartShellProps) {
                   href={`/${churchSlug}/checkout`}
                   onClick={() => setOpen(false)}
                 >
-                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 py-6 text-base font-semibold">
+                  <Button
+                    className="w-full py-6 text-base font-semibold text-white"
+                    style={{ backgroundColor: "var(--color-accent, #10b981)" }}
+                  >
                     Proceed to checkout
                   </Button>
                 </Link>

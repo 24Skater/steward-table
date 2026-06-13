@@ -39,7 +39,7 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1 mb-8">
-                Free & open source — MIT license
+                Free &amp; open source — AGPL-3.0
               </div>
               <h1 className="text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-slate-900 mb-6">
                 Order management
@@ -85,7 +85,7 @@ export default function HomePage() {
                   <span className="text-slate-400">=</span>
                 </p>
                 <p className="pl-4">
-                  <span className="text-emerald-400">| &apos;PENDING&apos;</span>
+                  <span className="text-slate-400">| &apos;SUBMITTED&apos;</span>
                 </p>
                 <p className="pl-4">
                   <span className="text-emerald-400">| &apos;CONFIRMED&apos;</span>
@@ -97,13 +97,13 @@ export default function HomePage() {
                   <span className="text-blue-400">| &apos;READY&apos;</span>
                 </p>
                 <p className="pl-4">
-                  <span className="text-purple-400">| &apos;FULFILLED&apos;</span>
+                  <span className="text-emerald-400">| &apos;COMPLETED&apos;</span>
                 </p>
                 <p className="pl-4">
-                  <span className="text-red-400">| &apos;CANCELLED&apos;</span>
+                  <span className="text-red-400">| &apos;CANCELED&apos;</span>
                 </p>
                 <p className="text-slate-400 mt-3 text-xs">
-                  // Real-time via Pusher — kitchen updates instantly
+                  // Real-time via SSE — kitchen updates instantly
                 </p>
               </div>
             </div>
@@ -356,7 +356,7 @@ export default function HomePage() {
       <footer className="border-t border-slate-100 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-400">
-            Steward Table is open source. MIT license.
+            Steward Table is open source. AGPL-3.0.
           </p>
           <nav className="flex items-center gap-6">
             <a

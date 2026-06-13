@@ -24,7 +24,8 @@ export function CartBar({ churchSlug }: CartBarProps) {
     <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 sm:hidden">
       <Link
         href={`/${churchSlug}/cart`}
-        className="flex items-center justify-between rounded-xl bg-emerald-600 px-4 py-3.5 shadow-lg transition-colors hover:bg-emerald-700"
+        className="flex items-center justify-between rounded-xl px-4 py-3.5 shadow-lg transition-opacity hover:opacity-90"
+        style={{ backgroundColor: "var(--color-accent, #10b981)" }}
       >
         <div className="flex items-center gap-2">
           <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-white/25 px-1.5 text-xs font-bold text-white">
