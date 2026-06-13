@@ -119,7 +119,7 @@ export function KitchenOrderCard({ order, currentTime, onMarkReady }: KitchenOrd
               <p className="text-white font-medium text-xl leading-tight">
                 {item.quantity} &times; {item.itemName}
               </p>
-              {item.modifierSnapshot.map((group) => (
+              {Array.isArray(item.modifierSnapshot) && item.modifierSnapshot.map((group) => (
                 <div key={group.groupName} className="pl-4 mt-0.5">
                   {group.options.map((opt) => (
                     <p key={opt.name} className="text-slate-400 text-base leading-snug">
