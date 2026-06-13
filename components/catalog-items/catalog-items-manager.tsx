@@ -72,6 +72,9 @@ export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerPr
   const [removeTarget, setRemoveTarget] = useState<CatalogItem | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<"OPEN" | "CLOSED" | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const effectivePrice = (ci: CatalogItem) => ci.priceOverride ?? ci.item.defaultPrice;
 
@@ -79,6 +82,38 @@ export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerPr
     const t = ci.item.translations as ItemTranslations | null;
     return !t?.es?.name?.trim();
   }).length;
+
+  function openPublishDialog() {
+    setPendingStatus("OPEN");
+    setStatusDialogOpen(true);
+  }
+
+  function openCloseDialog() {
+    setPendingStatus("CLOSED");
+    setStatusDialogOpen(true);
+  }
+
+  async function handleStatusConfirm() {
+    if (!pendingStatus) return;
+    setIsUpdatingStatus(true);
+    try {
+      const res = await fetch(`/api/catalogs/${catalog.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: pendingStatus }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? "Failed to update status");
+      }
+      setStatusDialogOpen(false);
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update status");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  }
 
   async function handleRemove() {
     if (!removeTarget) return;
@@ -136,10 +171,25 @@ export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerPr
           </div>
         </div>
 
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
-        </Button>
+        <div className="flex items-center gap-2">
+          {catalog.status === "DRAFT" || catalog.status === "CLOSED" ? (
+            <Button
+              onClick={openPublishDialog}
+              disabled={catalog.items.length === 0}
+              title={catalog.items.length === 0 ? "Add at least one item before publishing" : undefined}
+            >
+              Publish
+            </Button>
+          ) : catalog.status === "OPEN" ? (
+            <Button variant="outline" onClick={openCloseDialog}>
+              Close catalog
+            </Button>
+          ) : null}
+          <Button variant="outline" onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Item
+          </Button>
+        </div>
       </div>
 
       {/* Items list */}
@@ -231,6 +281,52 @@ export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerPr
         churchId={churchId}
         onSuccess={() => router.refresh()}
       />
+
+      {/* Publish / Close confirmation dialog */}
+      <Dialog
+        open={statusDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) { setStatusDialogOpen(false); setPendingStatus(null); }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingStatus === "OPEN" ? `Publish "${catalog.name}"?` : `Close "${catalog.name}"?`}
+            </DialogTitle>
+            <DialogDescription>
+              {pendingStatus === "OPEN" ? (
+                <>
+                  {missingEsCount > 0 && (
+                    <span className="block mb-2 text-amber-700 font-medium">
+                      {missingEsCount} {missingEsCount === 1 ? "item is" : "items are"} missing Spanish translations. Customers viewing in Spanish will see the English name as a fallback.
+                    </span>
+                  )}
+                  Customers will be able to place orders once the catalog is open.
+                </>
+              ) : (
+                "Orders already placed will continue normally. New orders won't be accepted."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setStatusDialogOpen(false); setPendingStatus(null); }}
+              disabled={isUpdatingStatus}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleStatusConfirm} disabled={isUpdatingStatus}>
+              {isUpdatingStatus
+                ? "Saving…"
+                : pendingStatus === "OPEN"
+                ? "Publish"
+                : "Close catalog"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Remove confirmation dialog */}
       <Dialog
