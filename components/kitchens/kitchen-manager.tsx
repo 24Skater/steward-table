@@ -58,6 +58,7 @@ export function KitchenManager({ initialKitchens }: KitchenManagerProps) {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           disabled={isPending}
+          maxLength={100}
         />
         <button
           type="submit"
@@ -91,6 +92,7 @@ export function KitchenManager({ initialKitchens }: KitchenManagerProps) {
               </Link>
               <button
                 type="button"
+                aria-label={`Rename ${kitchen.name}`}
                 className="text-slate-600 hover:underline disabled:opacity-50"
                 disabled={isPending}
                 onClick={() => {
@@ -103,6 +105,7 @@ export function KitchenManager({ initialKitchens }: KitchenManagerProps) {
               {!kitchen.isDefault && (
                 <button
                   type="button"
+                  aria-label={`Make ${kitchen.name} the default kitchen`}
                   className="text-slate-600 hover:underline disabled:opacity-50"
                   disabled={isPending}
                   onClick={() => run(() => setDefaultKitchen(kitchen.id))}
@@ -113,6 +116,7 @@ export function KitchenManager({ initialKitchens }: KitchenManagerProps) {
               {!kitchen.isDefault && (
                 <button
                   type="button"
+                  aria-label={`Archive ${kitchen.name}`}
                   className="text-red-600 hover:underline disabled:opacity-50"
                   disabled={isPending}
                   onClick={() => {

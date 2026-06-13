@@ -23,6 +23,7 @@ export async function createKitchen(name: string): Promise<void> {
   const churchId = await requireCatalogEdit();
   const trimmed = name.trim();
   if (!trimmed) throw new Error("Kitchen name is required");
+  if (trimmed.length > 100) throw new Error("Kitchen name must be 100 characters or fewer");
 
   const existing = await db.kitchen.findMany({
     where: { churchId },
@@ -33,7 +34,14 @@ export async function createKitchen(name: string): Promise<void> {
     existing.map((k) => k.slug),
   );
 
-  await db.kitchen.create({ data: { churchId, name: trimmed, slug } });
+  try {
+    await db.kitchen.create({ data: { churchId, name: trimmed, slug } });
+  } catch (e: unknown) {
+    if (e instanceof Error && e.message.includes("P2002")) {
+      throw new Error("A kitchen with that name already exists");
+    }
+    throw e;
+  }
   revalidatePath("/kitchens");
 }
 
@@ -41,6 +49,7 @@ export async function renameKitchen(kitchenId: string, name: string): Promise<vo
   const churchId = await requireCatalogEdit();
   const trimmed = name.trim();
   if (!trimmed) throw new Error("Kitchen name is required");
+  if (trimmed.length > 100) throw new Error("Kitchen name must be 100 characters or fewer");
 
   await db.kitchen.updateMany({
     where: { id: kitchenId, churchId },
@@ -67,20 +76,20 @@ export async function setDefaultKitchen(kitchenId: string): Promise<void> {
 export async function archiveKitchen(kitchenId: string): Promise<void> {
   const churchId = await requireCatalogEdit();
 
-  const kitchen = await db.kitchen.findFirst({
-    where: { id: kitchenId, churchId },
-    select: { id: true, isDefault: true },
-  });
-  if (!kitchen) throw new Error("Kitchen not found");
-  if (kitchen.isDefault) throw new Error("The default kitchen cannot be archived");
-
-  const defaultKitchen = await db.kitchen.findFirst({
-    where: { churchId, isDefault: true },
-    select: { id: true },
-  });
-  if (!defaultKitchen) throw new Error("No default kitchen to reassign catalogs to");
-
   await db.$transaction(async (tx) => {
+    const kitchen = await (tx.kitchen.findFirst as Function)({
+      where: { id: kitchenId, churchId },
+      select: { id: true, isDefault: true },
+    });
+    if (!kitchen) throw new Error("Kitchen not found");
+    if (kitchen.isDefault) throw new Error("The default kitchen cannot be archived");
+
+    const defaultKitchen = await (tx.kitchen.findFirst as Function)({
+      where: { churchId, isDefault: true },
+      select: { id: true },
+    });
+    if (!defaultKitchen) throw new Error("No default kitchen to reassign catalogs to");
+
     await (tx.catalog.updateMany as Function)({
       where: { churchId, kitchenId: kitchen.id },
       data: { kitchenId: defaultKitchen.id },
