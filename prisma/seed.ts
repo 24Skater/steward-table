@@ -264,8 +264,22 @@ async function main() {
 
   // ─────────────────────────────────────────────
   // 12. Customers — deleteMany first for idempotency
+  // Must delete orders before customers due to FK constraint
   // ─────────────────────────────────────────────
   console.log("Clearing and re-creating customers...");
+  // Delete orders that belong to the demo customers first
+  const demoCustomers = await prisma.customer.findMany({
+    where: {
+      churchId: church.id,
+      emailNormalized: { in: ["ana.garcia@demo.com", "carlos.mendez@demo.com"] },
+    },
+    select: { id: true },
+  });
+  if (demoCustomers.length > 0) {
+    await prisma.order.deleteMany({
+      where: { customerId: { in: demoCustomers.map((c) => c.id) } },
+    });
+  }
   await prisma.customer.deleteMany({
     where: {
       churchId: church.id,
