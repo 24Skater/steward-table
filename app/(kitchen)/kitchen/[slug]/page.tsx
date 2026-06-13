@@ -1,18 +1,14 @@
-import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { KitchenDisplay } from "@/components/kitchen/kitchen-display";
+import { requireActiveMembership } from "@/lib/auth/helpers";
 
 export default async function KitchenSlugPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/auth/sign-in");
-
-  const membership = session.user.memberships?.find((m) => m.status === "ACTIVE");
-  if (!membership) redirect("/auth/sign-in");
+  const { membership } = await requireActiveMembership();
 
   const { slug } = await params;
   const kitchen = await db.kitchen.findFirst({
