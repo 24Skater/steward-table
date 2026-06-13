@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ModifierDialog } from "@/components/storefront/modifier-dialog";
 import { useCart, type CartItem } from "@/hooks/use-cart";
 import type { CartModifier } from "@/hooks/use-cart";
+import { useStorefrontStrings } from "@/components/storefront/storefront-locale-provider";
 
 interface CartShellProps {
   churchSlug: string;
@@ -39,6 +40,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
   const [editingItem, setEditingItem] = useState<CartItem | null>(null);
   const isDesktop = useIsDesktop();
   const { items, removeItem, updateQuantity, updateItem, total } = useCart();
+  const s = useStorefrontStrings();
 
   function buildInitialSelections(item: CartItem): Record<string, string[]> {
     if (!item.modifierGroupDefs || item.modifiers.length === 0) return {};
@@ -68,7 +70,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
         aria-label="Open cart"
       >
         <ShoppingCart className="h-4 w-4" />
-        <span>Cart</span>
+        <span>{s.cart}</span>
         {count > 0 && (
           <>
             <span
@@ -96,7 +98,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
               <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-white/25 px-1.5 text-xs font-bold text-white">
                 {count}
               </span>
-              <span className="text-sm font-semibold text-white">View order</span>
+              <span className="text-sm font-semibold text-white">{s.viewCartBar}</span>
             </div>
             <span className="text-sm font-semibold text-white">{formatCents(total)}</span>
           </button>
@@ -137,18 +139,19 @@ export function CartShell({ churchSlug }: CartShellProps) {
 
           <SheetHeader className={`px-5 pb-3 ${isDesktop ? "pt-6" : ""}`}>
             <SheetTitle className="text-left text-lg font-bold text-slate-800">
-              Your order
+              {s.yourOrder}
             </SheetTitle>
           </SheetHeader>
 
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-slate-500">Your cart is empty.</p>
+              <p className="text-slate-500">{s.emptyCart}</p>
               <button
                 onClick={() => setOpen(false)}
-                className="mt-4 text-sm text-emerald-600 underline-offset-2 hover:underline"
+                className="mt-4 text-sm underline-offset-2 hover:underline"
+                style={{ color: "var(--color-accent, #10b981)" }}
               >
-                Browse menu
+                {s.browseMenu}
               </button>
             </div>
           ) : (
@@ -170,7 +173,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
                           <div className="flex items-center gap-1.5">
                             <p className="truncate font-medium text-slate-800">{item.itemName}</p>
                             {canEdit && (
-                              <span className="shrink-0 text-xs text-slate-400 underline underline-offset-2">Edit</span>
+                              <span className="shrink-0 text-xs text-slate-400 underline underline-offset-2">{s.editItem}</span>
                             )}
                           </div>
                           {item.modifiers.length > 0 && (
@@ -220,7 +223,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
               {/* Subtotal + checkout */}
               <div className="sticky bottom-0 bg-white border-t border-slate-100 px-5 pb-8 pt-4">
                 <div className="mb-4 flex items-center justify-between">
-                  <span className="font-medium text-slate-700">Subtotal</span>
+                  <span className="font-medium text-slate-700">{s.subtotal}</span>
                   <span className="font-semibold text-slate-900">{formatCents(total)}</span>
                 </div>
                 <Link
@@ -231,14 +234,14 @@ export function CartShell({ churchSlug }: CartShellProps) {
                     className="w-full py-6 text-base font-semibold text-white"
                     style={{ backgroundColor: "var(--color-accent, #10b981)" }}
                   >
-                    Proceed to checkout
+                    {s.proceedToCheckout}
                   </Button>
                 </Link>
                 <button
                   onClick={() => setOpen(false)}
                   className="mt-3 w-full text-center text-sm text-slate-400 hover:text-slate-600"
                 >
-                  Continue shopping
+                  {s.continueShopping}
                 </button>
               </div>
             </>

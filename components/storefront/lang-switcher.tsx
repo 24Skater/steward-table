@@ -72,8 +72,9 @@ export function LangSwitcher({ churchSlug }: { churchSlug: string }) {
                 key={l}
                 onClick={() => switchLocale(l)}
                 className={`block w-full px-4 py-2 text-left text-sm transition-colors hover:bg-slate-50 ${
-                  l === locale ? "font-semibold text-emerald-700" : "text-slate-700"
+                  l === locale ? "font-semibold" : "text-slate-700"
                 }`}
+                style={l === locale ? { color: "var(--color-accent, #10b981)" } : undefined}
               >
                 {l === "EN" ? "English" : "Español"}
               </button>

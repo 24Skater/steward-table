@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
+import { useStorefrontStrings } from "@/components/storefront/storefront-locale-provider";
 
 interface CartBarProps {
   churchSlug: string;
@@ -15,6 +16,7 @@ function formatCents(cents: number): string {
 export function CartBar({ churchSlug }: CartBarProps) {
   const { items, total } = useCart();
   const count = items.reduce((s, i) => s + i.quantity, 0);
+  const s = useStorefrontStrings();
 
   if (count === 0) {
     return null;
@@ -31,7 +33,7 @@ export function CartBar({ churchSlug }: CartBarProps) {
           <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-white/25 px-1.5 text-xs font-bold text-white">
             {count}
           </span>
-          <span className="text-sm font-semibold text-white">View Cart</span>
+          <span className="text-sm font-semibold text-white">{s.viewCartBar}</span>
         </div>
         <span className="text-sm font-semibold text-white">{formatCents(total)}</span>
       </Link>

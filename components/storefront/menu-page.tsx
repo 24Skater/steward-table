@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { ItemCard } from "@/components/storefront/item-card";
+import { useStorefrontStrings } from "@/components/storefront/storefront-locale-provider";
 
 interface ModifierOption {
   id: string;
@@ -48,6 +49,7 @@ export function MenuPage({
 }: MenuPageProps) {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const s = useStorefrontStrings();
 
   const searchFiltered =
     query.trim() === ""
@@ -64,8 +66,8 @@ export function MenuPage({
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-        <p className="text-lg font-medium">No items available right now.</p>
-        <p className="mt-1 text-sm">Check back soon.</p>
+        <p className="text-lg font-medium">{s.noItemsAvailable}</p>
+        <p className="mt-1 text-sm">{s.checkBackSoon}</p>
       </div>
     );
   }
@@ -82,7 +84,7 @@ export function MenuPage({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search items…"
+          placeholder={s.searchPlaceholder}
           className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
         />
       </div>
@@ -98,7 +100,7 @@ export function MenuPage({
             }`}
             style={selectedCategory === null ? { backgroundColor: "var(--color-accent, #10b981)" } : undefined}
           >
-            All
+            {s.allCategories}
           </button>
           {categories.map((cat) => (
             <button
@@ -121,8 +123,8 @@ export function MenuPage({
         <div className="flex flex-col items-center justify-center py-16 text-slate-400">
           <p className="text-sm">
             {query.trim() !== ""
-              ? `No items match "${query}"`
-              : "No items in this category."}
+              ? `${s.noItemsMatchQuery} "${query}"`
+              : s.noItemsInCategory}
           </p>
         </div>
       ) : selectedCategory !== null ? (

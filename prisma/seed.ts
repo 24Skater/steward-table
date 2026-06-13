@@ -406,7 +406,91 @@ async function main() {
   console.log("\nSeed complete.");
 }
 
+async function seedSecondChurch() {
+  console.log("\n🌱 Seeding second demo church (Riverside Chapel)...");
+
+  const user = await prisma.user.upsert({
+    where: { email: "admin@riversidechapel.demo" },
+    update: {},
+    create: {
+      email: "admin@riversidechapel.demo",
+      emailVerified: new Date(),
+      name: "James Park",
+      status: "ACTIVE",
+    },
+  });
+
+  const church = await prisma.church.upsert({
+    where: { slug: "riverside-chapel" },
+    update: {},
+    create: {
+      name: "Riverside Chapel",
+      slug: "riverside-chapel",
+      status: "ACTIVE",
+      accentColor: "#6366f1",
+      locale: "EN",
+      currency: "USD",
+      timezone: "America/Los_Angeles",
+    },
+  });
+
+  await prisma.membership.upsert({
+    where: { userId_churchId: { userId: user.id, churchId: church.id } },
+    update: {},
+    create: {
+      userId: user.id,
+      churchId: church.id,
+      roles: ["OWNER"],
+      status: "ACTIVE",
+    },
+  });
+
+  const catalog = await prisma.catalog.upsert({
+    where: { churchId_slug: { churchId: church.id, slug: "sunday-brunch" } },
+    update: {},
+    create: {
+      churchId: church.id,
+      name: "Sunday Brunch",
+      slug: "sunday-brunch",
+      description: "Fresh weekend brunch items",
+      status: "CLOSED",
+    },
+  });
+
+  const itemDefs = [
+    { name: "Pancakes", defaultPrice: 700 },
+    { name: "Avocado Toast", defaultPrice: 900 },
+    { name: "Fresh OJ", defaultPrice: 350 },
+  ];
+
+  for (const def of itemDefs) {
+    const item = await prisma.item.upsert({
+      where: { id: `riverside-${def.name.toLowerCase().replace(/\s/g, "-")}` },
+      update: {},
+      create: {
+        id: `riverside-${def.name.toLowerCase().replace(/\s/g, "-")}`,
+        churchId: church.id,
+        name: def.name,
+        defaultPrice: def.defaultPrice,
+        status: "ACTIVE",
+      },
+    });
+    await prisma.catalogItem.upsert({
+      where: { catalogId_itemId: { catalogId: catalog.id, itemId: item.id } },
+      update: {},
+      create: { catalogId: catalog.id, itemId: item.id, sortOrder: 0 },
+    });
+  }
+
+  console.log(`  Church: ${church.name} (slug: ${church.slug})`);
+  console.log(`  Admin: ${user.name} <${user.email}>`);
+  console.log("  Catalog: Sunday Brunch (CLOSED)");
+}
+
+const isMulti = process.argv.includes("--multi");
+
 main()
+  .then(() => isMulti ? seedSecondChurch() : Promise.resolve())
   .catch((e) => {
     console.error(e);
     process.exit(1);
