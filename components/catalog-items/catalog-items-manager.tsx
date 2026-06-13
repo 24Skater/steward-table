@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Settings2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,7 @@ interface CatalogItem {
   itemId: string;
   isAvailable: boolean;
   priceOverride: number | null;
+  maxQuantityPerOrder: number | null;
   item: Item;
 }
 
@@ -67,21 +68,243 @@ interface CatalogItemsManagerProps {
   churchId: string;
 }
 
-export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerProps) {
+// ── Inline editable price field ──────────────────────────────────────────────
+
+interface InlinePriceProps {
+  catalogId: string;
+  itemId: string;
+  priceOverride: number | null;
+  defaultPrice: number;
+  onSaved: (next: number | null) => void;
+}
+
+function InlinePrice({ catalogId, itemId, priceOverride, defaultPrice, onSaved }: InlinePriceProps) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(
+    priceOverride !== null ? (priceOverride / 100).toFixed(2) : "",
+  );
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
+
+  const displayPrice = priceOverride ?? defaultPrice;
+
+  async function commit() {
+    const trimmed = value.trim();
+    let nextOverride: number | null;
+
+    if (trimmed === "" || trimmed === "0") {
+      nextOverride = null;
+    } else {
+      const parsed = parseFloat(trimmed);
+      if (isNaN(parsed) || parsed < 0) {
+        setValue(priceOverride !== null ? (priceOverride / 100).toFixed(2) : "");
+        setEditing(false);
+        return;
+      }
+      nextOverride = Math.round(parsed * 100);
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch(
+        `/api/catalogs/${catalogId}/items?itemId=${itemId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ priceOverride: nextOverride }),
+        },
+      );
+      if (res.ok) onSaved(nextOverride);
+    } finally {
+      setSaving(false);
+      setEditing(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        min="0"
+        step="0.01"
+        value={value}
+        disabled={saving}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Escape") {
+            setValue(priceOverride !== null ? (priceOverride / 100).toFixed(2) : "");
+            setEditing(false);
+          }
+        }}
+        className="w-20 text-sm font-medium tabular-nums border border-slate-300 rounded px-1.5 py-0.5 focus:outline-none focus:ring-2 focus:ring-slate-400"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setValue(priceOverride !== null ? (priceOverride / 100).toFixed(2) : (defaultPrice / 100).toFixed(2));
+        setEditing(true);
+      }}
+      className="text-sm font-medium text-slate-700 tabular-nums hover:underline underline-offset-2 focus:outline-none"
+      title="Click to edit price override"
+    >
+      ${(displayPrice / 100).toFixed(2)}
+      {priceOverride !== null && (
+        <span className="ml-1 text-xs font-normal text-slate-400">override</span>
+      )}
+    </button>
+  );
+}
+
+// ── Inline max quantity field ─────────────────────────────────────────────────
+
+interface InlineMaxQtyProps {
+  catalogId: string;
+  itemId: string;
+  maxQuantityPerOrder: number | null;
+  onSaved: (next: number | null) => void;
+}
+
+function InlineMaxQty({ catalogId, itemId, maxQuantityPerOrder, onSaved }: InlineMaxQtyProps) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(maxQuantityPerOrder?.toString() ?? "");
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
+
+  async function commit() {
+    const trimmed = value.trim();
+    let next: number | null;
+
+    if (trimmed === "") {
+      next = null;
+    } else {
+      const parsed = parseInt(trimmed, 10);
+      if (isNaN(parsed) || parsed < 1) {
+        setValue(maxQuantityPerOrder?.toString() ?? "");
+        setEditing(false);
+        return;
+      }
+      next = parsed;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch(
+        `/api/catalogs/${catalogId}/items?itemId=${itemId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ maxQuantityPerOrder: next }),
+        },
+      );
+      if (res.ok) onSaved(next);
+    } finally {
+      setSaving(false);
+      setEditing(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        min="1"
+        step="1"
+        value={value}
+        disabled={saving}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Escape") {
+            setValue(maxQuantityPerOrder?.toString() ?? "");
+            setEditing(false);
+          }
+        }}
+        className="w-14 text-xs border border-slate-300 rounded px-1.5 py-0.5 focus:outline-none focus:ring-2 focus:ring-slate-400"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setValue(maxQuantityPerOrder?.toString() ?? "");
+        setEditing(true);
+      }}
+      className="text-xs text-slate-500 hover:underline underline-offset-2 focus:outline-none"
+      title="Click to set max per order"
+    >
+      {maxQuantityPerOrder !== null
+        ? `max ${maxQuantityPerOrder}`
+        : <span className="text-slate-300">no max</span>}
+    </button>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export function CatalogItemsManager({ catalog: initialCatalog, churchId }: CatalogItemsManagerProps) {
   const router = useRouter();
+  const [catalog, setCatalog] = useState(initialCatalog);
   const [removeTarget, setRemoveTarget] = useState<CatalogItem | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<"OPEN" | "CLOSED" | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-
-  const effectivePrice = (ci: CatalogItem) => ci.priceOverride ?? ci.item.defaultPrice;
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const missingEsCount = catalog.items.filter((ci) => {
     const t = ci.item.translations as ItemTranslations | null;
     return !t?.es?.name?.trim();
   }).length;
+
+  function patchItem(itemId: string, patch: Partial<CatalogItem>) {
+    setCatalog((prev) => ({
+      ...prev,
+      items: prev.items.map((ci) =>
+        ci.itemId === itemId ? { ...ci, ...patch } : ci,
+      ),
+    }));
+  }
+
+  async function handleToggleAvailability(ci: CatalogItem) {
+    const next = !ci.isAvailable;
+    patchItem(ci.itemId, { isAvailable: next });
+    setTogglingId(ci.itemId);
+    try {
+      const res = await fetch(
+        `/api/catalogs/${catalog.id}/items?itemId=${ci.itemId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isAvailable: next }),
+        },
+      );
+      if (!res.ok) patchItem(ci.itemId, { isAvailable: ci.isAvailable });
+    } catch {
+      patchItem(ci.itemId, { isAvailable: ci.isAvailable });
+    } finally {
+      setTogglingId(null);
+    }
+  }
 
   function openPublishDialog() {
     setPendingStatus("OPEN");
@@ -127,7 +350,10 @@ export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerPr
         const body = await res.json().catch(() => ({}));
         throw new Error((body as { error?: string }).error ?? "Failed to remove item");
       }
-      router.refresh();
+      setCatalog((prev) => ({
+        ...prev,
+        items: prev.items.filter((ci) => ci.itemId !== removeTarget.itemId),
+      }));
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Failed to remove item");
     } finally {
@@ -215,18 +441,6 @@ export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerPr
                   {!(ci.item.translations as ItemTranslations | null)?.es?.name?.trim() && (
                     <span title="Missing Spanish translation" className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
                   )}
-                  <Badge
-                    variant={
-                      ci.isAvailable && ci.item.status === "ACTIVE"
-                        ? "default"
-                        : "secondary"
-                    }
-                    className="text-xs shrink-0"
-                  >
-                    {ci.isAvailable && ci.item.status === "ACTIVE"
-                      ? "Available"
-                      : "Unavailable"}
-                  </Badge>
                 </div>
                 {ci.item.description && (
                   <p className="text-xs text-slate-500 truncate">
@@ -242,14 +456,40 @@ export function CatalogItemsManager({ catalog, churchId }: CatalogItemsManagerPr
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
-                <span className="text-sm font-medium text-slate-700 tabular-nums">
-                  ${(effectivePrice(ci) / 100).toFixed(2)}
-                  {ci.priceOverride !== null && (
-                    <span className="ml-1 text-xs font-normal text-slate-400">
-                      override
-                    </span>
-                  )}
-                </span>
+                {/* Inline max qty */}
+                <InlineMaxQty
+                  catalogId={catalog.id}
+                  itemId={ci.itemId}
+                  maxQuantityPerOrder={ci.maxQuantityPerOrder}
+                  onSaved={(next) => patchItem(ci.itemId, { maxQuantityPerOrder: next })}
+                />
+
+                {/* Inline price override */}
+                <InlinePrice
+                  catalogId={catalog.id}
+                  itemId={ci.itemId}
+                  priceOverride={ci.priceOverride}
+                  defaultPrice={ci.item.defaultPrice}
+                  onSaved={(next) => patchItem(ci.itemId, { priceOverride: next })}
+                />
+
+                {/* Availability toggle */}
+                <button
+                  type="button"
+                  disabled={togglingId === ci.itemId}
+                  onClick={() => handleToggleAvailability(ci)}
+                  title={ci.isAvailable ? "Mark unavailable" : "Mark available"}
+                  className="flex items-center focus:outline-none disabled:opacity-50"
+                  aria-label={ci.isAvailable ? "Available — click to mark unavailable" : "Unavailable — click to mark available"}
+                >
+                  <Badge
+                    variant={ci.isAvailable && ci.item.status === "ACTIVE" ? "default" : "secondary"}
+                    className="text-xs cursor-pointer hover:opacity-75 transition-opacity"
+                  >
+                    {ci.isAvailable && ci.item.status === "ACTIVE" ? "Available" : "Unavailable"}
+                  </Badge>
+                </button>
+
                 <Link
                   href={`/catalog/${catalog.id}/items/${ci.item.id}`}
                   className="inline-flex items-center justify-center h-8 w-8 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
