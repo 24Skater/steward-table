@@ -1,17 +1,12 @@
-import { redirect } from "next/navigation";
-import type { Route } from "next";
-import { auth, signIn } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { auth, signIn } from "@/lib/auth";
+import type { Route } from "next";
+import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
 
 const DEFAULT_REDIRECT = "/orders" satisfies Route;
 
@@ -34,19 +29,13 @@ export default async function SignInPage({
       <div className="w-full max-w-sm space-y-6">
         {/* Wordmark */}
         <div className="text-center space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            Steward Table
-          </h1>
-          <p className="text-sm text-slate-500">
-            Order management for churches and ministries
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Steward Table</h1>
+          <p className="text-sm text-slate-500">Order management for churches and ministries</p>
         </div>
 
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-lg font-medium text-slate-800">
-              Sign in
-            </CardTitle>
+            <CardTitle className="text-lg font-medium text-slate-800">Sign in</CardTitle>
             <CardDescription className="text-slate-500">
               Use your email and password or continue with Google.
             </CardDescription>
@@ -75,19 +64,19 @@ export default async function SignInPage({
                     password,
                     redirectTo: destination,
                   });
-                } catch {
-                  redirect(
-                    `/auth/sign-in?error=CredentialsSignin&callbackUrl=${destination}` as Route,
-                  );
+                } catch (error) {
+                  if (error instanceof AuthError) {
+                    redirect(
+                      `/auth/sign-in?error=${error.type}&callbackUrl=${encodeURIComponent(destination)}` as Route,
+                    );
+                  }
+                  throw error;
                 }
               }}
               className="space-y-3"
             >
               <div className="space-y-1.5">
-                <Label
-                  htmlFor="email"
-                  className="text-sm font-medium text-slate-700"
-                >
+                <Label htmlFor="email" className="text-sm font-medium text-slate-700">
                   Email
                 </Label>
                 <Input
@@ -101,10 +90,7 @@ export default async function SignInPage({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label
-                  htmlFor="password"
-                  className="text-sm font-medium text-slate-700"
-                >
+                <Label htmlFor="password" className="text-sm font-medium text-slate-700">
                   Password
                 </Label>
                 <Input
@@ -159,10 +145,7 @@ export default async function SignInPage({
               className="space-y-3"
             >
               <div className="space-y-1.5">
-                <Label
-                  htmlFor="magic-email"
-                  className="text-sm font-medium text-slate-700"
-                >
+                <Label htmlFor="magic-email" className="text-sm font-medium text-slate-700">
                   Or get a sign-in link by email
                 </Label>
                 <div className="flex gap-2">
@@ -192,7 +175,10 @@ export default async function SignInPage({
         </p>
         <p className="text-center text-xs text-slate-400">
           Setting up a new church?{" "}
-          <a href="/auth/sign-in?callbackUrl=%2Fonboarding" className="text-slate-600 underline underline-offset-2 hover:text-slate-800">
+          <a
+            href="/auth/sign-in?callbackUrl=%2Fonboarding"
+            className="text-slate-600 underline underline-offset-2 hover:text-slate-800"
+          >
             Register your organization
           </a>
         </p>
