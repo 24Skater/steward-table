@@ -36,9 +36,9 @@ interface OrdersSsePayload {
 // ── SSE hook ──────────────────────────────────────────────────────────────────
 
 function useOrdersSse() {
+  const router = useRouter();
   const [liveStatusCounts, setLiveStatusCounts] = useState<Partial<Record<OrderStatus, number>>>({});
   const [isLive, setIsLive] = useState(false);
-  // Track previous total to detect new orders arriving
   const prevTotalRef = useRef<number>(0);
   const [flashTab, setFlashTab] = useState<FilterTab | null>(null);
 
@@ -50,12 +50,12 @@ function useOrdersSse() {
       setIsLive(true);
       setLiveStatusCounts(payload.statusCounts);
 
-      // Detect newly arrived orders (new orders in the last 5 minutes)
       const newTotal = payload.newOrders.length;
       if (newTotal > prevTotalRef.current) {
-        // Flash the "pending" tab since new orders arrive as SUBMITTED
         setFlashTab("pending");
         setTimeout(() => setFlashTab(null), 1_500);
+        // Refresh the server-side data so new orders appear in the list
+        router.refresh();
       }
       prevTotalRef.current = newTotal;
     });
@@ -68,7 +68,7 @@ function useOrdersSse() {
       es.close();
       setIsLive(false);
     };
-  }, []);
+  }, [router]);
 
   return { liveStatusCounts, isLive, flashTab };
 }
