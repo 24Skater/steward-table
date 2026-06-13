@@ -51,9 +51,9 @@
   }
 
   html {
-    /* Belt-and-suspenders for the meta color-scheme tag in layout.tsx.
-       Together they prevent Chrome's black canvas-background flash on Windows. */
-    color-scheme: light;
+    /* "only light" forbids Chrome's Auto Dark Mode flag from overriding colors.
+       This prevents the black GPU canvas artifact on Windows Chrome. */
+    color-scheme: only light;
     background-color: white;
   }
 
