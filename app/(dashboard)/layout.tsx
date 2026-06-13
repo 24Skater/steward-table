@@ -29,7 +29,7 @@ export default async function DashboardLayout({
   });
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100">
+    <div className="flex w-full h-screen overflow-hidden bg-slate-100">
       <Sidebar churchName={church?.name} />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <main className="flex-1 overflow-y-auto">{children}</main>

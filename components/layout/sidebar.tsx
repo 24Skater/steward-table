@@ -48,7 +48,7 @@ export function Sidebar({ churchName }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex flex-col w-56 shrink-0 h-screen bg-slate-900 text-slate-100">
+    <aside className="flex flex-col w-56 shrink-0 bg-slate-900 text-slate-100">
       {/* Header */}
       <div className="px-4 py-4 border-b border-slate-800">
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wider truncate">
