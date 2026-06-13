@@ -10,8 +10,8 @@ export const runtime = "nodejs";
 // How often to push fresh data (ms)
 const POLL_INTERVAL_MS = 5_000;
 
-// Active order statuses shown in kitchen
-const KITCHEN_STATUSES: OrderStatus[] = ["CONFIRMED", "IN_KITCHEN", "READY"];
+// Active order statuses shown in kitchen — READY is excluded so marked orders leave the display
+const KITCHEN_STATUSES: OrderStatus[] = ["CONFIRMED", "IN_KITCHEN"];
 
 // How long (ms) to keep showing a recently-canceled order overlay
 const CANCELED_WINDOW_MS = 35_000;
