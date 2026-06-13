@@ -1,0 +1,37 @@
+model InventoryItem {
+  id                String  @id @default(cuid())
+  churchId          String
+  itemId            String  @unique
+  quantityOnHand    Int     @default(0)
+  lowStockThreshold Int?
+  trackingEnabled   Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church    Church          @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  item      Item            @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  movements StockMovement[]
+
+  @@index([churchId])
+  @@map("inventory_items")
+}
+
+model StockMovement {
+  id              String            @id @default(cuid())
+  inventoryItemId String
+  kind            StockMovementKind
+  delta           Int
+  reason          String?
+  orderId         String?
+  actorId         String?
+
+  createdAt DateTime @default(now())
+
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  actor         User?         @relation("StockMovementActor", fields: [actorId], references: [id])
+
+  @@index([inventoryItemId, createdAt])
+  @@map("stock_movements")
+}

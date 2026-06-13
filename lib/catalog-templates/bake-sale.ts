@@ -1,0 +1,55 @@
+import type { CatalogTemplate } from "./types";
+
+export const bakeSaleTemplate: CatalogTemplate = {
+  key: "bake-sale",
+  name: "Bake Sale",
+  description: "Church bake sale",
+  items: [
+    {
+      name: "Chocolate Chip Cookies (Dozen)",
+      nameEs: "Galletas de Chispas de Chocolate (Docena)",
+      description: "One dozen freshly baked chocolate chip cookies",
+      descriptionEs: "Una docena de galletas de chispas de chocolate recién horneadas",
+      defaultPrice: 800,
+      station: "food",
+      modifierGroupNames: [],
+    },
+    {
+      name: "Banana Bread Loaf",
+      nameEs: "Pan de Plátano",
+      description: "Homemade banana bread loaf",
+      descriptionEs: "Pan de plátano casero",
+      defaultPrice: 600,
+      station: "food",
+      modifierGroupNames: [],
+    },
+    {
+      name: "Brownies (Half Dozen)",
+      nameEs: "Brownies (Media Docena)",
+      description: "Six homemade brownies",
+      descriptionEs: "Seis brownies caseros",
+      defaultPrice: 600,
+      station: "food",
+      modifierGroupNames: [],
+    },
+    {
+      name: "Cinnamon Rolls (4-pack)",
+      nameEs: "Rollos de Canela (Paquete de 4)",
+      description: "Four cinnamon rolls with icing",
+      descriptionEs: "Cuatro rollos de canela con glaseado",
+      defaultPrice: 800,
+      station: "food",
+      modifierGroupNames: [],
+    },
+    {
+      name: "Lemonade (Cup)",
+      nameEs: "Limonada (Vaso)",
+      description: "Fresh-squeezed lemonade",
+      descriptionEs: "Limonada natural recién exprimida",
+      defaultPrice: 200,
+      station: "drinks",
+      modifierGroupNames: [],
+    },
+  ],
+  modifierGroups: [],
+};

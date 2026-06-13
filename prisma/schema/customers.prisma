@@ -1,0 +1,94 @@
+model Customer {
+  id                 String  @id @default(cuid())
+  churchId           String
+  userId             String?
+  name               String
+  email              String?
+  emailNormalized    String?
+  phone              String?
+  phoneNormalized    String?
+  locale             Locale  @default(EN)
+  marketingOptIn     Boolean @default(false)
+  smsOptIn           Boolean @default(false)
+  smsOptInProofUrl   String?
+  notes              String?
+  lifetimeValueCents Int     @default(0)
+  totalOrders        Int     @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church    Church         @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  addresses Address[]
+  orders    Order[]
+  tags      CustomerTag[]
+  notesLog  CustomerNote[]
+
+  @@unique([churchId, emailNormalized])
+  @@unique([churchId, phoneNormalized])
+  @@index([churchId])
+  @@index([deletedAt])
+  @@map("customers")
+}
+
+model Address {
+  id            String  @id @default(cuid())
+  customerId    String
+  label         String?
+  recipientName String?
+  line1         String
+  line2         String?
+  city          String
+  region        String
+  postalCode    String
+  country       String  @default("US")
+  isDefault     Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@map("addresses")
+}
+
+model CustomerNote {
+  id         String  @id @default(cuid())
+  customerId String
+  authorId   String?
+  body       String
+
+  createdAt DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  author   User?    @relation(fields: [authorId], references: [id])
+
+  @@index([customerId])
+  @@map("customer_notes")
+}
+
+model CustomerTag {
+  id         String @id @default(cuid())
+  customerId String
+  value      String
+
+  createdAt DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, value])
+  @@index([value])
+  @@map("customer_tags")
+}
+
+model SmsOptOut {
+  id              String   @id @default(cuid())
+  phoneNormalized String   @unique
+  reason          String?
+  optedOutAt      DateTime @default(now())
+
+  @@map("sms_opt_outs")
+}
