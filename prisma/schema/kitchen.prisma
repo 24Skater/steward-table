@@ -1,0 +1,20 @@
+model Kitchen {
+  id        String  @id @default(cuid())
+  churchId  String
+  name      String
+  slug      String
+  isDefault Boolean @default(false)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church   Church    @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  catalogs Catalog[]
+
+  @@unique([churchId, slug])
+  @@index([churchId])
+  @@index([deletedAt])
+  @@map("kitchens")
+}

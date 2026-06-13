@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const TENANTED_MODELS = new Set([
   "catalog",
+  "kitchen",
   "item",
   "catalogitem",
   "modifiergroup",
@@ -27,6 +28,7 @@ const SOFT_DELETE_MODELS = new Set([
   "church",
   "churchsettings",
   "catalog",
+  "kitchen",
   "item",
   "itemphoto",
   "catalogitem",
