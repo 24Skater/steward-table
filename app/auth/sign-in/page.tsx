@@ -192,7 +192,7 @@ export default async function SignInPage({
         </p>
         <p className="text-center text-xs text-slate-400">
           Setting up a new church?{" "}
-          <a href="/onboarding" className="text-slate-600 underline underline-offset-2 hover:text-slate-800">
+          <a href="/auth/sign-in?callbackUrl=%2Fonboarding" className="text-slate-600 underline underline-offset-2 hover:text-slate-800">
             Register your organization
           </a>
         </p>
