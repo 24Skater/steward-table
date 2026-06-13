@@ -4,12 +4,20 @@ import { useTransition } from "react";
 import type { KitchenOrder } from "./kitchen-display";
 
 interface UrgencyLevel {
+  urgent: boolean;
   border: string;
   header: string;
   badge?: string;
 }
 
-function getUrgency(order: KitchenOrder, now: Date): UrgencyLevel {
+interface UrgencyConfig {
+  urgent: boolean;
+  border: string;
+  header: string;
+  badge?: string;
+}
+
+function getUrgency(order: KitchenOrder, now: Date): UrgencyConfig {
   const referenceTime = order.scheduledFor
     ? new Date(order.scheduledFor)
     : new Date(order.createdAt);
@@ -19,6 +27,7 @@ function getUrgency(order: KitchenOrder, now: Date): UrgencyLevel {
 
   if (diffMin <= 10) {
     return {
+      urgent: true,
       border: "border-red-500",
       header: "bg-red-950",
       badge: "bg-red-500 text-white",
@@ -26,12 +35,14 @@ function getUrgency(order: KitchenOrder, now: Date): UrgencyLevel {
   }
   if (diffMin <= 60) {
     return {
+      urgent: false,
       border: "border-amber-400",
       header: "bg-amber-950",
       badge: "bg-amber-400 text-slate-900",
     };
   }
   return {
+    urgent: false,
     border: "border-slate-700",
     header: "bg-slate-800",
   };
@@ -82,7 +93,7 @@ export function KitchenOrderCard({ order, currentTime, onMarkReady }: KitchenOrd
 
   return (
     <article
-      className={`flex flex-col rounded-lg border-2 overflow-hidden bg-slate-900 ${urgency.border}`}
+      className={`flex flex-col rounded-lg border-2 overflow-hidden bg-slate-900 ${urgency.border}${urgency.urgent ? " animate-pulse-subtle" : ""}`}
       aria-label={`Order #${order.number}`}
     >
       {/* Header */}
