@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import type { Route } from "next";
 
 const LOCALES = ["EN", "ES"] as const;
 type Locale = (typeof LOCALES)[number];
@@ -45,7 +46,7 @@ export function LangSwitcher({ churchSlug }: { churchSlug: string }) {
     localStorage.setItem(LOCALE_STORAGE_KEY + "-" + churchSlug, next);
     const params = new URLSearchParams(searchParams.toString());
     params.set("lang", next.toLowerCase());
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}` as Route);
   }
 
   return (

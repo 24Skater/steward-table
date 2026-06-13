@@ -8,9 +8,10 @@ RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
+ENV CI=true
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm prisma generate
+RUN node_modules/.bin/prisma generate
 RUN pnpm build
 
 FROM base AS runner
