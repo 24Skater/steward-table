@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
+export const runtime = "nodejs";
+
 // Production domain: {slug}.table.steward.app
 // Development: localhost:3000/{slug} or subdomain via /etc/hosts
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";

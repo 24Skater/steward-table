@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { CheckCircle, Monitor, CreditCard, Github } from "lucide-react";
 
 export default function HomePage() {
@@ -68,44 +69,16 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Order state diagram */}
-            <div className="bg-slate-950 rounded-xl p-6 font-mono text-sm shadow-xl ring-1 ring-slate-800">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="w-3 h-3 rounded-full bg-red-500" />
-                <span className="w-3 h-3 rounded-full bg-yellow-500" />
-                <span className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="ml-2 text-xs text-slate-500">
-                  order-state-machine.ts
-                </span>
-              </div>
-              <div className="space-y-1 text-slate-300 leading-relaxed">
-                <p>
-                  <span className="text-purple-400">type</span>{" "}
-                  <span className="text-yellow-300">OrderStatus</span>{" "}
-                  <span className="text-slate-400">=</span>
-                </p>
-                <p className="pl-4">
-                  <span className="text-slate-400">| &apos;SUBMITTED&apos;</span>
-                </p>
-                <p className="pl-4">
-                  <span className="text-emerald-400">| &apos;CONFIRMED&apos;</span>
-                </p>
-                <p className="pl-4">
-                  <span className="text-yellow-400">| &apos;IN_KITCHEN&apos;</span>
-                </p>
-                <p className="pl-4">
-                  <span className="text-blue-400">| &apos;READY&apos;</span>
-                </p>
-                <p className="pl-4">
-                  <span className="text-emerald-400">| &apos;COMPLETED&apos;</span>
-                </p>
-                <p className="pl-4">
-                  <span className="text-red-400">| &apos;CANCELED&apos;</span>
-                </p>
-                <p className="text-slate-400 mt-3 text-xs">
-                  // Real-time via SSE — kitchen updates instantly
-                </p>
-              </div>
+            {/* App screenshot — orders dashboard */}
+            <div className="rounded-xl overflow-hidden shadow-2xl ring-1 ring-slate-200">
+              <Image
+                src="/screenshots/dashboard-orders.png"
+                alt="Steward Table orders dashboard showing real-time order management"
+                width={1440}
+                height={900}
+                className="w-full h-auto"
+                priority
+              />
             </div>
           </div>
         </section>
@@ -267,60 +240,15 @@ export default function HomePage() {
               </ul>
             </div>
 
-            <div className="bg-slate-950 rounded-xl overflow-hidden shadow-xl ring-1 ring-slate-800">
-              <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-400">
-                  Kitchen Display
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs text-emerald-400">Live</span>
-                </span>
-              </div>
-              <div className="p-6 space-y-3">
-                {[
-                  {
-                    id: "#1042",
-                    name: "Maria G.",
-                    items: "3x Pupusas, 1x Tamale",
-                    status: "IN_KITCHEN",
-                    color: "text-yellow-400 bg-yellow-400/10",
-                  },
-                  {
-                    id: "#1043",
-                    name: "Carlos R.",
-                    items: "6x Tamales",
-                    status: "CONFIRMED",
-                    color: "text-blue-400 bg-blue-400/10",
-                  },
-                  {
-                    id: "#1044",
-                    name: "Ana M.",
-                    items: "2x Pupusas, 2x Horchata",
-                    status: "READY",
-                    color: "text-emerald-400 bg-emerald-400/10",
-                  },
-                ].map((order) => (
-                  <div
-                    key={order.id}
-                    className="rounded-lg bg-slate-900 border border-slate-800 p-4 flex items-start justify-between gap-4"
-                  >
-                    <div>
-                      <p className="text-xs text-slate-500 mb-0.5">
-                        {order.id} — {order.name}
-                      </p>
-                      <p className="text-sm font-medium text-slate-200">
-                        {order.items}
-                      </p>
-                    </div>
-                    <span
-                      className={`shrink-0 text-xs font-medium px-2 py-1 rounded-full ${order.color}`}
-                    >
-                      {order.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            {/* App screenshot — kitchen display */}
+            <div className="rounded-xl overflow-hidden shadow-xl ring-1 ring-slate-800">
+              <Image
+                src="/screenshots/kitchen-display.png"
+                alt="Steward Table kitchen display showing live order queue"
+                width={1440}
+                height={900}
+                className="w-full h-auto"
+              />
             </div>
           </div>
         </section>
