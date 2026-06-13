@@ -6,6 +6,7 @@ import { ModifierDialog } from "@/components/storefront/modifier-dialog";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/components/ui/toast";
 import type { CartModifier } from "@/hooks/use-cart";
+import { useStorefrontStrings } from "@/components/storefront/storefront-locale-provider";
 
 interface ModifierOption {
   id: string;
@@ -53,6 +54,7 @@ export function ItemCard({
   const { addItem } = useCart();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const s = useStorefrontStrings();
 
   const hasRequiredModifiers = modifierGroups.some((g) => g.isRequired);
   const hasAnyModifiers = modifierGroups.length > 0;
@@ -103,7 +105,7 @@ export function ItemCard({
         {!isAvailable && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/60">
             <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-              Sold out
+              {s.soldOut}
             </span>
           </div>
         )}
@@ -137,7 +139,7 @@ export function ItemCard({
                 style={{ backgroundColor: "var(--color-accent, #10b981)" }}
                 aria-hidden="true"
               >
-                {hasRequiredModifiers ? "Customize" : "Add"}
+                {hasRequiredModifiers ? s.customize : s.addItem}
               </div>
             )}
           </div>

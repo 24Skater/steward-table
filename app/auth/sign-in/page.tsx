@@ -188,7 +188,13 @@ export default async function SignInPage({
         </Card>
 
         <p className="text-center text-xs text-slate-400">
-          Access is by invitation only. Contact your church administrator.
+          Member access is by invitation only. Contact your church administrator.
+        </p>
+        <p className="text-center text-xs text-slate-400">
+          Setting up a new church?{" "}
+          <a href="/onboarding" className="text-slate-600 underline underline-offset-2 hover:text-slate-800">
+            Register your organization
+          </a>
         </p>
       </div>
     </div>

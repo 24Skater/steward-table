@@ -7,6 +7,7 @@ import { CartShell } from "@/components/storefront/cart-shell";
 import { ToastProvider } from "@/components/ui/toast";
 import { StorefrontMenu } from "@/components/storefront/storefront-menu";
 import { LangSwitcher } from "@/components/storefront/lang-switcher";
+import { StorefrontLocaleProvider } from "@/components/storefront/storefront-locale-provider";
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
@@ -91,6 +92,8 @@ export default async function StorefrontLayout({
 
   return (
     <ToastProvider>
+    <Suspense>
+    <StorefrontLocaleProvider>
     <div
       className="min-h-screen bg-white"
       data-church-id={church.id}
@@ -140,6 +143,8 @@ export default async function StorefrontLayout({
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8 pb-28">{children}</main>
     </div>
+    </StorefrontLocaleProvider>
+    </Suspense>
     </ToastProvider>
   );
 }

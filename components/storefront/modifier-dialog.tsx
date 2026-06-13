@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import type { CartModifier } from "@/hooks/use-cart";
+import { useStorefrontStrings } from "@/components/storefront/storefront-locale-provider";
 
 interface ModifierOption {
   id: string;
@@ -58,6 +59,7 @@ export function ModifierDialog({
   confirmLabel,
   onConfirm,
 }: ModifierDialogProps) {
+  const s = useStorefrontStrings();
   const [quantity, setQuantity] = useState(initialQuantity);
   const [selections, setSelections] = useState<Record<string, string[]>>(() => {
     if (initialSelections) return initialSelections;
@@ -170,7 +172,7 @@ export function ModifierDialog({
               <div className="mb-2 flex items-baseline justify-between">
                 <span className="text-sm font-semibold text-slate-800">{group.name}</span>
                 {group.isRequired && (
-                  <span className="text-xs font-medium text-rose-600">Required</span>
+                  <span className="text-xs font-medium text-rose-600">{s.required}</span>
                 )}
               </div>
               <div className="space-y-2">
@@ -241,7 +243,7 @@ export function ModifierDialog({
             className="w-full py-6 text-base font-semibold text-white"
             style={{ backgroundColor: "var(--color-accent, #10b981)" }}
           >
-            {confirmLabel ?? "Add"}{quantity > 1 ? ` ${quantity} × ` : " "}to order — {formatCents((itemBasePrice + modifierTotal) * quantity)}
+            {confirmLabel ?? s.addItem}{quantity > 1 ? ` ${quantity} × ` : " "}{s.toOrder} — {formatCents((itemBasePrice + modifierTotal) * quantity)}
           </Button>
         </div>
       </SheetContent>
