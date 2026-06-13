@@ -1,0 +1,10 @@
+version: "3.9"
+
+# Dev override — uses the locally built steward-table:latest image
+# instead of rebuilding from source. Run with:
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up
+
+services:
+  app:
+    build: !reset null
+    image: steward-table:latest

@@ -41,6 +41,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     restart: unless-stopped
+    env_file:
+      - ../.env.local
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/steward_table
       NEXTAUTH_URL: http://localhost:3000
@@ -54,8 +56,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ../.env.local:/app/.env.local:ro
 
 volumes:
   postgres_data:

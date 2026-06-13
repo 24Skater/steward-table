@@ -1,12 +1,12 @@
+import { db } from "@/lib/db";
+import { sendWelcomeEmail } from "@/lib/notifications/email";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import bcrypt from "bcryptjs";
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { db } from "@/lib/db";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
-import { sendWelcomeEmail } from "@/lib/notifications/email";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -16,7 +16,7 @@ const credentialsSchema = z.object({
 export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(db),
   session: {
-    strategy: "database",
+    strategy: "jwt",
   },
   providers: [
     Google({
@@ -53,13 +53,17 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
-      if (!user?.id) return session;
+    async session({ session, user, token }) {
+      // Auth.js uses database sessions with OAuth providers but JWT sessions
+      // with the Credentials provider (even when adapter is configured).
+      // Support both: database sessions supply `user`, JWT sessions supply `token.sub`.
+      const userId = user?.id ?? (token?.sub as string | undefined);
+      if (!userId) return session;
 
       // Attach memberships to session for downstream use
       const memberships = await db.membership.findMany({
         where: {
-          userId: user.id,
+          userId,
           status: "ACTIVE",
           churchId: { not: undefined },
         },
@@ -77,7 +81,7 @@ export const authConfig: NextAuthConfig = {
         ...session,
         user: {
           ...session.user,
-          id: user.id,
+          id: userId,
           memberships,
         },
       };
