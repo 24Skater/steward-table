@@ -6,7 +6,7 @@ import { can } from "@/lib/rbac/can";
 import type { SessionMembership } from "@/lib/auth/types";
 
 const postSchema = z.object({
-  catalogId: z.string().min(1),
+  catalogId: z.string().min(1).optional(),
   name: z.string().min(1, "Name is required").max(200),
   priceCents: z.number().int().min(0, "Price must be non-negative"),
   description: z.string().max(1000).optional(),
@@ -49,16 +49,18 @@ export async function POST(req: NextRequest) {
 
   const { catalogId, name, priceCents, description } = parsed.data;
 
-  // Verify the catalog belongs to this church
-  const catalog = await db.catalog.findFirst({
-    where: { id: catalogId, churchId: membership.churchId },
-    select: { id: true },
-  });
-  if (!catalog) {
-    return NextResponse.json({ error: "Catalog not found" }, { status: 404 });
+  // If catalogId provided, verify the catalog belongs to this church
+  if (catalogId) {
+    const catalog = await db.catalog.findFirst({
+      where: { id: catalogId, churchId: membership.churchId },
+      select: { id: true },
+    });
+    if (!catalog) {
+      return NextResponse.json({ error: "Catalog not found" }, { status: 404 });
+    }
   }
 
-  // Create the Item and link it to the catalog via CatalogItem
+  // Create the Item
   const item = await db.item.create({
     data: {
       churchId: membership.churchId,
@@ -78,29 +80,35 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  const catalogItem = await db.catalogItem.create({
-    data: {
-      catalogId,
-      itemId: item.id,
-      sortOrder: 0,
-    },
-    select: {
-      id: true,
-      sortOrder: true,
-      deletedAt: true,
-    },
-  });
-
-  return NextResponse.json(
-    {
-      success: true,
-      catalogItem: {
-        id: catalogItem.id,
-        sortOrder: catalogItem.sortOrder,
-        deletedAt: catalogItem.deletedAt,
-        item,
+  // Optionally link to a catalog
+  if (catalogId) {
+    const catalogItem = await db.catalogItem.create({
+      data: {
+        catalogId,
+        itemId: item.id,
+        sortOrder: 0,
       },
-    },
-    { status: 201 },
-  );
+      select: {
+        id: true,
+        sortOrder: true,
+        deletedAt: true,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        item,
+        catalogItem: {
+          id: catalogItem.id,
+          sortOrder: catalogItem.sortOrder,
+          deletedAt: catalogItem.deletedAt,
+          item,
+        },
+      },
+      { status: 201 },
+    );
+  }
+
+  return NextResponse.json({ success: true, item }, { status: 201 });
 }
