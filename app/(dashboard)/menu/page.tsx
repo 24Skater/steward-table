@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
 import { TopBar } from "@/components/layout/top-bar";
-import { MenuManager } from "@/components/menu/menu-manager";
+import { ItemsLibrary } from "@/components/menu/items-library";
 import type { SessionMembership } from "@/lib/auth/types";
 
 export default async function MenuPage() {
@@ -22,38 +22,33 @@ export default async function MenuPage() {
   });
   if (!canResult.allowed) redirect("/");
 
-  const catalogs = await (db.catalog.findMany as Function)({
+  const items = await (db.item.findMany as Function)({
     where: { churchId: membership.churchId, deletedAt: null },
-    include: {
-      items: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      defaultPrice: true,
+      imageUrl: true,
+      status: true,
+      taxCategory: true,
+      translations: true,
+      _count: { select: { modifierGroups: true } },
+      catalogItems: {
         where: { deletedAt: null },
-        include: {
-          item: {
-            select: {
-              id: true,
-              name: true,
-              description: true,
-              defaultPrice: true,
-              imageUrl: true,
-              status: true,
-              _count: { select: { modifierGroups: true } },
-            },
-          },
+        select: {
+          catalog: { select: { id: true, name: true, status: true } },
         },
-        orderBy: { sortOrder: "asc" },
       },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { name: "asc" },
   });
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Menu" />
+      <TopBar title="Menu Items" />
       <div className="flex-1 overflow-y-auto p-6">
-        <MenuManager
-          catalogs={catalogs}
-          churchId={membership.churchId}
-        />
+        <ItemsLibrary items={items} />
       </div>
     </div>
   );
