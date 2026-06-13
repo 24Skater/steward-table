@@ -83,7 +83,7 @@ export function MenuPage({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search items…"
-          className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+          className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
         />
       </div>
 
@@ -93,9 +93,10 @@ export function MenuPage({
             onClick={() => setSelectedCategory(null)}
             className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
               selectedCategory === null
-                ? "bg-emerald-600 text-white"
-                : "border border-slate-200 bg-white text-slate-600 hover:border-emerald-300"
+                ? "text-white"
+                : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
             }`}
+            style={selectedCategory === null ? { backgroundColor: "var(--color-accent, #10b981)" } : undefined}
           >
             All
           </button>
@@ -105,9 +106,10 @@ export function MenuPage({
               onClick={() => setSelectedCategory(cat)}
               className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                 selectedCategory === cat
-                  ? "bg-emerald-600 text-white"
-                  : "border border-slate-200 bg-white text-slate-600 hover:border-emerald-300"
+                  ? "text-white"
+                  : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
               }`}
+              style={selectedCategory === cat ? { backgroundColor: "var(--color-accent, #10b981)" } : undefined}
             >
               {cat}
             </button>

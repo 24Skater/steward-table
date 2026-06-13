@@ -25,10 +25,16 @@ export function CartButton({ churchSlug }: CartButtonProps) {
       <span>Cart</span>
       {count > 0 && (
         <>
-          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-600 px-1 text-xs font-semibold text-white">
+          <span
+            className="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold text-white"
+            style={{ backgroundColor: "var(--color-accent, #10b981)" }}
+          >
             {count}
           </span>
-          <span className="hidden text-xs font-semibold text-emerald-700 sm:inline">
+          <span
+            className="hidden text-xs font-semibold sm:inline"
+            style={{ color: "var(--color-accent, #10b981)" }}
+          >
             {formatCents(total)}
           </span>
         </>

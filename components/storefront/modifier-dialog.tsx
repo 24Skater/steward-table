@@ -238,7 +238,8 @@ export function ModifierDialog({
           </div>
           <Button
             onClick={handleConfirm}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 py-6 text-base font-semibold"
+            className="w-full py-6 text-base font-semibold text-white"
+            style={{ backgroundColor: "var(--color-accent, #10b981)" }}
           >
             {confirmLabel ?? "Add"}{quantity > 1 ? ` ${quantity} × ` : " "}to order — {formatCents((itemBasePrice + modifierTotal) * quantity)}
           </Button>
