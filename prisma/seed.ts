@@ -45,7 +45,7 @@ async function main() {
   });
   console.log(`  Church: ${church.name} (${church.id})`);
 
-  const existingKitchen = await prisma.kitchen.findFirst({ where: { churchId: church.id } });
+  const existingKitchen = await prisma.kitchen.findFirst({ where: { churchId: church.id, isDefault: true } });
   if (!existingKitchen) {
     await createDefaultKitchen(prisma, church.id);
   }
@@ -455,7 +455,7 @@ async function seedSecondChurch() {
     },
   });
 
-  const existingKitchenRiverside = await prisma.kitchen.findFirst({ where: { churchId: church.id } });
+  const existingKitchenRiverside = await prisma.kitchen.findFirst({ where: { churchId: church.id, isDefault: true } });
   if (!existingKitchenRiverside) {
     await createDefaultKitchen(prisma, church.id);
   }

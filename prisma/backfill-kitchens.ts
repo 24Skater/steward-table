@@ -8,7 +8,10 @@ import { createDefaultKitchen } from "../lib/kitchens/defaults";
 async function main() {
   const prisma = new PrismaClient();
   try {
-    const churches = await prisma.church.findMany({ select: { id: true } });
+    const churches = await prisma.church.findMany({
+      where: { deletedAt: null },
+      select: { id: true },
+    });
     for (const church of churches) {
       let kitchen = await prisma.kitchen.findFirst({
         where: { churchId: church.id, isDefault: true },
@@ -29,6 +32,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(err);
+  console.error("Backfill failed:", err instanceof Error ? err.message : err);
   process.exit(1);
 });
