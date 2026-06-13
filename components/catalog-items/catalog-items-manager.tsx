@@ -3,7 +3,24 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Settings2, Trash2 } from "lucide-react";
+import { ArrowLeft, GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -258,6 +275,134 @@ function InlineMaxQty({ catalogId, itemId, maxQuantityPerOrder, onSaved }: Inlin
   );
 }
 
+// ── Sortable row ──────────────────────────────────────────────────────────────
+
+interface SortableCatalogItemRowProps {
+  ci: CatalogItem;
+  catalogId: string;
+  togglingId: string | null;
+  onToggleAvailability: (ci: CatalogItem) => void;
+  onPriceOverrideSaved: (itemId: string, next: number | null) => void;
+  onMaxQtySaved: (itemId: string, next: number | null) => void;
+  onRemove: (ci: CatalogItem) => void;
+}
+
+function SortableCatalogItemRow({
+  ci,
+  catalogId,
+  togglingId,
+  onToggleAvailability,
+  onPriceOverrideSaved,
+  onMaxQtySaved,
+  onRemove,
+}: SortableCatalogItemRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: ci.itemId });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between px-4 py-3 gap-4 bg-white"
+    >
+      <button
+        type="button"
+        className="flex-none cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 focus:outline-none"
+        aria-label="Drag to reorder"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+
+      <div className="flex-1 min-w-0 space-y-0.5">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-slate-900 text-sm truncate">
+            {ci.item.name}
+          </span>
+          {!(ci.item.translations as ItemTranslations | null)?.es?.name?.trim() && (
+            <span title="Missing Spanish translation" className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+          )}
+        </div>
+        {ci.item.description && (
+          <p className="text-xs text-slate-500 truncate">
+            {ci.item.description}
+          </p>
+        )}
+        {ci.item.modifierGroups.length > 0 && (
+          <p className="text-xs text-slate-400">
+            Modifiers:{" "}
+            {ci.item.modifierGroups.map((mg) => mg.group.name).join(", ")}
+          </p>
+        )}
+      </div>
+
+      <div className="flex items-center gap-3 shrink-0">
+        <InlineMaxQty
+          catalogId={catalogId}
+          itemId={ci.itemId}
+          maxQuantityPerOrder={ci.maxQuantityPerOrder}
+          onSaved={(next) => onMaxQtySaved(ci.itemId, next)}
+        />
+
+        <InlinePrice
+          catalogId={catalogId}
+          itemId={ci.itemId}
+          priceOverride={ci.priceOverride}
+          defaultPrice={ci.item.defaultPrice}
+          onSaved={(next) => onPriceOverrideSaved(ci.itemId, next)}
+        />
+
+        <button
+          type="button"
+          disabled={togglingId === ci.itemId}
+          onClick={() => onToggleAvailability(ci)}
+          title={ci.isAvailable ? "Mark unavailable" : "Mark available"}
+          className="flex items-center focus:outline-none disabled:opacity-50"
+          aria-label={ci.isAvailable ? "Available — click to mark unavailable" : "Unavailable — click to mark available"}
+        >
+          <Badge
+            variant={ci.isAvailable && ci.item.status === "ACTIVE" ? "default" : "secondary"}
+            className="text-xs cursor-pointer hover:opacity-75 transition-opacity"
+          >
+            {ci.isAvailable && ci.item.status === "ACTIVE" ? "Available" : "Unavailable"}
+          </Badge>
+        </button>
+
+        <Link
+          href={`/catalog/${catalogId}/items/${ci.item.id}`}
+          className="inline-flex items-center justify-center h-8 w-8 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          title={`Manage modifiers for ${ci.item.name}`}
+        >
+          <Settings2 className="h-4 w-4" />
+          <span className="sr-only">Manage modifiers for {ci.item.name}</span>
+        </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-slate-400 hover:text-red-500"
+          onClick={() => onRemove(ci)}
+        >
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Remove {ci.item.name}</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function CatalogItemsManager({ catalog: initialCatalog, churchId }: CatalogItemsManagerProps) {
@@ -270,6 +415,11 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
   const [pendingStatus, setPendingStatus] = useState<"OPEN" | "CLOSED" | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const missingEsCount = catalog.items.filter((ci) => {
     const t = ci.item.translations as ItemTranslations | null;
@@ -304,6 +454,26 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
     } finally {
       setTogglingId(null);
     }
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = catalog.items.findIndex((ci) => ci.itemId === active.id);
+    const newIndex = catalog.items.findIndex((ci) => ci.itemId === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(catalog.items, oldIndex, newIndex);
+    setCatalog((prev) => ({ ...prev, items: reordered }));
+
+    await fetch(`/api/catalogs/${catalog.id}/items/reorder`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemIds: reordered.map((ci) => ci.itemId) }),
+    }).catch(() => {
+      setCatalog((prev) => ({ ...prev, items: catalog.items }));
+    });
   }
 
   function openPublishDialog() {
@@ -427,90 +597,31 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
           </p>
         </div>
       ) : (
-        <div className="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">
-          {catalog.items.map((ci) => (
-            <div
-              key={ci.id}
-              className="flex items-center justify-between px-4 py-3 gap-4"
-            >
-              <div className="flex-1 min-w-0 space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-slate-900 text-sm truncate">
-                    {ci.item.name}
-                  </span>
-                  {!(ci.item.translations as ItemTranslations | null)?.es?.name?.trim() && (
-                    <span title="Missing Spanish translation" className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                  )}
-                </div>
-                {ci.item.description && (
-                  <p className="text-xs text-slate-500 truncate">
-                    {ci.item.description}
-                  </p>
-                )}
-                {ci.item.modifierGroups.length > 0 && (
-                  <p className="text-xs text-slate-400">
-                    Modifiers:{" "}
-                    {ci.item.modifierGroups.map((mg) => mg.group.name).join(", ")}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                {/* Inline max qty */}
-                <InlineMaxQty
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={catalog.items.map((ci) => ci.itemId)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100 overflow-hidden">
+              {catalog.items.map((ci) => (
+                <SortableCatalogItemRow
+                  key={ci.itemId}
+                  ci={ci}
                   catalogId={catalog.id}
-                  itemId={ci.itemId}
-                  maxQuantityPerOrder={ci.maxQuantityPerOrder}
-                  onSaved={(next) => patchItem(ci.itemId, { maxQuantityPerOrder: next })}
+                  togglingId={togglingId}
+                  onToggleAvailability={handleToggleAvailability}
+                  onPriceOverrideSaved={(itemId, next) => patchItem(itemId, { priceOverride: next })}
+                  onMaxQtySaved={(itemId, next) => patchItem(itemId, { maxQuantityPerOrder: next })}
+                  onRemove={setRemoveTarget}
                 />
-
-                {/* Inline price override */}
-                <InlinePrice
-                  catalogId={catalog.id}
-                  itemId={ci.itemId}
-                  priceOverride={ci.priceOverride}
-                  defaultPrice={ci.item.defaultPrice}
-                  onSaved={(next) => patchItem(ci.itemId, { priceOverride: next })}
-                />
-
-                {/* Availability toggle */}
-                <button
-                  type="button"
-                  disabled={togglingId === ci.itemId}
-                  onClick={() => handleToggleAvailability(ci)}
-                  title={ci.isAvailable ? "Mark unavailable" : "Mark available"}
-                  className="flex items-center focus:outline-none disabled:opacity-50"
-                  aria-label={ci.isAvailable ? "Available — click to mark unavailable" : "Unavailable — click to mark available"}
-                >
-                  <Badge
-                    variant={ci.isAvailable && ci.item.status === "ACTIVE" ? "default" : "secondary"}
-                    className="text-xs cursor-pointer hover:opacity-75 transition-opacity"
-                  >
-                    {ci.isAvailable && ci.item.status === "ACTIVE" ? "Available" : "Unavailable"}
-                  </Badge>
-                </button>
-
-                <Link
-                  href={`/catalog/${catalog.id}/items/${ci.item.id}`}
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                  title={`Manage modifiers for ${ci.item.name}`}
-                >
-                  <Settings2 className="h-4 w-4" />
-                  <span className="sr-only">Manage modifiers for {ci.item.name}</span>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-slate-400 hover:text-red-500"
-                  onClick={() => setRemoveTarget(ci)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="sr-only">Remove {ci.item.name}</span>
-                </Button>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Create item dialog */}
