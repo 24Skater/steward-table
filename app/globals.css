@@ -52,10 +52,9 @@
 
   html {
     /* Belt-and-suspenders for the meta color-scheme tag in layout.tsx.
-       Together they prevent Chrome's black scrollbar-gutter flash on Windows. */
+       Together they prevent Chrome's black canvas-background flash on Windows. */
     color-scheme: light;
     background-color: white;
-    scrollbar-gutter: stable;
   }
 
   body {
