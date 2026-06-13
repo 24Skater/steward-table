@@ -24,7 +24,8 @@ export interface Catalog {
   status: string;
   opensAt?: Date | string | null;
   closesAt?: Date | string | null;
-  _count: { items: number };
+  _count: { items: number; orders?: number };
+  revenue?: number;
 }
 
 interface CatalogCardProps {
