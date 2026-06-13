@@ -214,8 +214,6 @@ function buildOrderCta(payload: OrderNotificationPayload): string {
 }
 
 function buildConfirmedBody(payload: OrderNotificationPayload): string {
-  const fulfillmentLabel =
-    payload.fulfillment === "DELIVERY" ? "Delivery" : "Pickup";
   const itemsTable = buildItemsTable(payload.items);
   const total = formatCents(payload.total);
 
@@ -229,20 +227,49 @@ function buildConfirmedBody(payload: OrderNotificationPayload): string {
         <span style="color: #0f172a; font-size: 15px; font-weight: 700;">Total</span>
         <span style="color: #0f172a; font-size: 15px; font-weight: 700;">${total}</span>
       </div>
-      <p style="color: #64748b; font-size: 13px; margin: 12px 0 0;">Fulfillment: ${fulfillmentLabel}</p>
+      ${buildFulfillmentLine(payload)}
     </div>
     ${buildOrderCta(payload)}`;
+}
+
+function buildFulfillmentLine(payload: OrderNotificationPayload): string {
+  const label =
+    payload.fulfillment === "DELIVERY"
+      ? "Delivery"
+      : payload.fulfillment === "DINE_IN"
+      ? "Dine-in"
+      : "Pickup";
+
+  const scheduledLine = payload.scheduledFor
+    ? `<br><span style="color: #64748b;">
+        Scheduled: ${new Date(payload.scheduledFor).toLocaleString("en-US", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        })}
+      </span>`
+    : "";
+
+  return `<p style="color: #64748b; font-size: 13px; margin: 12px 0 0;">${label}${scheduledLine}</p>`;
 }
 
 function buildSimpleBody(
   payload: OrderNotificationPayload,
   message: NotificationMessage,
 ): string {
+  const itemsTable = buildItemsTable(payload.items);
+  const total = formatCents(payload.total);
+
   return `
-    <p style="color: #64748b; font-size: 15px; margin: 0 0 24px;">Hi ${payload.customerName}, ${message.body}</p>
-    <div style="background: #f1f5f9; border-radius: 8px; padding: 16px;">
-      <p style="color: #475569; font-size: 13px; margin: 0 0 4px;">Order number</p>
-      <p style="color: #0f172a; font-size: 20px; font-weight: 700; font-family: monospace; margin: 0;">#${payload.orderNumber}</p>
+    <p style="color: #64748b; font-size: 15px; margin: 0 0 4px;">Hi ${payload.customerName},</p>
+    <p style="color: #64748b; font-size: 15px; margin: 0 0 24px;">${message.body}</p>
+    <div style="background: #f1f5f9; border-radius: 8px; padding: 16px 20px;">
+      <p style="color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin: 0 0 4px;">Order #${payload.orderNumber}</p>
+      ${itemsTable}
+      <div style="display: flex; justify-content: space-between; margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+        <span style="color: #0f172a; font-size: 15px; font-weight: 700;">Total</span>
+        <span style="color: #0f172a; font-size: 15px; font-weight: 700;">${total}</span>
+      </div>
+      ${buildFulfillmentLine(payload)}
     </div>
     ${buildOrderCta(payload)}`;
 }
