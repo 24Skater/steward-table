@@ -153,6 +153,8 @@ export function KitchenDisplay() {
     try {
       const res = await fetch(`/api/orders/${orderId}/ready`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to mark ready");
+      // Optimistically remove the card — SSE will reconcile on the next poll
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
     } catch {
       setKitchenError("Could not mark order ready. Please try again.");
       setTimeout(() => setKitchenError(null), 4000);
