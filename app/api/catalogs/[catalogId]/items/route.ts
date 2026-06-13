@@ -112,6 +112,66 @@ export async function POST(
   return NextResponse.json(catalogItem, { status: 201 });
 }
 
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ catalogId: string }> },
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
+  }
+
+  const { catalogId } = await params;
+
+  const itemId = req.nextUrl.searchParams.get("itemId");
+  if (!itemId) {
+    return NextResponse.json({ error: "Missing itemId" }, { status: 400 });
+  }
+
+  const body = await req.json().catch(() => null) as {
+    priceOverride?: number | null;
+    isAvailable?: boolean;
+    maxQuantityPerOrder?: number | null;
+  } | null;
+
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+
+  const churchId = await resolveCatalogChurchId(catalogId);
+  if (!churchId) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const membership = session.user.memberships?.find(
+    (m: SessionMembership) => m.churchId === churchId && m.status === "ACTIVE",
+  );
+  if (!membership) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const result = await can("catalog.edit", {
+    userId: session.user.id,
+    churchId,
+    roles: membership.roles,
+  });
+  if (!result.allowed) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const updated = await db.catalogItem.update({
+    where: { catalogId_itemId: { catalogId, itemId } },
+    data: {
+      ...(body.priceOverride !== undefined && { priceOverride: body.priceOverride }),
+      ...(body.isAvailable !== undefined && { isAvailable: body.isAvailable }),
+      ...(body.maxQuantityPerOrder !== undefined && { maxQuantityPerOrder: body.maxQuantityPerOrder }),
+    },
+    ...({ _bypassTenancyCheck: true } as object),
+  });
+
+  return NextResponse.json(updated);
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ catalogId: string }> },
