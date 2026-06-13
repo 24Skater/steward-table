@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { SessionMembership } from "@/lib/auth/types";
+import { createDefaultKitchen } from "@/lib/kitchens/defaults";
 
 const onboardingSchema = z.object({
   churchName: z.string().min(1, "Church name is required"),
@@ -101,6 +102,8 @@ export async function POST(req: NextRequest) {
         value: 0,
       },
     });
+
+    await createDefaultKitchen(tx as never, church.id);
   });
 
   return NextResponse.json({ success: true }, { status: 201 });

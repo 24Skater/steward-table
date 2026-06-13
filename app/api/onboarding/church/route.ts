@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { createDefaultKitchen } from "@/lib/kitchens/defaults";
 
 const SLUG_REGEX = /^[a-z0-9-]{3,50}$/;
 
@@ -70,6 +71,8 @@ export async function POST(req: NextRequest) {
         status: "ACTIVE",
       },
     });
+
+    await createDefaultKitchen(tx as never, newChurch.id);
 
     return newChurch;
   });
