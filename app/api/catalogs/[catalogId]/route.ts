@@ -23,8 +23,9 @@ export async function PATCH(
   const body = await req.json().catch(() => null) as {
     name?: string;
     description?: string | null;
-    isActive?: boolean;
     translations?: Record<string, unknown> | null;
+    opensAt?: string | null;
+    closesAt?: string | null;
   } | null;
 
   const catalog = await db.catalog.findUnique({
@@ -58,10 +59,15 @@ export async function PATCH(
     data: {
       ...(body?.name !== undefined && { name: body.name }),
       ...(body?.description !== undefined && { description: body.description }),
-      ...(body?.isActive !== undefined && { isActive: body.isActive }),
       ...(body?.translations !== undefined && {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         translations: body.translations as any,
+      }),
+      ...(body?.opensAt !== undefined && {
+        opensAt: body.opensAt ? new Date(body.opensAt) : null,
+      }),
+      ...(body?.closesAt !== undefined && {
+        closesAt: body.closesAt ? new Date(body.closesAt) : null,
       }),
     },
   });

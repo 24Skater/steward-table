@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 interface CatalogTranslations {
@@ -26,6 +25,8 @@ interface Catalog {
   translations?: unknown;
   isActive: boolean;
   status: string;
+  opensAt?: Date | string | null;
+  closesAt?: Date | string | null;
   _count: { items: number };
 }
 
@@ -37,6 +38,14 @@ interface EditCatalogDialogProps {
 }
 
 type LangTab = "EN" | "ES";
+
+function toDatetimeLocal(val: Date | string | null | undefined): string {
+  if (!val) return "";
+  const d = typeof val === "string" ? new Date(val) : val;
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export function EditCatalogDialog({
   open,
@@ -51,7 +60,8 @@ export function EditCatalogDialog({
   const [description, setDescription] = useState(catalog.description ?? "");
   const [nameEs, setNameEs] = useState(existingEs.name ?? "");
   const [descriptionEs, setDescriptionEs] = useState(existingEs.description ?? "");
-  const [isActive, setIsActive] = useState(catalog.isActive);
+  const [opensAt, setOpensAt] = useState(toDatetimeLocal(catalog.opensAt));
+  const [closesAt, setClosesAt] = useState(toDatetimeLocal(catalog.closesAt));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,8 +87,9 @@ export function EditCatalogDialog({
         body: JSON.stringify({
           name: name.trim(),
           description: description.trim() || null,
-          isActive,
           translations: Object.keys(translations).length > 0 ? translations : null,
+          opensAt: opensAt ? new Date(opensAt).toISOString() : null,
+          closesAt: closesAt ? new Date(closesAt).toISOString() : null,
         }),
       });
 
@@ -87,11 +98,20 @@ export function EditCatalogDialog({
         throw new Error((body as { error?: string }).error ?? "Failed to update catalog");
       }
 
-      const updated = await res.json();
+      const updated = await res.json() as {
+        id: string;
+        name: string;
+        description: string | null;
+        translations: unknown;
+        status: string;
+        opensAt: string | null;
+        closesAt: string | null;
+      };
+
       onUpdated({
         ...updated,
         _count: catalog._count,
-        isActive: (updated.status ?? catalog.status) === "OPEN",
+        isActive: updated.status === "OPEN",
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -102,7 +122,7 @@ export function EditCatalogDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit Catalog</DialogTitle>
         </DialogHeader>
@@ -174,14 +194,31 @@ export function EditCatalogDialog({
             </>
           )}
 
-          <div className="flex items-center gap-3">
-            <Switch
-              id="edit-catalog-active"
-              checked={isActive}
-              onCheckedChange={setIsActive}
-            />
-            <Label htmlFor="edit-catalog-active">Active</Label>
+          {/* Scheduling window */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="edit-catalog-opens">Opens at (optional)</Label>
+              <Input
+                id="edit-catalog-opens"
+                type="datetime-local"
+                value={opensAt}
+                onChange={(e) => setOpensAt(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-catalog-closes">Closes at (optional)</Label>
+              <Input
+                id="edit-catalog-closes"
+                type="datetime-local"
+                value={closesAt}
+                onChange={(e) => setClosesAt(e.target.value)}
+              />
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Schedule when this catalog opens and closes. Leave blank for manual control.
+          </p>
+
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
