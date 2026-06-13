@@ -21,7 +21,7 @@ model Catalog {
 
   @@unique([churchId, slug])
   @@index([churchId, status])
-  @@index([kitchenId])
+  @@index([churchId, kitchenId])
   @@index([deletedAt])
   @@map("catalogs")
 }

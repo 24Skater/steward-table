@@ -26,10 +26,15 @@ CREATE INDEX "kitchens_deletedAt_idx" ON "kitchens"("deletedAt");
 CREATE UNIQUE INDEX "kitchens_churchId_slug_key" ON "kitchens"("churchId", "slug");
 
 -- CreateIndex
-CREATE INDEX "catalogs_kitchenId_idx" ON "catalogs"("kitchenId");
+CREATE INDEX "catalogs_churchId_kitchenId_idx" ON "catalogs"("churchId", "kitchenId");
 
 -- AddForeignKey
 ALTER TABLE "catalogs" ADD CONSTRAINT "catalogs_kitchenId_fkey" FOREIGN KEY ("kitchenId") REFERENCES "kitchens"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "kitchens" ADD CONSTRAINT "kitchens_churchId_fkey" FOREIGN KEY ("churchId") REFERENCES "churches"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Enforce: at most one active default kitchen per church
+CREATE UNIQUE INDEX "kitchens_churchId_default_key"
+  ON "kitchens" ("churchId")
+  WHERE "isDefault" = true AND "deletedAt" IS NULL;
