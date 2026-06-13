@@ -13,6 +13,10 @@ describe("slugifyKitchenName", () => {
   it("falls back to 'kitchen' when the name has no usable characters", () => {
     expect(slugifyKitchenName("!!!")).toBe("kitchen");
   });
+
+  it("normalizes accented characters to ASCII", () => {
+    expect(slugifyKitchenName("Café Kitchen")).toBe("cafe-kitchen");
+  });
 });
 
 describe("generateUniqueKitchenSlug", () => {
