@@ -162,9 +162,7 @@ async function main() {
     },
   });
 
-  console.log(
-    `  Items: ${pupusasQueso.name}, ${pupusasFrijoles.name}, ${horchata.name}`
-  );
+  console.log(`  Items: ${pupusasQueso.name}, ${pupusasFrijoles.name}, ${horchata.name}`);
 
   // ─────────────────────────────────────────────
   // 8. CatalogItems
@@ -263,9 +261,7 @@ async function main() {
       sortOrder: 0,
     },
   });
-  console.log(
-    `  ItemModifierGroup: "${modifierGroup.name}" bound to "${pupusasQueso.name}"`
-  );
+  console.log(`  ItemModifierGroup: "${modifierGroup.name}" bound to "${pupusasQueso.name}"`);
 
   // ─────────────────────────────────────────────
   // 12. Customers — deleteMany first for idempotency
@@ -419,7 +415,7 @@ async function main() {
   });
 
   console.log(
-    `  Orders: #${order1.number} (${order1.status}), #${order2.number} (${order2.status}), #${order3.number} (${order3.status})`
+    `  Orders: #${order1.number} (${order1.status}), #${order2.number} (${order2.status}), #${order3.number} (${order3.status})`,
   );
 
   console.log("\nSeed complete.");
@@ -509,7 +505,7 @@ async function seedSecondChurch() {
 const isMulti = process.argv.includes("--multi");
 
 main()
-  .then(() => isMulti ? seedSecondChurch() : Promise.resolve())
+  .then(() => (isMulti ? seedSecondChurch() : Promise.resolve()))
   .catch((e) => {
     console.error(e);
     process.exit(1);
