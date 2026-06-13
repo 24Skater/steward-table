@@ -29,7 +29,12 @@ export interface KitchenOrder {
 
 const CANCELED_DISPLAY_MS = 30_000;
 
-export function KitchenDisplay() {
+interface KitchenDisplayProps {
+  slug: string;
+  kitchenName: string;
+}
+
+export function KitchenDisplay({ slug, kitchenName }: KitchenDisplayProps) {
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
   const [canceledOrders, setCanceledOrders] = useState<Map<string, KitchenOrder>>(new Map());
   const [connected, setConnected] = useState(false);
@@ -94,7 +99,7 @@ export function KitchenDisplay() {
     let backoffMs = 1000;
 
     function connect() {
-      es = new EventSource("/api/sse/kitchen");
+      es = new EventSource(`/api/sse/kitchen/${slug}`);
 
       es.onopen = () => {
         setConnected(true);
@@ -147,7 +152,7 @@ export function KitchenDisplay() {
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [slug]);
 
   const handleMarkReady = useCallback(async (orderId: string) => {
     try {
@@ -202,6 +207,7 @@ export function KitchenDisplay() {
         inKitchenCount={inKitchenCount}
         onMarkAllReady={handleMarkAllReady}
         markingAllReady={markingAllReady}
+        kitchenName={kitchenName}
       />
 
       {totalVisible === 0 ? (
