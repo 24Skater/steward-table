@@ -138,6 +138,7 @@ export async function GET(
             updatedAt: { gte: since },
           },
           select: ORDER_SELECT,
+          _bypassTenancyCheck: true,
         })) as RawOrder[];
         return rows.map(shapeOrder);
       }
