@@ -14,7 +14,16 @@ export default async function CatalogPage() {
 
   const rawCatalogs = await db.catalog.findMany({
     where: { churchId: membership.churchId },
-    include: { _count: { select: { items: true } } },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      translations: true,
+      status: true,
+      opensAt: true,
+      closesAt: true,
+      _count: { select: { items: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 

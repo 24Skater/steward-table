@@ -22,6 +22,8 @@ export interface Catalog {
   translations?: unknown;
   isActive: boolean;
   status: string;
+  opensAt?: Date | string | null;
+  closesAt?: Date | string | null;
   _count: { items: number };
 }
 
@@ -111,6 +113,17 @@ export function CatalogCard({ catalog, onUpdated, onDeleted }: CatalogCardProps)
           </DropdownMenu>
         </CardHeader>
         <CardContent>
+          {(catalog.opensAt || catalog.closesAt) && (
+            <p className="text-xs text-slate-400 mb-2">
+              {catalog.opensAt && (
+                <span>Opens {new Date(catalog.opensAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}</span>
+              )}
+              {catalog.opensAt && catalog.closesAt && <span> · </span>}
+              {catalog.closesAt && (
+                <span>Closes {new Date(catalog.closesAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}</span>
+              )}
+            </p>
+          )}
           <div className="flex items-center justify-between">
             <span className="text-slate-500 text-sm">
               {catalog._count.items} {catalog._count.items === 1 ? "item" : "items"}
