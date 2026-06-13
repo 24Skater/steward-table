@@ -1,0 +1,181 @@
+model Church {
+  id              String       @id @default(cuid())
+  slug            String       @unique
+  name            String
+  legalName       String?
+  ein             String?
+  taxRegistration String?
+
+  timezone String @default("America/New_York")
+  locale   Locale @default(EN)
+  currency String @default("USD")
+
+  logoUrl     String?
+  accentColor String?
+
+  status ChurchStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  memberships          Membership[]
+  invitations          Invitation[]
+  settings             ChurchSettings?
+  apiKeys              ApiKey[]
+  stripeAccount        StripeAccount?
+  reservedSubdomains   SubdomainReservation[]
+  orderCounter         OrderCounter?
+
+  catalogs       Catalog[]
+  items          Item[]
+  modifierGroups ModifierGroup[]
+  customers      Customer[]
+  orders         Order[]
+  deliveryZones  DeliveryZone[]
+  inventoryItems InventoryItem[]
+
+  auditLogs     AuditLog[]
+  webhookEvents WebhookEvent[]
+  emailLogs     EmailLog[]
+  smsLogs       SmsLog[]
+  notifications Notification[]
+
+  @@index([deletedAt])
+  @@map("churches")
+}
+
+model Membership {
+  id       String           @id @default(cuid())
+  userId   String
+  churchId String
+  roles    Role[]
+  status   MembershipStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, churchId])
+  @@index([churchId, status])
+  @@map("memberships")
+}
+
+model Invitation {
+  id        String           @id @default(cuid())
+  churchId  String
+  email     String
+  role      Role
+  token     String           @unique
+  status    InvitationStatus @default(PENDING)
+  sentById  String
+  expiresAt DateTime
+
+  createdAt  DateTime  @default(now())
+  acceptedAt DateTime?
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  sentBy User   @relation("InvitationSentBy", fields: [sentById], references: [id])
+
+  @@index([churchId, status])
+  @@index([email])
+  @@map("invitations")
+}
+
+model ChurchSettings {
+  id       String @id @default(cuid())
+  churchId String @unique
+
+  stripeMode  StripeMode @default(BYO)
+  acceptCash  Boolean    @default(true)
+  acceptZelle Boolean    @default(true)
+
+  taxMode        TaxMode @default(STRIPE_TAX)
+  manualTaxRules Json?
+
+  receiptLanguage        ReceiptLanguagePreset @default(OFF)
+  receiptCustomFooter    String?
+  receiptLanguageVersion Int                   @default(1)
+
+  sendingMode   SendingMode @default(PLATFORM)
+  sendingDomain String?
+  replyToEmail  String?
+  displayName   String?
+
+  smsEnabled Boolean @default(false)
+
+  customerSelfCancelWindowMinutes Int                @default(5)
+  noShowTimeoutHours              Int                @default(2)
+  kitchenDisplayMode              KitchenDisplayMode @default(IMMEDIATE)
+  prepLeadTimeMinutes             Int                @default(30)
+  staffRefundCapCents             Int                @default(5000)
+
+  brandTokens Json?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@map("church_settings")
+}
+
+model ApiKey {
+  id          String  @id @default(cuid())
+  churchId    String
+  provider    String
+  label       String
+  encrypted   Bytes
+  publishable String?
+  isLive      Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  rotatedAt DateTime?
+  deletedAt DateTime?
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@unique([churchId, provider, isLive])
+  @@map("api_keys")
+}
+
+model StripeAccount {
+  id              String  @id @default(cuid())
+  churchId        String  @unique
+  stripeAccountId String  @unique
+  chargesEnabled  Boolean @default(false)
+  payoutsEnabled  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@map("stripe_accounts")
+}
+
+model SubdomainReservation {
+  id       String  @id @default(cuid())
+  churchId String?
+  name     String
+  reason   String?
+
+  createdAt DateTime @default(now())
+
+  church Church? @relation(fields: [churchId], references: [id], onDelete: SetNull)
+
+  @@unique([name])
+  @@map("subdomain_reservations")
+}
+
+model OrderCounter {
+  churchId String @id
+  value    Int    @default(0)
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@map("order_counters")
+}

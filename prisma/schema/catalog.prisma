@@ -1,0 +1,151 @@
+model Catalog {
+  id           String        @id @default(cuid())
+  churchId     String
+  name         String
+  slug         String
+  description  String?
+  translations Json?
+  status       CatalogStatus @default(DRAFT)
+  opensAt      DateTime?
+  closesAt     DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church Church        @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  items  CatalogItem[]
+  orders Order[]
+
+  @@unique([churchId, slug])
+  @@index([churchId, status])
+  @@index([deletedAt])
+  @@map("catalogs")
+}
+
+model Item {
+  id           String     @id @default(cuid())
+  churchId     String
+  name         String
+  description  String?
+  translations Json?
+  defaultPrice Int
+  taxCategory  String?
+  imageUrl     String?
+  status       ItemStatus @default(ACTIVE)
+  station      String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church         Church              @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  catalogItems   CatalogItem[]
+  photos         ItemPhoto[]
+  modifierGroups ItemModifierGroup[]
+  orderItems     OrderItem[]
+  inventoryItem  InventoryItem?
+
+  @@index([churchId, status])
+  @@index([deletedAt])
+  @@map("items")
+}
+
+model ItemPhoto {
+  id        String  @id @default(cuid())
+  itemId    String
+  url       String
+  altText   String?
+  sortOrder Int     @default(0)
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, sortOrder])
+  @@map("item_photos")
+}
+
+model CatalogItem {
+  id                  String  @id @default(cuid())
+  catalogId           String
+  itemId              String
+  priceOverride       Int?
+  isAvailable         Boolean @default(true)
+  sortOrder           Int     @default(0)
+  maxQuantityPerOrder Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  catalog Catalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id])
+
+  @@unique([catalogId, itemId])
+  @@index([catalogId, sortOrder])
+  @@map("catalog_items")
+}
+
+model ModifierGroup {
+  id                   String  @id @default(cuid())
+  churchId             String
+  name                 String
+  translations         Json?
+  defaultMinSelections Int     @default(0)
+  defaultMaxSelections Int     @default(1)
+  defaultIsRequired    Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church       Church              @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  options      ModifierOption[]
+  itemBindings ItemModifierGroup[]
+
+  @@index([churchId])
+  @@index([deletedAt])
+  @@map("modifier_groups")
+}
+
+model ModifierOption {
+  id           String  @id @default(cuid())
+  groupId      String
+  name         String
+  translations Json?
+  priceDelta   Int     @default(0)
+  sortOrder    Int     @default(0)
+  isDefault    Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  group ModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, sortOrder])
+  @@map("modifier_options")
+}
+
+model ItemModifierGroup {
+  id                 String   @id @default(cuid())
+  itemId             String
+  groupId            String
+  sortOrder          Int      @default(0)
+  overrideMin        Int?
+  overrideMax        Int?
+  overrideIsRequired Boolean?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  item  Item          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  group ModifierGroup @relation(fields: [groupId], references: [id])
+
+  @@unique([itemId, groupId])
+  @@index([itemId, sortOrder])
+  @@map("item_modifier_groups")
+}

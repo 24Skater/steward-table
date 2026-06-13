@@ -1,0 +1,32 @@
+model User {
+  id               String     @id @default(cuid())
+  email            String?    @unique
+  emailVerified    DateTime?
+  phone            String?    @unique
+  phoneVerified    DateTime?
+  name             String?
+  image            String?
+  preferredLocale  Locale     @default(EN)
+  twoFactorEnabled Boolean    @default(false)
+  twoFactorSecret  String?
+  passwordHash     String?
+  status           UserStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  accounts          Account[]
+  sessions          Session[]
+  memberships       Membership[]
+  sentInvitations   Invitation[]   @relation("InvitationSentBy")
+  orderEvents       OrderEvent[]   @relation("OrderEventActor")
+  driverDeliveries  DeliveryInfo[] @relation("DriverAssignment")
+  auditLogs         AuditLog[]     @relation("AuditLogActor")
+  customerNotes     CustomerNote[]
+  refunds           Refund[]       @relation("RefundActor")
+  stockMovements    StockMovement[] @relation("StockMovementActor")
+
+  @@index([deletedAt])
+  @@map("users")
+}

@@ -1,0 +1,1 @@
+export { handleInventoryEffect } from "./handler";

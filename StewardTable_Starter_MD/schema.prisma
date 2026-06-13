@@ -1,0 +1,1041 @@
+// =====================================================================
+// Steward Table v1.0 — Prisma Schema
+//
+// Conventions:
+//   • Primary keys: cuid2 via `@default(cuid())`.
+//   • Money: integer minor units (cents); currency snapshot from the Church.
+//     Never use Float for money.
+//   • Timestamps: UTC. Prisma camelCase, Postgres snake_case via `@@map`.
+//   • Multi-tenancy: row-level via `churchId` on every tenanted model.
+//     Every query in app code MUST scope by churchId — enforced by a
+//     Prisma middleware that rejects unscoped queries against tenanted models.
+//   • Soft-delete: `deletedAt DateTime?` on user-editable entities only.
+//     Prisma middleware auto-filters `deletedAt IS NULL` on reads.
+//     Admin "trash" views opt-in via `withDeleted: true`.
+//   • Immutable history: Order, OrderItem, OrderEvent, Payment, Refund,
+//     AuditLog, WebhookEvent, EmailLog, SmsLog, StockMovement — never
+//     soft-deleted; deletion is semantically wrong for these.
+//   • Status enums where "delete" is really a state change: Membership,
+//     Invitation.
+//   • Translations for customer-visible strings stored as JSONB on the
+//     owning row: e.g., Item.translations = {"es": {"name": "...",
+//     "description": "..."}}. Default-locale value sits on the row itself.
+//     For two locales (en/es) this is simpler than per-row translation tables;
+//     migrates cleanly to dedicated tables if more locales arrive.
+//   • Indexes: compound `(churchId, ...)` on every tenanted table's hot paths.
+//   • At implementation, split into files under `prisma/` using the
+//     `prismaSchemaFolder` preview feature for navigability.
+//
+// Decisions reflected (see STEWARD_PLAN §18):
+//   • Catalog always-mutable, OrderItem captures snapshots
+//   • Items are church-level templates; Catalogs reference via CatalogItem
+//   • Modifier rules: defaults on Group, overrides on junction (Square pattern)
+//   • Soft-delete: selective + immutable history
+//   • Inventory: finished-goods (Item-level), modifiers are pricing-only
+//   • Tax: line-level on OrderItem + denormalized total on Order
+//   • Refund: order-level for v1 (line-level v2)
+//   • Delivery zones: ZIP-based for v1 (polygon v2)
+//   • Order numbering: per-church monotonic via OrderCounter row
+//   • Storefront URL: {slug}.table.steward.app
+//   • Currency: single per Church, immutable after first order
+//   • Payments: BYO Stripe keys (encrypted) or Connect account
+// =====================================================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres", "prismaSchemaFolder"]
+}
+
+// =====================================================================
+// Enums
+// =====================================================================
+
+enum Locale {
+  EN
+  ES
+}
+
+enum ChurchStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  STAFF
+  COOK
+  DRIVER
+  VIEWER
+}
+
+enum MembershipStatus {
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum CatalogStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum ItemStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum Channel {
+  ONLINE
+  PHONE
+  IN_PERSON
+}
+
+enum FulfillmentType {
+  PICKUP
+  DELIVERY
+  DINE_IN
+}
+
+enum OrderStatus {
+  DRAFT
+  SUBMITTED
+  CONFIRMED
+  IN_KITCHEN
+  READY
+  AWAITING_PICKUP
+  PICKED_UP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  SERVED
+  COMPLETED
+  CANCELED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  STRIPE_CARD
+  STRIPE_OTHER
+  CASH
+  ZELLE
+  PAY_ON_PICKUP
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  VOIDED
+}
+
+enum RefundStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum StripeMode {
+  BYO
+  CONNECT
+}
+
+enum TaxMode {
+  STRIPE_TAX
+  MANUAL
+}
+
+enum ReceiptLanguagePreset {
+  OFF
+  US_501C3
+  CUSTOM
+}
+
+enum SendingMode {
+  PLATFORM
+  BYO_DOMAIN
+}
+
+enum StockMovementKind {
+  RESTOCK
+  ORDER_DECREMENT
+  REFUND_INCREMENT
+  MANUAL_ADJUSTMENT
+  STOCKTAKE
+  SHRINKAGE
+}
+
+enum KitchenDisplayMode {
+  IMMEDIATE
+  JUST_IN_TIME
+}
+
+// =====================================================================
+// Auth.js v5 boilerplate
+// =====================================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// =====================================================================
+// Identity
+// =====================================================================
+
+model User {
+  id               String     @id @default(cuid())
+  email            String?    @unique
+  emailVerified    DateTime?
+  phone            String?    @unique // E.164 normalized
+  phoneVerified    DateTime?
+  name             String?
+  image            String?
+  preferredLocale  Locale     @default(EN)
+  twoFactorEnabled Boolean    @default(false)
+  twoFactorSecret  String?    // encrypted at rest
+  status           UserStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  accounts          Account[]
+  sessions          Session[]
+  memberships       Membership[]
+  sentInvitations   Invitation[]   @relation("InvitationSentBy")
+  orderEvents       OrderEvent[]   @relation("OrderEventActor")
+  driverDeliveries  DeliveryInfo[] @relation("DriverAssignment")
+  auditLogs         AuditLog[]     @relation("AuditLogActor")
+  customerNotes     CustomerNote[]
+  refunds           Refund[]       @relation("RefundActor")
+  stockMovements    StockMovement[] @relation("StockMovementActor")
+
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// =====================================================================
+// Tenancy
+// =====================================================================
+
+model Church {
+  id              String       @id @default(cuid())
+  slug            String       @unique // {slug}.table.steward.app
+  name            String
+  legalName       String?
+  ein             String?      // US 501(c)(3)
+  taxRegistration String?      // non-US equivalent
+
+  timezone String @default("America/New_York") // IANA tz
+  locale   Locale @default(EN)
+  currency String @default("USD")              // ISO 4217; immutable after first order
+
+  logoUrl     String?
+  accentColor String?
+
+  status ChurchStatus @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  memberships          Membership[]
+  invitations          Invitation[]
+  settings             ChurchSettings?
+  apiKeys              ApiKey[]
+  stripeAccount        StripeAccount?
+  reservedSubdomains   SubdomainReservation[]
+  orderCounter         OrderCounter?
+
+  catalogs       Catalog[]
+  items          Item[]
+  modifierGroups ModifierGroup[]
+  customers      Customer[]
+  orders         Order[]
+  deliveryZones  DeliveryZone[]
+  inventoryItems InventoryItem[]
+
+  auditLogs     AuditLog[]
+  webhookEvents WebhookEvent[]
+  emailLogs     EmailLog[]
+  smsLogs       SmsLog[]
+  notifications Notification[]
+
+  @@index([deletedAt])
+  @@map("churches")
+}
+
+model Membership {
+  id       String           @id @default(cuid())
+  userId   String
+  churchId String
+  roles    Role[]           // multi-role volunteers (cook who also drives, etc.)
+  status   MembershipStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, churchId])
+  @@index([churchId, status])
+  @@map("memberships")
+}
+
+model Invitation {
+  id        String           @id @default(cuid())
+  churchId  String
+  email     String
+  role      Role
+  token     String           @unique
+  status    InvitationStatus @default(PENDING)
+  sentById  String
+  expiresAt DateTime
+
+  createdAt  DateTime  @default(now())
+  acceptedAt DateTime?
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  sentBy User   @relation("InvitationSentBy", fields: [sentById], references: [id])
+
+  @@index([churchId, status])
+  @@index([email])
+  @@map("invitations")
+}
+
+// =====================================================================
+// Per-church settings
+// =====================================================================
+
+model ChurchSettings {
+  id       String @id @default(cuid())
+  churchId String @unique
+
+  // Payments
+  stripeMode  StripeMode @default(BYO)
+  acceptCash  Boolean    @default(true)
+  acceptZelle Boolean    @default(true)
+
+  // Tax
+  taxMode        TaxMode @default(STRIPE_TAX)
+  manualTaxRules Json?   // [{name, rate, appliesTo}]
+
+  // Receipts
+  receiptLanguage        ReceiptLanguagePreset @default(OFF)
+  receiptCustomFooter    String?               // markdown
+  receiptLanguageVersion Int                   @default(1) // bumped on change; Order snapshots the version
+
+  // Email sending
+  sendingMode   SendingMode @default(PLATFORM)
+  sendingDomain String?     // verified BYO domain
+  replyToEmail  String?
+  displayName   String?     // overrides Church.name for email "From"
+
+  // SMS
+  smsEnabled Boolean @default(false)
+
+  // Order lifecycle knobs
+  customerSelfCancelWindowMinutes Int                @default(5)  // 0 disables self-cancel
+  noShowTimeoutHours              Int                @default(2)  // 0 disables auto-cancel
+  kitchenDisplayMode              KitchenDisplayMode @default(IMMEDIATE)
+  prepLeadTimeMinutes             Int                @default(30) // used by JIT mode
+  staffRefundCapCents             Int                @default(5000) // STAFF role partial-refund cap
+
+  // Branding
+  brandTokens Json? // overrides for typography, spacing if needed
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@map("church_settings")
+}
+
+model ApiKey {
+  id          String  @id @default(cuid())
+  churchId    String
+  provider    String  // "stripe"
+  label       String  // "Production", "Test"
+  encrypted   Bytes   // envelope-encrypted secret
+  publishable String? // Stripe publishable key (not secret)
+  isLive      Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  rotatedAt DateTime?
+  deletedAt DateTime?
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@unique([churchId, provider, isLive])
+  @@map("api_keys")
+}
+
+model StripeAccount {
+  id              String  @id @default(cuid())
+  churchId        String  @unique
+  stripeAccountId String  @unique // acct_xxx
+  chargesEnabled  Boolean @default(false)
+  payoutsEnabled  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@map("stripe_accounts")
+}
+
+model SubdomainReservation {
+  id       String  @id @default(cuid())
+  churchId String?  // null = system-reserved (www, admin, etc.)
+  name     String   // e.g., "alfayomega", "www", "admin"
+  reason   String?
+
+  createdAt DateTime @default(now())
+
+  church Church? @relation(fields: [churchId], references: [id], onDelete: SetNull)
+
+  @@unique([name])
+  @@map("subdomain_reservations")
+}
+
+model OrderCounter {
+  churchId String @id
+  value    Int    @default(0)
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@map("order_counters")
+}
+
+// =====================================================================
+// Catalog
+// =====================================================================
+
+model Catalog {
+  id           String        @id @default(cuid())
+  churchId     String
+  name         String        // canonical (default locale)
+  slug         String        // url-safe per-church
+  description  String?
+  translations Json?         // {"es": {"name": "...", "description": "..."}}
+  status       CatalogStatus @default(DRAFT)
+  opensAt      DateTime?
+  closesAt     DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church Church        @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  items  CatalogItem[]
+  orders Order[]
+
+  @@unique([churchId, slug])
+  @@index([churchId, status])
+  @@index([deletedAt])
+  @@map("catalogs")
+}
+
+model Item {
+  id           String     @id @default(cuid())
+  churchId     String
+  name         String     // canonical (default locale)
+  description  String?
+  translations Json?      // {"es": {"name": "...", "description": "..."}}
+  defaultPrice Int                 // minor units
+  taxCategory  String?    // e.g., "food.prepared", "beverage"
+  imageUrl     String?
+  status       ItemStatus @default(ACTIVE)
+  station      String?    // v2 seam — single-station v1 ignores this field
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church         Church              @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  catalogItems   CatalogItem[]
+  photos         ItemPhoto[]
+  modifierGroups ItemModifierGroup[]
+  orderItems     OrderItem[]
+  inventoryItem  InventoryItem?
+
+  @@index([churchId, status])
+  @@index([deletedAt])
+  @@map("items")
+}
+
+model ItemPhoto {
+  id        String  @id @default(cuid())
+  itemId    String
+  url       String
+  altText   String?
+  sortOrder Int     @default(0)
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, sortOrder])
+  @@map("item_photos")
+}
+
+model CatalogItem {
+  id                  String  @id @default(cuid())
+  catalogId           String
+  itemId              String
+  priceOverride       Int?    // null = use Item.defaultPrice
+  isAvailable         Boolean @default(true)
+  sortOrder           Int     @default(0)
+  maxQuantityPerOrder Int?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  catalog Catalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id])
+
+  @@unique([catalogId, itemId])
+  @@index([catalogId, sortOrder])
+  @@map("catalog_items")
+}
+
+model ModifierGroup {
+  id                   String  @id @default(cuid())
+  churchId             String
+  name                 String  // canonical
+  translations         Json?   // {"es": {"name": "..."}}
+  defaultMinSelections Int     @default(0)
+  defaultMaxSelections Int     @default(1)
+  defaultIsRequired    Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church       Church              @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  options      ModifierOption[]
+  itemBindings ItemModifierGroup[]
+
+  @@index([churchId])
+  @@index([deletedAt])
+  @@map("modifier_groups")
+}
+
+model ModifierOption {
+  id           String  @id @default(cuid())
+  groupId      String
+  name         String  // canonical
+  translations Json?   // {"es": {"name": "..."}}
+  priceDelta   Int     @default(0) // minor units; positive adds, negative subtracts
+  sortOrder    Int     @default(0)
+  isDefault    Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  group ModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, sortOrder])
+  @@map("modifier_options")
+}
+
+model ItemModifierGroup {
+  id                 String   @id @default(cuid())
+  itemId             String
+  groupId            String
+  sortOrder          Int      @default(0)
+  overrideMin        Int?
+  overrideMax        Int?
+  overrideIsRequired Boolean?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  item  Item          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  group ModifierGroup @relation(fields: [groupId], references: [id])
+
+  @@unique([itemId, groupId])
+  @@index([itemId, sortOrder])
+  @@map("item_modifier_groups")
+}
+
+// =====================================================================
+// Customer
+// =====================================================================
+
+model Customer {
+  id                 String  @id @default(cuid())
+  churchId           String
+  userId             String? // optional link to a User account for sign-in
+  name               String
+  email              String?
+  emailNormalized    String? // lowercased, trimmed
+  phone              String?
+  phoneNormalized    String? // E.164
+  locale             Locale  @default(EN)
+  marketingOptIn     Boolean @default(false)
+  smsOptIn           Boolean @default(false)
+  smsOptInProofUrl   String? // link to opt-in event record
+  notes              String?
+  lifetimeValueCents Int     @default(0)
+  totalOrders        Int     @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church    Church         @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  addresses Address[]
+  orders    Order[]
+  tags      CustomerTag[]
+  notesLog  CustomerNote[]
+
+  @@unique([churchId, emailNormalized])
+  @@unique([churchId, phoneNormalized])
+  @@index([churchId])
+  @@index([deletedAt])
+  @@map("customers")
+}
+
+model Address {
+  id            String  @id @default(cuid())
+  customerId    String
+  label         String? // "Home", "Office"
+  recipientName String?
+  line1         String
+  line2         String?
+  city          String
+  region        String  // state / province
+  postalCode    String
+  country       String  @default("US")
+  isDefault     Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@map("addresses")
+}
+
+model CustomerNote {
+  id         String  @id @default(cuid())
+  customerId String
+  authorId   String?
+  body       String
+
+  createdAt DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  author   User?    @relation(fields: [authorId], references: [id])
+
+  @@index([customerId])
+  @@map("customer_notes")
+}
+
+model CustomerTag {
+  id         String @id @default(cuid())
+  customerId String
+  value      String // "vip", "allergy:nuts", "delivery-zone:bowie"
+
+  createdAt DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, value])
+  @@index([value])
+  @@map("customer_tags")
+}
+
+model SmsOptOut {
+  id              String   @id @default(cuid())
+  phoneNormalized String   @unique // cross-church scope (one opt-out = global)
+  reason          String?
+  optedOutAt      DateTime @default(now())
+
+  @@map("sms_opt_outs")
+}
+
+// =====================================================================
+// Order (immutable after creation; mutations via OrderEvent + status field)
+// =====================================================================
+
+model Order {
+  id           String          @id @default(cuid())
+  churchId     String
+  catalogId    String
+  customerId   String
+  number       Int                                  // per-church monotonic via OrderCounter
+  channel      Channel
+  fulfillment  FulfillmentType
+  status       OrderStatus     @default(SUBMITTED)
+  currency     String                               // snapshot from Church
+  subtotal     Int                                  // sum of OrderItem.subtotal
+  tax          Int             @default(0)          // sum of OrderItem.tax
+  tip          Int             @default(0)
+  total        Int                                  // subtotal + tax + tip
+  notes        String?
+  scheduledFor DateTime?                            // pickup/delivery scheduled window
+
+  // Receipt snapshot — survives ChurchSettings.receiptLanguage changes
+  receiptLanguageVersion Int
+  receiptFooterSnapshot  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  church       Church        @relation(fields: [churchId], references: [id])
+  catalog      Catalog       @relation(fields: [catalogId], references: [id])
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  items        OrderItem[]
+  payments     Payment[]
+  refunds      Refund[]
+  events       OrderEvent[]
+  deliveryInfo DeliveryInfo?
+
+  @@unique([churchId, number])
+  @@index([churchId, status, scheduledFor])
+  @@index([churchId, createdAt])
+  @@index([customerId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id               String @id @default(cuid())
+  orderId          String
+  itemId           String?  // nullable in case Item is ever hard-deleted
+  itemName         String   // snapshot
+  unitPrice        Int      // snapshot, minor units
+  quantity         Int
+  modifierSnapshot Json     // [{groupName, options: [{name, priceDelta}]}]
+  subtotal         Int      // (unitPrice + sum(modifier priceDelta)) * quantity
+  tax              Int      @default(0) // line-level tax
+  total            Int      // subtotal + tax
+
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  item  Item? @relation(fields: [itemId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderEvent {
+  id         String       @id @default(cuid())
+  orderId    String
+  actorId    String?
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  reason     String?
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor User? @relation("OrderEventActor", fields: [actorId], references: [id])
+
+  @@index([orderId, createdAt])
+  @@map("order_events")
+}
+
+model Payment {
+  id                 String        @id @default(cuid())
+  orderId            String
+  method             PaymentMethod
+  status             PaymentStatus @default(PENDING)
+  amount             Int                              // minor units
+  currency           String
+  externalId         String?                          // Stripe payment_intent_id, etc.
+  externalReceiptUrl String?
+  metadata           Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds Refund[]
+
+  @@index([orderId])
+  @@index([externalId])
+  @@map("payments")
+}
+
+model Refund {
+  id         String       @id @default(cuid())
+  orderId    String
+  paymentId  String?
+  amount     Int                                     // minor units; v1 is order-level
+  reason     String
+  status     RefundStatus @default(PENDING)
+  actorId    String?
+  externalId String?
+
+  createdAt DateTime @default(now())
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id])
+  actor   User?    @relation("RefundActor", fields: [actorId], references: [id])
+
+  @@index([orderId])
+  @@map("refunds")
+}
+
+// =====================================================================
+// Delivery
+// =====================================================================
+
+model DeliveryZone {
+  id            String   @id @default(cuid())
+  churchId      String
+  name          String
+  translations  Json?    // {"es": {"name": "..."}}
+  postalCodes   String[] // ZIPs in zone (v1; polygon support v2)
+  feeCents      Int      @default(0)
+  minOrderCents Int      @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
+  @@map("delivery_zones")
+}
+
+model DeliveryInfo {
+  id            String  @id @default(cuid())
+  orderId       String  @unique
+  zoneId        String?
+  driverId      String?
+  recipientName String
+  phone         String
+  line1         String
+  line2         String?
+  city          String
+  region        String
+  postalCode    String
+  country       String
+  instructions  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driver User? @relation("DriverAssignment", fields: [driverId], references: [id])
+
+  @@map("delivery_info")
+}
+
+// =====================================================================
+// Inventory (finished-goods)
+// =====================================================================
+
+model InventoryItem {
+  id                String  @id @default(cuid())
+  churchId          String
+  itemId            String  @unique  // 1:1 with Item
+  quantityOnHand    Int     @default(0)
+  lowStockThreshold Int?
+  trackingEnabled   Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  church    Church          @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  item      Item            @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  movements StockMovement[]
+
+  @@index([churchId])
+  @@map("inventory_items")
+}
+
+model StockMovement {
+  id              String            @id @default(cuid())
+  inventoryItemId String
+  kind            StockMovementKind
+  delta           Int               // positive = +stock, negative = -stock
+  reason          String?
+  orderId         String?           // when kind=ORDER_DECREMENT or REFUND_INCREMENT
+  actorId         String?
+
+  createdAt DateTime @default(now())
+
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  actor         User?         @relation("StockMovementActor", fields: [actorId], references: [id])
+
+  @@index([inventoryItemId, createdAt])
+  @@map("stock_movements")
+}
+
+// =====================================================================
+// Audit & operations
+// =====================================================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  churchId   String?
+  actorId    String?
+  action     String   // e.g., "order.refund", "catalog.publish"
+  resource   String   // e.g., "Order", "Catalog"
+  resourceId String?
+  metadata   Json?
+  ip         String?
+  userAgent  String?
+
+  createdAt DateTime @default(now())
+
+  church Church? @relation(fields: [churchId], references: [id], onDelete: SetNull)
+  actor  User?   @relation("AuditLogActor", fields: [actorId], references: [id])
+
+  @@index([churchId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([resource, resourceId])
+  @@map("audit_logs")
+}
+
+model WebhookEvent {
+  id              String    @id @default(cuid())
+  churchId        String?
+  provider        String    // "stripe"
+  eventId         String    // provider's event ID
+  eventType       String
+  payload         Json
+  signatureValid  Boolean
+  processedAt     DateTime?
+  processingError String?
+
+  createdAt DateTime @default(now())
+
+  church Church? @relation(fields: [churchId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, eventId])
+  @@index([churchId, createdAt])
+  @@map("webhook_events")
+}
+
+model EmailLog {
+  id         String  @id @default(cuid())
+  churchId   String
+  to         String
+  from       String
+  subject    String
+  template   String  // e.g., "order.confirmation"
+  status     String  // sent, delivered, bounced, complained
+  providerId String? // Resend message ID
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId, createdAt])
+  @@map("email_logs")
+}
+
+model SmsLog {
+  id            String  @id @default(cuid())
+  churchId      String
+  to            String
+  body          String
+  status        String  // sent, delivered, failed
+  providerId    String? // Twilio SID
+  optInProofUrl String?
+  metadata      Json?
+
+  createdAt DateTime @default(now())
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId, createdAt])
+  @@map("sms_logs")
+}
+
+model Notification {
+  id       String    @id @default(cuid())
+  churchId String
+  userId   String?
+  type     String    // "order.new", "inventory.low"
+  body     String
+  link     String?
+  readAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  church Church @relation(fields: [churchId], references: [id], onDelete: Cascade)
+
+  @@index([churchId, userId, readAt])
+  @@map("notifications")
+}

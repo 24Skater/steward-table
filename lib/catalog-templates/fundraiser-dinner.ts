@@ -1,0 +1,116 @@
+import type { CatalogTemplate } from "./types";
+
+export const fundraiserDinnerTemplate: CatalogTemplate = {
+  key: "fundraiser-dinner",
+  name: "Fundraiser Dinner",
+  description: "Full dinner fundraiser",
+  items: [
+    {
+      name: "Dinner Plate",
+      nameEs: "Plato de Cena",
+      description: "Includes protein, two sides, and bread",
+      descriptionEs: "Incluye proteína, dos acompañamientos y pan",
+      defaultPrice: 1500,
+      station: "food",
+      modifierGroupNames: ["Protein Choice", "Side Choice (Pick 2)"],
+    },
+    {
+      name: "Children's Plate",
+      nameEs: "Plato Infantil",
+      description: "Smaller portion for children",
+      descriptionEs: "Porción más pequeña para niños",
+      defaultPrice: 800,
+      station: "food",
+      modifierGroupNames: ["Protein Choice"],
+    },
+    {
+      name: "Extra Side Dish",
+      nameEs: "Plato Adicional",
+      description: "Additional side dish",
+      descriptionEs: "Acompañamiento adicional",
+      defaultPrice: 300,
+      station: "sides",
+      modifierGroupNames: [],
+    },
+    {
+      name: "Dessert Slice",
+      nameEs: "Rebanada de Postre",
+      description: "Slice of dessert",
+      descriptionEs: "Rebanada de postre",
+      defaultPrice: 400,
+      station: "desserts",
+      modifierGroupNames: [],
+    },
+    {
+      name: "Bottled Water",
+      nameEs: "Agua Embotellada",
+      description: "16 oz bottled water",
+      descriptionEs: "Agua embotellada de 500ml",
+      defaultPrice: 100,
+      station: "drinks",
+      modifierGroupNames: [],
+    },
+  ],
+  modifierGroups: [
+    {
+      name: "Protein Choice",
+      nameEs: "Elección de Proteína",
+      minSelections: 1,
+      maxSelections: 1,
+      isRequired: true,
+      options: [
+        {
+          name: "Chicken",
+          nameEs: "Pollo",
+          priceDelta: 0,
+          isDefault: true,
+        },
+        {
+          name: "Beef",
+          nameEs: "Res",
+          priceDelta: 200,
+          isDefault: false,
+        },
+        {
+          name: "Vegetarian",
+          nameEs: "Vegetariano",
+          priceDelta: 0,
+          isDefault: false,
+        },
+      ],
+    },
+    {
+      name: "Side Choice (Pick 2)",
+      nameEs: "Elección de Acompañamiento (Elige 2)",
+      minSelections: 2,
+      maxSelections: 2,
+      isRequired: true,
+      options: [
+        {
+          name: "Rice",
+          nameEs: "Arroz",
+          priceDelta: 0,
+          isDefault: false,
+        },
+        {
+          name: "Beans",
+          nameEs: "Frijoles",
+          priceDelta: 0,
+          isDefault: false,
+        },
+        {
+          name: "Salad",
+          nameEs: "Ensalada",
+          priceDelta: 0,
+          isDefault: false,
+        },
+        {
+          name: "Coleslaw",
+          nameEs: "Ensalada de Col",
+          priceDelta: 0,
+          isDefault: false,
+        },
+      ],
+    },
+  ],
+};

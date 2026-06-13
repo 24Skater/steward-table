@@ -1,0 +1,119 @@
+model Order {
+  id           String          @id @default(cuid())
+  churchId     String
+  catalogId    String
+  customerId   String
+  number       Int
+  channel      Channel
+  fulfillment  FulfillmentType
+  status       OrderStatus     @default(SUBMITTED)
+  currency     String
+  subtotal     Int
+  tax          Int             @default(0)
+  tip          Int             @default(0)
+  total        Int
+  notes        String?
+  scheduledFor DateTime?
+
+  receiptLanguageVersion Int
+  receiptFooterSnapshot  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  church       Church        @relation(fields: [churchId], references: [id])
+  catalog      Catalog       @relation(fields: [catalogId], references: [id])
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  items        OrderItem[]
+  payments     Payment[]
+  refunds      Refund[]
+  events       OrderEvent[]
+  deliveryInfo DeliveryInfo?
+
+  @@unique([churchId, number])
+  @@index([churchId, status, scheduledFor])
+  @@index([churchId, createdAt])
+  @@index([customerId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id               String @id @default(cuid())
+  orderId          String
+  itemId           String?
+  itemName         String
+  unitPrice        Int
+  quantity         Int
+  modifierSnapshot Json
+  subtotal         Int
+  tax              Int      @default(0)
+  total            Int
+
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  item  Item? @relation(fields: [itemId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderEvent {
+  id         String       @id @default(cuid())
+  orderId    String
+  actorId    String?
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  reason     String?
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor User? @relation("OrderEventActor", fields: [actorId], references: [id])
+
+  @@index([orderId, createdAt])
+  @@map("order_events")
+}
+
+model Payment {
+  id                 String        @id @default(cuid())
+  orderId            String
+  method             PaymentMethod
+  status             PaymentStatus @default(PENDING)
+  amount             Int
+  currency           String
+  externalId         String?
+  externalReceiptUrl String?
+  metadata           Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds Refund[]
+
+  @@index([orderId])
+  @@index([externalId])
+  @@map("payments")
+}
+
+model Refund {
+  id         String       @id @default(cuid())
+  orderId    String
+  paymentId  String?
+  amount     Int
+  reason     String
+  status     RefundStatus @default(PENDING)
+  actorId    String?
+  externalId String?
+
+  createdAt DateTime @default(now())
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id])
+  actor   User?    @relation("RefundActor", fields: [actorId], references: [id])
+
+  @@index([orderId])
+  @@map("refunds")
+}
