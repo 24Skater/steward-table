@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { TopBar } from "@/components/layout/top-bar";
 import { ReportsPage } from "@/components/reports";
 import type { ReportsData } from "@/components/reports";
+import { getKitchenRevenue } from "@/lib/kitchens/reporting";
 import type { OrderStatus } from "@prisma/client";
 
 const COMPLETED_STATUSES: OrderStatus[] = [
@@ -89,6 +90,13 @@ export default async function ReportsPageRoute() {
 
   const revenue = revenueResult._sum.total ?? 0;
 
+  const byKitchen = await getKitchenRevenue(
+    db,
+    churchId,
+    startOfToday,
+    COMPLETED_STATUSES,
+  );
+
   const initialData: ReportsData = {
     totalOrders,
     completedOrders,
@@ -103,6 +111,7 @@ export default async function ReportsPageRoute() {
       itemName: row.itemName,
       count: row._sum.quantity ?? 0,
     })),
+    byKitchen,
   };
 
   return (

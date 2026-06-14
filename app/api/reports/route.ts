@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
+import { getKitchenRevenue } from "@/lib/kitchens/reporting";
 import type { SessionMembership } from "@/lib/auth/types";
 import type { OrderStatus } from "@prisma/client";
 
@@ -141,6 +142,13 @@ export async function GET(request: NextRequest) {
   const averageOrderValue =
     totalOrders > 0 ? Math.round(revenue / totalOrders) : 0;
 
+  const byKitchen = await getKitchenRevenue(
+    db,
+    churchId,
+    rangeStart,
+    COMPLETED_STATUSES,
+  );
+
   return NextResponse.json({
     totalOrders,
     completedOrders,
@@ -154,5 +162,6 @@ export async function GET(request: NextRequest) {
       itemName: row.itemName,
       count: row._sum.quantity ?? 0,
     })),
+    byKitchen,
   });
 }

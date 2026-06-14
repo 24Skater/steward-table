@@ -17,6 +17,12 @@ export interface TopItem {
   count: number;
 }
 
+export interface KitchenRevenueItem {
+  kitchenName: string;
+  orders: number;
+  revenue: number;
+}
+
 export interface ReportsData {
   totalOrders: number;
   completedOrders: number;
@@ -24,6 +30,7 @@ export interface ReportsData {
   averageOrderValue: number;
   statusBreakdown: StatusBreakdownItem[];
   topItems: TopItem[];
+  byKitchen: KitchenRevenueItem[];
 }
 
 interface ReportsPageProps {
@@ -171,6 +178,37 @@ function TopItemsTable({ items }: { items: TopItem[] }) {
   );
 }
 
+// ── Per-kitchen revenue table ───────────────────────────────────────────────────
+
+function KitchenRevenueTable({ rows }: { rows: KitchenRevenueItem[] }) {
+  if (rows.length === 0) {
+    return <p className="text-sm text-slate-400">No kitchens configured.</p>;
+  }
+
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="text-left text-slate-400">
+          <th className="pb-2 font-medium">Kitchen</th>
+          <th className="pb-2 font-medium text-right tabular-nums">Orders</th>
+          <th className="pb-2 font-medium text-right tabular-nums">Revenue</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.kitchenName} className="border-t border-slate-100">
+            <td className="py-1.5 text-slate-700">{row.kitchenName}</td>
+            <td className="py-1.5 text-right text-slate-600 tabular-nums">{row.orders}</td>
+            <td className="py-1.5 text-right text-slate-600 tabular-nums">
+              {formatCurrency(row.revenue)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function ReportsPage({ initialData, churchId }: ReportsPageProps) {
@@ -287,6 +325,14 @@ export function ReportsPage({ initialData, churchId }: ReportsPageProps) {
           </h3>
           <TopItemsTable items={data.topItems} />
         </div>
+      </div>
+
+      {/* Per-kitchen revenue */}
+      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5">
+        <h3 className="mb-4 text-sm font-semibold text-slate-700">
+          Revenue by Kitchen
+        </h3>
+        <KitchenRevenueTable rows={data.byKitchen ?? []} />
       </div>
     </div>
   );
