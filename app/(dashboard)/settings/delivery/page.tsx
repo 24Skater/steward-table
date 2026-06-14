@@ -22,7 +22,7 @@ export default async function DeliverySettingsPage() {
   });
   if (!result.allowed) redirect("/settings");
 
-  const zones = await (db.deliveryZone.findMany as Function)({
+  const zones = await (db.deliveryZone.findMany as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: {
       id: true,

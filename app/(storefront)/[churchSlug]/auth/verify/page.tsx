@@ -35,7 +35,7 @@ export default async function MagicLinkVerifyPage({ searchParams }: VerifyPagePr
 
   // Link customer record if we have an orderId
   if (orderId) {
-    const order = await (db.order.findFirst as Function)({
+    const order = await (db.order.findFirst as PrismaBypass)({
       where: { id: orderId },
       select: { customerId: true, customer: { select: { userId: true } } },
       _bypassTenancyCheck: true,

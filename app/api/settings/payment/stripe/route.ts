@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
   const encryptedWebhookSecret = encrypt(ws);
 
   await Promise.all([
-    (db.apiKey.upsert as Function)({
+    (db.apiKey.upsert as PrismaBypass)({
       where: {
         churchId_provider_isLive: {
           churchId: membership.churchId,
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       },
       ...({ _bypassTenancyCheck: true } as object),
     }),
-    (db.apiKey.upsert as Function)({
+    (db.apiKey.upsert as PrismaBypass)({
       where: {
         churchId_provider_isLive: {
           churchId: membership.churchId,

@@ -49,14 +49,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Check if there's already an active membership for this email
-  const existingUser = await (db.user.findUnique as Function)({
+  const existingUser = await (db.user.findUnique as PrismaBypass)({
     where: { email: emailLower },
     select: { id: true },
     _bypassTenancyCheck: true,
   });
 
   if (existingUser) {
-    const existingMembership = await (db.membership.findFirst as Function)({
+    const existingMembership = await (db.membership.findFirst as PrismaBypass)({
       where: {
         userId: existingUser.id,
         churchId: membership.churchId,
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Check for a pending invitation for this email
-  const pendingInvitation = await (db.invitation.findFirst as Function)({
+  const pendingInvitation = await (db.invitation.findFirst as PrismaBypass)({
     where: {
       churchId: membership.churchId,
       email: emailLower,
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     Date.now() + INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000,
   );
 
-  const invitation = await (db.invitation.create as Function)({
+  const invitation = await (db.invitation.create as PrismaBypass)({
     data: {
       churchId: membership.churchId,
       email: emailLower,

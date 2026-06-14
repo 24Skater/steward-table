@@ -54,7 +54,7 @@ export default async function RefundsPage({
   const { churchId } = activeMembership;
 
   // Confirm the order belongs to this church
-  const order = await (db.order.findFirst as Function)({
+  const order = await (db.order.findFirst as PrismaBypass)({
     where: { id: orderId, churchId },
     select: { id: true, number: true },
     _bypassTenancyCheck: true,
@@ -62,7 +62,7 @@ export default async function RefundsPage({
 
   if (!order) notFound();
 
-  const refunds = await (db.refund.findMany as Function)({
+  const refunds = await (db.refund.findMany as PrismaBypass)({
     where: { orderId },
     orderBy: { createdAt: "desc" },
     include: {

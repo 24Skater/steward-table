@@ -63,7 +63,7 @@ export async function PUT(req: NextRequest) {
   } = rawBody;
 
   // Fetch existing brandTokens to merge — avoid clobbering unrelated keys
-  const existing = await (db.churchSettings.findUnique as Function)({
+  const existing = await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: { brandTokens: true },
     ...({ _bypassTenancyCheck: true } as object),
@@ -83,7 +83,7 @@ export async function PUT(req: NextRequest) {
     smsReadyEnabled,
   };
 
-  await (db.churchSettings.upsert as Function)({
+  await (db.churchSettings.upsert as PrismaBypass)({
     where: { churchId: membership.churchId },
     create: {
       churchId: membership.churchId,

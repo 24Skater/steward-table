@@ -28,17 +28,17 @@ export async function GET() {
   }
 
   const [settings, stripeKey, webhookKey] = await Promise.all([
-    (db.churchSettings.findUnique as Function)({
+    (db.churchSettings.findUnique as PrismaBypass)({
       where: { churchId: membership.churchId },
       select: { stripeMode: true },
       _bypassTenancyCheck: true,
     }),
-    (db.apiKey.findFirst as Function)({
+    (db.apiKey.findFirst as PrismaBypass)({
       where: { churchId: membership.churchId, provider: "stripe", isLive: true },
       select: { publishable: true },
       _bypassTenancyCheck: true,
     }),
-    (db.apiKey.findFirst as Function)({
+    (db.apiKey.findFirst as PrismaBypass)({
       where: { churchId: membership.churchId, provider: "stripe_webhook", isLive: true },
       select: { id: true },
       _bypassTenancyCheck: true,
@@ -97,7 +97,7 @@ export async function PATCH(req: NextRequest) {
     const hint = `${trimmed.slice(0, 7)}****${trimmed.slice(-4)}`;
 
     ops.push(
-      (db.apiKey.upsert as Function)({
+      (db.apiKey.upsert as PrismaBypass)({
         where: {
           churchId_provider_isLive: {
             churchId: membership.churchId,
@@ -129,7 +129,7 @@ export async function PATCH(req: NextRequest) {
     const encryptedWebhook = encrypt(trimmed);
 
     ops.push(
-      (db.apiKey.upsert as Function)({
+      (db.apiKey.upsert as PrismaBypass)({
         where: {
           churchId_provider_isLive: {
             churchId: membership.churchId,

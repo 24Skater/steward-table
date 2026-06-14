@@ -66,7 +66,7 @@ export default async function OrderDetailPage({
 
   // Fetch DRIVER members for the driver assignment select (only relevant for delivery orders)
   const rawDrivers = raw.fulfillment === "DELIVERY"
-    ? await (db.membership.findMany as Function)({
+    ? await (db.membership.findMany as PrismaBypass)({
         where: {
           churchId,
           status: "ACTIVE",

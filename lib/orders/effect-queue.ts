@@ -70,7 +70,7 @@ const STATUS_NOTIFICATION_BODY: Partial<Record<string, string>> = {
 };
 
 async function handleCustomerStatusNotification(orderId: string): Promise<void> {
-  const order = await (db.order.findUnique as Function)({
+  const order = await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: {
       id: true,

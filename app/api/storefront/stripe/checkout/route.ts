@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
   const fulfillmentType = fulfillment && isValidFulfillment(fulfillment) ? fulfillment : "PICKUP";
 
   // Resolve church (bypass tenancy for guest checkout)
-  const church = await (db.church.findFirst as Function)({
+  const church = await (db.church.findFirst as PrismaBypass)({
     where: { slug: churchSlug, status: "ACTIVE" },
     select: { id: true, name: true, currency: true },
     _bypassTenancyCheck: true,

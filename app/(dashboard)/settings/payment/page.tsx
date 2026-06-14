@@ -35,14 +35,14 @@ export default async function PaymentSettingsPage() {
     );
   }
 
-  const churchSettings = await (db.churchSettings.findUnique as Function)({
+  const churchSettings = await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: { acceptCash: true, acceptZelle: true },
     _bypassTenancyCheck: true,
   }) as { acceptCash: boolean; acceptZelle: boolean } | null;
 
   const [stripeKey, webhookKey] = await Promise.all([
-    (db.apiKey.findFirst as Function)({
+    (db.apiKey.findFirst as PrismaBypass)({
       where: {
         churchId: membership.churchId,
         provider: "stripe",
@@ -55,7 +55,7 @@ export default async function PaymentSettingsPage() {
       },
       ...({ _bypassTenancyCheck: true } as object),
     }),
-    (db.apiKey.findFirst as Function)({
+    (db.apiKey.findFirst as PrismaBypass)({
       where: {
         churchId: membership.churchId,
         provider: "stripe_webhook",

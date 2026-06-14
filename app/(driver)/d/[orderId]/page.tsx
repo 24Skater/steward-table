@@ -23,7 +23,7 @@ export default async function DriverOrderPage({ params }: DriverOrderPageProps) 
   const churchId = membership.churchId;
   const userId = session.user.id;
 
-  const deliveryInfo = await (db.deliveryInfo.findFirst as Function)({
+  const deliveryInfo = await (db.deliveryInfo.findFirst as PrismaBypass)({
     where: {
       driverId: userId,
       order: { churchId, id: orderId },

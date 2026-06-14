@@ -10,7 +10,7 @@ import { getStripeForChurch } from "@/lib/stripe/client";
  */
 export async function handleStripeRefundEffect(orderId: string): Promise<void> {
   try {
-    const order = await (db.order.findUnique as Function)({
+    const order = await (db.order.findUnique as PrismaBypass)({
       where: { id: orderId },
       select: {
         id: true,

@@ -85,7 +85,7 @@ export default async function DashboardHomePage() {
     }),
 
     // Recent activity: last 10 OrderEvents with actor + order
-    (db.orderEvent.findMany as Function)({
+    (db.orderEvent.findMany as PrismaBypass)({
       where: {},
       orderBy: { createdAt: "desc" },
       take: 10,
@@ -100,7 +100,7 @@ export default async function DashboardHomePage() {
     }) as Promise<OrderEventRow[]>,
 
     // Low stock alerts
-    (db.inventoryItem.findMany as Function)({
+    (db.inventoryItem.findMany as PrismaBypass)({
       where: {
         churchId,
         trackingEnabled: true,

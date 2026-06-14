@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const user = await (db.user.findUnique as Function)({
+  const user = await (db.user.findUnique as PrismaBypass)({
     where: { id: session.user.id },
     select: { id: true, passwordHash: true },
     _bypassTenancyCheck: true,
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   const newHash = await bcrypt.hash(parsed.data.newPassword, 12);
 
-  await (db.user.update as Function)({
+  await (db.user.update as PrismaBypass)({
     where: { id: session.user.id },
     data: { passwordHash: newHash },
     _bypassTenancyCheck: true,

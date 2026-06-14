@@ -14,7 +14,7 @@ export async function POST(
 
   const { orderId } = await params;
 
-  const order = (await (db.order.findUnique as Function)({
+  const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: {
       id: true,
@@ -66,7 +66,7 @@ export async function POST(
   }
 
   // Optimistic lock: only claim if still unassigned
-  const updated = await (db.deliveryInfo.updateMany as Function)({
+  const updated = await (db.deliveryInfo.updateMany as PrismaBypass)({
     where: {
       id: order.deliveryInfo.id,
       driverId: null,

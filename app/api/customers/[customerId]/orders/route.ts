@@ -35,7 +35,7 @@ export async function GET(
   }
 
   // Verify customer belongs to this church (tenancy safety check)
-  const customer = await (db.customer.findFirst as Function)({
+  const customer = await (db.customer.findFirst as PrismaBypass)({
     where: { id: customerId, churchId, deletedAt: null },
     _bypassTenancyCheck: true,
   });

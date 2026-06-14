@@ -42,7 +42,7 @@ export default async function WebhooksPage() {
     );
   }
 
-  const events = await (db.webhookEvent.findMany as Function)({
+  const events = await (db.webhookEvent.findMany as PrismaBypass)({
     where: { churchId: membership.churchId },
     orderBy: { createdAt: "desc" },
     take: 50,

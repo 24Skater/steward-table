@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       : "America/Chicago";
 
   // Check slug uniqueness
-  const existing = await (db.church.findUnique as Function)({
+  const existing = await (db.church.findUnique as PrismaBypass)({
     where: { slug },
     select: { id: true },
     _bypassTenancyCheck: true,
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
   // Create church, settings, and OWNER membership atomically
   const church = await db.$transaction(async (tx) => {
-    const newChurch = await (tx.church.create as Function)({
+    const newChurch = await (tx.church.create as PrismaBypass)({
       data: {
         name: name.trim(),
         slug,
@@ -59,11 +59,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await (tx.churchSettings.create as Function)({
+    await (tx.churchSettings.create as PrismaBypass)({
       data: { churchId: newChurch.id },
     });
 
-    await (tx.membership.create as Function)({
+    await (tx.membership.create as PrismaBypass)({
       data: {
         userId: session.user.id,
         churchId: newChurch.id,

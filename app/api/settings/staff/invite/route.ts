@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   const email = body.email.trim().toLowerCase();
 
   // Check if a user with this email exists
-  const existingUser = await (db.user.findUnique as Function)({
+  const existingUser = await (db.user.findUnique as PrismaBypass)({
     where: { email },
     select: { id: true },
     ...({ _bypassTenancyCheck: true } as object),
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Check if they already have a membership for this church
-  const existingMembership = await (db.membership.findFirst as Function)({
+  const existingMembership = await (db.membership.findFirst as PrismaBypass)({
     where: { userId: existingUser.id, churchId: membership.churchId },
     select: { id: true, status: true },
     ...({ _bypassTenancyCheck: true } as object),
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Create membership with VIEWER role (ACTIVE — direct addition, no email invite flow)
-  await (db.membership.create as Function)({
+  await (db.membership.create as PrismaBypass)({
     data: {
       userId: existingUser.id,
       churchId: membership.churchId,

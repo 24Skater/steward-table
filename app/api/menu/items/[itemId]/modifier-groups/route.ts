@@ -82,7 +82,7 @@ export async function POST(
   });
 
   // Get the current max sort order for this item's modifier groups
-  const lastBinding = await (db.itemModifierGroup.findFirst as Function)({
+  const lastBinding = await (db.itemModifierGroup.findFirst as PrismaBypass)({
     where: { itemId, deletedAt: null },
     orderBy: { sortOrder: "desc" },
     select: { sortOrder: true },
@@ -90,7 +90,7 @@ export async function POST(
 
   const nextSortOrder = lastBinding ? (lastBinding.sortOrder as number) + 1 : 0;
 
-  const binding = await (db.itemModifierGroup.create as Function)({
+  const binding = await (db.itemModifierGroup.create as PrismaBypass)({
     data: {
       itemId,
       groupId: group.id,

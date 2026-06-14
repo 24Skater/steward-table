@@ -73,7 +73,7 @@ export async function PUT(req: NextRequest) {
   } = parsed.data;
 
   const [updatedChurch] = await Promise.all([
-    (db.church.update as Function)({
+    (db.church.update as PrismaBypass)({
       where: { id: membership.churchId, ...({ _bypassTenancyCheck: true } as object) },
       data: {
         name,
@@ -86,7 +86,7 @@ export async function PUT(req: NextRequest) {
       },
       select: { id: true, name: true, slug: true, timezone: true, legalName: true, logoUrl: true, accentColor: true, locale: true },
     }),
-    (db.churchSettings.upsert as Function)({
+    (db.churchSettings.upsert as PrismaBypass)({
       where: { churchId: membership.churchId, ...({ _bypassTenancyCheck: true } as object) },
       create: {
         churchId: membership.churchId,

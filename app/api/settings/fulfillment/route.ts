@@ -72,7 +72,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const settings = await (db.churchSettings.findUnique as Function)({
+  const settings = await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: { brandTokens: true },
     _bypassTenancyCheck: true,
@@ -110,7 +110,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   // Fetch existing settings to merge
-  const existing = await (db.churchSettings.findUnique as Function)({
+  const existing = await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: { brandTokens: true },
     _bypassTenancyCheck: true,
@@ -139,7 +139,7 @@ export async function PATCH(req: NextRequest) {
 
   const updatedTokens = { ...existingTokens, ...merged };
 
-  await (db.churchSettings.upsert as Function)({
+  await (db.churchSettings.upsert as PrismaBypass)({
     where: { churchId: membership.churchId },
     create: {
       churchId: membership.churchId,

@@ -34,7 +34,7 @@ export default async function TeamRoute() {
   }
 
   const [members, invitations] = await Promise.all([
-    (db.membership.findMany as Function)({
+    (db.membership.findMany as PrismaBypass)({
       where: {
         churchId: membership.churchId,
         status: { in: ["ACTIVE", "SUSPENDED"] },
@@ -51,7 +51,7 @@ export default async function TeamRoute() {
       _bypassTenancyCheck: true,
     }),
     inviteResult.allowed
-      ? (db.invitation.findMany as Function)({
+      ? (db.invitation.findMany as PrismaBypass)({
           where: {
             churchId: membership.churchId,
             status: "PENDING",

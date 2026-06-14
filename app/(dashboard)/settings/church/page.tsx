@@ -23,7 +23,7 @@ export default async function ChurchSettingsPage() {
   if (!result.allowed) redirect("/");
 
   const [church, settings] = await Promise.all([
-    (db.church.findUnique as Function)({
+    (db.church.findUnique as PrismaBypass)({
       where: { id: membership.churchId, ...({ _bypassTenancyCheck: true } as object) },
       select: {
         id: true,
@@ -36,7 +36,7 @@ export default async function ChurchSettingsPage() {
         locale: true,
       },
     }),
-    (db.churchSettings.findUnique as Function)({
+    (db.churchSettings.findUnique as PrismaBypass)({
       where: { churchId: membership.churchId, ...({ _bypassTenancyCheck: true } as object) },
       select: {
         customerSelfCancelWindowMinutes: true,

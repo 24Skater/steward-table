@@ -32,7 +32,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
 
   const { invitationId } = await context.params;
 
-  const invitation = await (db.invitation.findFirst as Function)({
+  const invitation = await (db.invitation.findFirst as PrismaBypass)({
     where: {
       id: invitationId,
       churchId: membership.churchId,
@@ -51,7 +51,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     );
   }
 
-  await (db.invitation.update as Function)({
+  await (db.invitation.update as PrismaBypass)({
     where: { id: invitationId },
     data: { status: "REVOKED" },
     _bypassTenancyCheck: true,

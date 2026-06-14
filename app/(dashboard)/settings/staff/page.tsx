@@ -54,7 +54,7 @@ export default async function StaffPage() {
     );
   }
 
-  const memberships = await (db.membership.findMany as Function)({
+  const memberships = await (db.membership.findMany as PrismaBypass)({
     where: { churchId: membership.churchId },
     include: { user: { select: { id: true, name: true, email: true, image: true } } },
     orderBy: { createdAt: "asc" },

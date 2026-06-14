@@ -36,7 +36,7 @@ export default async function CustomerDetailRoute({
 
   const { customerId } = await params;
 
-  const raw = await (db.customer.findFirst as Function)({
+  const raw = await (db.customer.findFirst as PrismaBypass)({
     where: { id: customerId, churchId: churchId },
     include: {
       orders: {

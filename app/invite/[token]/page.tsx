@@ -10,7 +10,7 @@ export default async function InvitePage({
 }) {
   const { token } = await params;
 
-  const invitation = await (db.invitation.findUnique as Function)({
+  const invitation = await (db.invitation.findUnique as PrismaBypass)({
     where: { token },
     include: { church: { select: { name: true, slug: true } } },
     _bypassTenancyCheck: true,

@@ -26,7 +26,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const members = await (db.membership.findMany as Function)({
+  const members = await (db.membership.findMany as PrismaBypass)({
     where: {
       churchId: membership.churchId,
       status: { in: ["ACTIVE", "SUSPENDED"] },

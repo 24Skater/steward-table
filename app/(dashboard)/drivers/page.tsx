@@ -48,7 +48,7 @@ export default async function DriversPageRoute() {
 
   const [rawOrders, rawDrivers] = await Promise.all([
     // Fetch active DELIVERY orders
-    (db.order.findMany as Function)({
+    (db.order.findMany as PrismaBypass)({
       where: {
         churchId,
         fulfillment: "DELIVERY",
@@ -95,7 +95,7 @@ export default async function DriversPageRoute() {
 
     // Fetch all active DRIVER members of this church
     canAssign
-      ? (db.membership.findMany as Function)({
+      ? (db.membership.findMany as PrismaBypass)({
           where: {
             churchId,
             status: "ACTIVE",

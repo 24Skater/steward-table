@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Load per-church no-show timeout settings
-  const settings = await (db.churchSettings.findMany as Function)({
+  const settings = await (db.churchSettings.findMany as PrismaBypass)({
     where: { noShowTimeoutHours: { gt: 0 } },
     select: { churchId: true, noShowTimeoutHours: true },
     _bypassTenancyCheck: true,
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     settings.map(async ({ churchId, noShowTimeoutHours }) => {
       const cutoff = new Date(now - noShowTimeoutHours * 60 * 60 * 1000);
 
-      const staleOrders = await (db.order.findMany as Function)({
+      const staleOrders = await (db.order.findMany as PrismaBypass)({
         where: {
           churchId,
           status: "AWAITING_PICKUP",

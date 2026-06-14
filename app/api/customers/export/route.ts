@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
 
   // Audit log this export
   try {
-    await (db.auditLog.create as Function)({
+    await (db.auditLog.create as PrismaBypass)({
       data: {
         churchId,
         actorId: session.user.id,

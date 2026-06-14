@@ -23,7 +23,7 @@ interface KitchenSettings {
 }
 
 async function getKitchenSettings(churchId: string): Promise<KitchenSettings> {
-  const settings = (await (db.churchSettings.findUnique as Function)({
+  const settings = (await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId },
     select: { kitchenDisplayMode: true, prepLeadTimeMinutes: true },
     _bypassTenancyCheck: true,
@@ -132,7 +132,7 @@ export async function GET(
 
       async function fetchRecentlyCanceled() {
         const since = new Date(Date.now() - CANCELED_WINDOW_MS);
-        const rows = (await (db.order.findMany as Function)({
+        const rows = (await (db.order.findMany as PrismaBypass)({
           where: {
             ...buildKitchenOrderWhere(churchId, catalogIds, CANCELED_STATUSES),
             updatedAt: { gte: since },

@@ -17,7 +17,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const zones = await (db.deliveryZone.findMany as Function)({
+  const zones = await (db.deliveryZone.findMany as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: {
       id: true,
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "minOrderCents must be a non-negative integer" }, { status: 400 });
   }
 
-  const zone = await (db.deliveryZone.create as Function)({
+  const zone = await (db.deliveryZone.create as PrismaBypass)({
     data: {
       churchId: membership.churchId,
       name: name.trim(),
@@ -129,7 +129,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Missing id query parameter" }, { status: 400 });
   }
 
-  const zone = await (db.deliveryZone.findFirst as Function)({
+  const zone = await (db.deliveryZone.findFirst as PrismaBypass)({
     where: { id, churchId: membership.churchId },
     select: { id: true },
   });
@@ -138,7 +138,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Delivery zone not found" }, { status: 404 });
   }
 
-  await (db.deliveryZone.update as Function)({
+  await (db.deliveryZone.update as PrismaBypass)({
     where: { id },
     data: { deletedAt: new Date() },
     _bypassTenancyCheck: true,

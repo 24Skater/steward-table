@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest) {
       },
     }),
     ein !== undefined
-      ? (db.church.update as Function)({
+      ? (db.church.update as PrismaBypass)({
           where: { id: churchId },
           data: { ein: ein ?? null },
           _bypassTenancyCheck: true,

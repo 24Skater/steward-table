@@ -31,7 +31,7 @@ export async function PATCH(
   const { customerId } = await params;
 
   // Verify the customer belongs to this church
-  const existing = await (db.customer.findFirst as Function)({
+  const existing = await (db.customer.findFirst as PrismaBypass)({
     where: { id: customerId, churchId, deletedAt: null },
     _bypassTenancyCheck: true,
   });

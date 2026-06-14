@@ -23,7 +23,7 @@ export default async function ReceiptSettingsPage() {
   if (!permission.allowed) redirect("/settings");
 
   const [church, settings] = await Promise.all([
-    (db.church.findUnique as Function)({
+    (db.church.findUnique as PrismaBypass)({
       where: { id: membership.churchId },
       select: { name: true, ein: true },
       _bypassTenancyCheck: true,

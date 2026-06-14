@@ -22,7 +22,7 @@ export default async function MenuPage() {
   });
   if (!canResult.allowed) redirect("/");
 
-  const items = await (db.item.findMany as Function)({
+  const items = await (db.item.findMany as PrismaBypass)({
     where: { churchId: membership.churchId, deletedAt: null },
     select: {
       id: true,

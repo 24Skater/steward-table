@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest) {
   const { membershipId, roles, status } = body;
 
   // Fetch the target membership to validate it belongs to this church
-  const target = await (db.membership.findFirst as Function)({
+  const target = await (db.membership.findFirst as PrismaBypass)({
     where: { id: membershipId, churchId: membership.churchId },
     ...({ _bypassTenancyCheck: true } as object),
   }) as { id: string; userId: string; roles: Role[]; status: string } | null;
@@ -86,7 +86,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
 
-  const updated = await (db.membership.update as Function)({
+  const updated = await (db.membership.update as PrismaBypass)({
     where: { id: membershipId },
     data: updateData,
     ...({ _bypassTenancyCheck: true } as object),

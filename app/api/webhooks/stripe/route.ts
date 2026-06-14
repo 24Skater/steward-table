@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Persist webhook event for audit log
-  await (db.webhookEvent.create as Function)({
+  await (db.webhookEvent.create as PrismaBypass)({
     data: {
       churchId,
       provider: "stripe",
@@ -101,7 +101,7 @@ async function handleCheckoutCompleted(
   orderId: string,
   churchId: string,
 ): Promise<void> {
-  const order = await (db.order.findUnique as Function)({
+  const order = await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: { id: true, status: true, payments: { select: { id: true, status: true } } },
     _bypassTenancyCheck: true,
@@ -142,7 +142,7 @@ async function handleCheckoutCompleted(
 }
 
 async function handleCheckoutExpired(orderId: string): Promise<void> {
-  const order = await (db.order.findUnique as Function)({
+  const order = await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: { id: true, status: true },
     _bypassTenancyCheck: true,
@@ -161,7 +161,7 @@ async function handlePaymentFailed(
   _paymentIntent: Stripe.PaymentIntent,
   orderId: string,
 ): Promise<void> {
-  const order = await (db.order.findUnique as Function)({
+  const order = await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: { id: true, status: true },
     _bypassTenancyCheck: true,

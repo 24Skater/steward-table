@@ -99,7 +99,7 @@ export default async function OrdersPageRoute({ searchParams }: OrdersPageRouteP
       },
     }),
     // Fetch active DRIVER members for the assignment dropdown
-    (db.membership.findMany as Function)({
+    (db.membership.findMany as PrismaBypass)({
       where: {
         churchId,
         status: "ACTIVE",

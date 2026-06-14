@@ -48,7 +48,7 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
     notFound();
   }
 
-  const churchSettings = await (db.churchSettings.findUnique as Function)({
+  const churchSettings = await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: church.id },
     select: { customerSelfCancelWindowMinutes: true },
     _bypassTenancyCheck: true,

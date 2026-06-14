@@ -13,7 +13,7 @@ export async function POST(
 
   const { token } = await params;
 
-  const invitation = await (db.invitation.findUnique as Function)({
+  const invitation = await (db.invitation.findUnique as PrismaBypass)({
     where: { token },
     _bypassTenancyCheck: true,
   });
@@ -30,7 +30,7 @@ export async function POST(
     return NextResponse.json({ error: "Invitation already accepted" }, { status: 409 });
   }
 
-  const existing = await (db.membership.findFirst as Function)({
+  const existing = await (db.membership.findFirst as PrismaBypass)({
     where: { userId: session.user.id, churchId: invitation.churchId },
     _bypassTenancyCheck: true,
   });
@@ -43,7 +43,7 @@ export async function POST(
   }
 
   await db.$transaction(async (tx) => {
-    await (tx.membership.create as Function)({
+    await (tx.membership.create as PrismaBypass)({
       data: {
         userId: session.user.id,
         churchId: invitation.churchId,
@@ -52,7 +52,7 @@ export async function POST(
       },
     });
 
-    await (tx.invitation.update as Function)({
+    await (tx.invitation.update as PrismaBypass)({
       where: { token },
       data: {
         status: "ACCEPTED",

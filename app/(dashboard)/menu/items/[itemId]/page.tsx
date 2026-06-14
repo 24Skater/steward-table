@@ -27,7 +27,7 @@ export default async function ItemDetailPage({
 
   const { itemId } = await params;
 
-  const item = await (db.item.findFirst as Function)({
+  const item = await (db.item.findFirst as PrismaBypass)({
     where: { id: itemId, churchId: membership.churchId, deletedAt: null },
     include: {
       catalogItems: {

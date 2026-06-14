@@ -30,7 +30,7 @@ export async function PATCH(req: NextRequest) {
     driverId?: string | null;
   };
 
-  const order = await (db.order.findUnique as Function)({
+  const order = await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: {
       id: true,
@@ -86,7 +86,7 @@ export async function PATCH(req: NextRequest) {
   // If assigning to a specific driver, verify that driver is an active DRIVER
   // member of this church.
   if (driverId) {
-    const driverMembership = await (db.membership.findFirst as Function)({
+    const driverMembership = await (db.membership.findFirst as PrismaBypass)({
       where: {
         userId: driverId,
         churchId: order.churchId,
@@ -111,7 +111,7 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  await (db.deliveryInfo.update as Function)({
+  await (db.deliveryInfo.update as PrismaBypass)({
     where: { id: order.deliveryInfo.id },
     data: { driverId: driverId ?? null },
     _bypassTenancyCheck: true,

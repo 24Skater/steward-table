@@ -32,7 +32,7 @@ export async function DELETE(
   const { itemId, groupId } = await params;
 
   // Verify the binding exists and belongs to an item owned by this church
-  const binding = await (db.itemModifierGroup.findFirst as Function)({
+  const binding = await (db.itemModifierGroup.findFirst as PrismaBypass)({
     where: { id: groupId, itemId, deletedAt: null },
     include: {
       item: { select: { churchId: true } },
@@ -44,7 +44,7 @@ export async function DELETE(
   }
 
   // Soft-delete the binding (ItemModifierGroup has deletedAt)
-  await (db.itemModifierGroup.update as Function)({
+  await (db.itemModifierGroup.update as PrismaBypass)({
     where: { id: groupId },
     data: { deletedAt: new Date() },
   });

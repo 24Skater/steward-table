@@ -38,7 +38,7 @@ export async function POST(
   const { itemId, groupId } = await params;
 
   // Verify the binding exists and belongs to an item owned by this church
-  const binding = await (db.itemModifierGroup.findFirst as Function)({
+  const binding = await (db.itemModifierGroup.findFirst as PrismaBypass)({
     where: { id: groupId, itemId, deletedAt: null },
     include: {
       item: { select: { churchId: true } },
@@ -70,7 +70,7 @@ export async function POST(
   const underlyingGroupId = (binding as { group: { id: string } }).group.id;
 
   // Get the current max sort order for the options in this group
-  const lastOption = await (db.modifierOption.findFirst as Function)({
+  const lastOption = await (db.modifierOption.findFirst as PrismaBypass)({
     where: { groupId: underlyingGroupId, deletedAt: null },
     orderBy: { sortOrder: "desc" },
     select: { sortOrder: true },

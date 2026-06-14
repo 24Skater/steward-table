@@ -15,7 +15,7 @@ function sseMessage(event: string, data: unknown): string {
 
 async function fetchDriverPayload(churchId: string, userId: string) {
   const [rawAssigned, rawAvailable] = await Promise.all([
-    (db.deliveryInfo.findMany as Function)({
+    (db.deliveryInfo.findMany as PrismaBypass)({
       where: {
         driverId: userId,
         order: {
@@ -28,7 +28,7 @@ async function fetchDriverPayload(churchId: string, userId: string) {
       },
       _bypassTenancyCheck: true,
     }),
-    (db.order.findMany as Function)({
+    (db.order.findMany as PrismaBypass)({
       where: {
         churchId,
         fulfillment: "DELIVERY" as FulfillmentType,

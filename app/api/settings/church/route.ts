@@ -17,7 +17,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const church = await (db.church.findUnique as Function)({
+  const church = await (db.church.findUnique as PrismaBypass)({
     where: { id: membership.churchId },
     select: {
       id: true,
@@ -79,7 +79,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const [updatedChurch] = await Promise.all([
-    (db.church.update as Function)({
+    (db.church.update as PrismaBypass)({
       where: { id: membership.churchId },
       data: {
         ...(body.name && { name: body.name }),
@@ -89,7 +89,7 @@ export async function PATCH(req: NextRequest) {
       _bypassTenancyCheck: true,
     }),
     body.contactEmail !== undefined
-      ? (db.churchSettings.upsert as Function)({
+      ? (db.churchSettings.upsert as PrismaBypass)({
           where: { churchId: membership.churchId },
           create: {
             churchId: membership.churchId,

@@ -87,7 +87,7 @@ export default async function DeliveriesPage() {
 
   const [rawDeliveries, rawAvailable] = await Promise.all([
     // Assigned to this driver, active statuses
-    (db.deliveryInfo.findMany as Function)({
+    (db.deliveryInfo.findMany as PrismaBypass)({
       where: {
         driverId: session.user.id,
         order: {
@@ -119,7 +119,7 @@ export default async function DeliveriesPage() {
     }),
 
     // Unassigned delivery orders that are READY (available pool)
-    (db.order.findMany as Function)({
+    (db.order.findMany as PrismaBypass)({
       where: {
         churchId,
         fulfillment: "DELIVERY",

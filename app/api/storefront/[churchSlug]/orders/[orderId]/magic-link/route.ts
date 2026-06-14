@@ -10,7 +10,7 @@ interface RouteParams {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const { churchSlug, orderId } = await params;
 
-  const church = await (db.church.findFirst as Function)({
+  const church = await (db.church.findFirst as PrismaBypass)({
     where: { slug: churchSlug, status: "ACTIVE" },
     select: { id: true, name: true },
     _bypassTenancyCheck: true,

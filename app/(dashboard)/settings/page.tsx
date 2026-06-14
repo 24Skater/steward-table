@@ -60,7 +60,7 @@ export default async function SettingsRoute() {
   if (!result.allowed) redirect("/");
 
   const [church, stripeKey, webhookKey] = await Promise.all([
-    (db.church.findUnique as Function)({
+    (db.church.findUnique as PrismaBypass)({
       where: { id: membership.churchId },
       select: {
         id: true,
@@ -77,12 +77,12 @@ export default async function SettingsRoute() {
       },
       _bypassTenancyCheck: true,
     }),
-    (db.apiKey.findFirst as Function)({
+    (db.apiKey.findFirst as PrismaBypass)({
       where: { churchId: membership.churchId, provider: "stripe", isLive: true },
       select: { id: true },
       _bypassTenancyCheck: true,
     }),
-    (db.apiKey.findFirst as Function)({
+    (db.apiKey.findFirst as PrismaBypass)({
       where: { churchId: membership.churchId, provider: "stripe_webhook", isLive: true },
       select: { id: true },
       _bypassTenancyCheck: true,

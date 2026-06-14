@@ -70,7 +70,7 @@ export default async function NotificationsSettingsPage() {
     );
   }
 
-  const settings = await (db.churchSettings.findUnique as Function)({
+  const settings = await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: {
       smsEnabled: true,

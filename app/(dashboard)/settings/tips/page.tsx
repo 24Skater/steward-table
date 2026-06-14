@@ -22,7 +22,7 @@ export default async function TipSettingsPage() {
   });
   if (!result.allowed) redirect("/");
 
-  const settings = await (db.churchSettings.findUnique as Function)({
+  const settings = await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: { brandTokens: true },
     _bypassTenancyCheck: true,

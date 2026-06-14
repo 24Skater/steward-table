@@ -61,11 +61,11 @@ export async function renameKitchen(kitchenId: string, name: string): Promise<vo
 export async function setDefaultKitchen(kitchenId: string): Promise<void> {
   const churchId = await requireCatalogEdit();
   await db.$transaction(async (tx) => {
-    await (tx.kitchen.updateMany as Function)({
+    await (tx.kitchen.updateMany as PrismaBypass)({
       where: { churchId, isDefault: true },
       data: { isDefault: false },
     });
-    await (tx.kitchen.updateMany as Function)({
+    await (tx.kitchen.updateMany as PrismaBypass)({
       where: { id: kitchenId, churchId },
       data: { isDefault: true },
     });
@@ -77,24 +77,24 @@ export async function archiveKitchen(kitchenId: string): Promise<void> {
   const churchId = await requireCatalogEdit();
 
   await db.$transaction(async (tx) => {
-    const kitchen = await (tx.kitchen.findFirst as Function)({
+    const kitchen = await (tx.kitchen.findFirst as PrismaBypass)({
       where: { id: kitchenId, churchId },
       select: { id: true, isDefault: true },
     });
     if (!kitchen) throw new Error("Kitchen not found");
     if (kitchen.isDefault) throw new Error("The default kitchen cannot be archived");
 
-    const defaultKitchen = await (tx.kitchen.findFirst as Function)({
+    const defaultKitchen = await (tx.kitchen.findFirst as PrismaBypass)({
       where: { churchId, isDefault: true },
       select: { id: true },
     });
     if (!defaultKitchen) throw new Error("No default kitchen to reassign catalogs to");
 
-    await (tx.catalog.updateMany as Function)({
+    await (tx.catalog.updateMany as PrismaBypass)({
       where: { churchId, kitchenId: kitchen.id },
       data: { kitchenId: defaultKitchen.id },
     });
-    await (tx.kitchen.updateMany as Function)({
+    await (tx.kitchen.updateMany as PrismaBypass)({
       where: { id: kitchen.id, churchId },
       data: { deletedAt: new Date() },
     });
@@ -113,13 +113,13 @@ export async function setKitchenCatalogs(kitchenId: string, catalogIds: string[]
 
   await db.$transaction(async (tx) => {
     // Detach catalogs currently on this kitchen that are no longer selected.
-    await (tx.catalog.updateMany as Function)({
+    await (tx.catalog.updateMany as PrismaBypass)({
       where: { churchId, kitchenId: kitchen.id, id: { notIn: catalogIds } },
       data: { kitchenId: null },
     });
     // Attach the selected catalogs to this kitchen.
     if (catalogIds.length > 0) {
-      await (tx.catalog.updateMany as Function)({
+      await (tx.catalog.updateMany as PrismaBypass)({
         where: { churchId, id: { in: catalogIds } },
         data: { kitchenId: kitchen.id },
       });

@@ -7,7 +7,7 @@ export async function GET(
 ) {
   const { churchSlug } = await params;
 
-  const church = await (db.church.findFirst as Function)({
+  const church = await (db.church.findFirst as PrismaBypass)({
     where: { slug: churchSlug, status: "ACTIVE" },
     select: { id: true },
     _bypassTenancyCheck: true,
@@ -17,7 +17,7 @@ export async function GET(
     return NextResponse.json({ error: "Church not found" }, { status: 404 });
   }
 
-  const zones = await (db.deliveryZone.findMany as Function)({
+  const zones = await (db.deliveryZone.findMany as PrismaBypass)({
     where: { churchId: church.id },
     select: {
       id: true,

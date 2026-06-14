@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   const { churchName, slug, timezone, displayName, phone } = parsed.data;
 
   // Check slug uniqueness
-  const existingChurch = await (db.church.findUnique as Function)({
+  const existingChurch = await (db.church.findUnique as PrismaBypass)({
     where: { slug },
     select: { id: true },
     ...({ _bypassTenancyCheck: true } as object),
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
   }
 
   await db.$transaction(async (tx) => {
-    const church = await (tx.church.create as Function)({
+    const church = await (tx.church.create as PrismaBypass)({
       data: {
         name: churchName,
         slug,
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await (tx.user.update as Function)({
+    await (tx.user.update as PrismaBypass)({
       where: { id: session.user.id },
       data: {
         name: displayName,
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await (tx.membership.create as Function)({
+    await (tx.membership.create as PrismaBypass)({
       data: {
         userId: session.user.id,
         churchId: church.id,
@@ -92,11 +92,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await (tx.churchSettings.create as Function)({
+    await (tx.churchSettings.create as PrismaBypass)({
       data: { churchId: church.id },
     });
 
-    await (tx.orderCounter.create as Function)({
+    await (tx.orderCounter.create as PrismaBypass)({
       data: {
         churchId: church.id,
         value: 0,

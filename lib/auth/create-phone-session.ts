@@ -15,12 +15,12 @@ export async function createMagicLinkToken(
   const expires = new Date(Date.now() + LINK_EXPIRY_HOURS * 60 * 60 * 1000);
 
   // Delete any existing token for this phone to avoid stale tokens
-  await (db.verificationToken.deleteMany as Function)({
+  await (db.verificationToken.deleteMany as PrismaBypass)({
     where: { identifier: phone },
     _bypassTenancyCheck: true,
   }).catch(() => null);
 
-  await (db.verificationToken.create as Function)({
+  await (db.verificationToken.create as PrismaBypass)({
     data: { identifier: phone, token, expires },
     _bypassTenancyCheck: true,
   });
@@ -32,7 +32,7 @@ export async function verifyMagicLinkToken(
   token: string,
   phone: string,
 ): Promise<boolean> {
-  const record = await (db.verificationToken.findUnique as Function)({
+  const record = await (db.verificationToken.findUnique as PrismaBypass)({
     where: { token },
     _bypassTenancyCheck: true,
   }) as { identifier: string; token: string; expires: Date } | null;
@@ -40,7 +40,7 @@ export async function verifyMagicLinkToken(
   if (!record) return false;
   if (record.identifier !== phone) return false;
   if (record.expires < new Date()) {
-    await (db.verificationToken.delete as Function)({
+    await (db.verificationToken.delete as PrismaBypass)({
       where: { token },
       _bypassTenancyCheck: true,
     }).catch(() => null);
@@ -48,7 +48,7 @@ export async function verifyMagicLinkToken(
   }
 
   // Consume the token
-  await (db.verificationToken.delete as Function)({
+  await (db.verificationToken.delete as PrismaBypass)({
     where: { token },
     _bypassTenancyCheck: true,
   }).catch(() => null);
@@ -57,7 +57,7 @@ export async function verifyMagicLinkToken(
 }
 
 export async function findOrCreateUserByPhone(phone: string): Promise<string> {
-  const existing = await (db.user.findUnique as Function)({
+  const existing = await (db.user.findUnique as PrismaBypass)({
     where: { phone },
     select: { id: true },
     _bypassTenancyCheck: true,
@@ -65,7 +65,7 @@ export async function findOrCreateUserByPhone(phone: string): Promise<string> {
 
   if (existing) return existing.id;
 
-  const user = await (db.user.create as Function)({
+  const user = await (db.user.create as PrismaBypass)({
     data: { phone, phoneVerified: new Date() },
     select: { id: true },
     _bypassTenancyCheck: true,
@@ -88,7 +88,7 @@ export async function createDatabaseSession(userId: string): Promise<string> {
   const sessionToken = generateSecureToken();
   const expires = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
 
-  await (db.session.create as Function)({
+  await (db.session.create as PrismaBypass)({
     data: { sessionToken, userId, expires },
     _bypassTenancyCheck: true,
   });

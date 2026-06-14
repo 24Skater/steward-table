@@ -44,7 +44,7 @@ export async function POST(
     );
   }
 
-  const order = (await (db.order.findUnique as Function)({
+  const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: {
       id: true,

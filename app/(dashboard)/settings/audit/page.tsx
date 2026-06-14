@@ -67,7 +67,7 @@ export default async function AuditLogPage() {
     );
   }
 
-  const rawLogs = await (db.auditLog.findMany as Function)({
+  const rawLogs = await (db.auditLog.findMany as PrismaBypass)({
     where: { churchId: membership.churchId },
     orderBy: { createdAt: "desc" },
     take: 100,

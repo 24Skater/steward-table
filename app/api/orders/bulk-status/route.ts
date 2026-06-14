@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Verify all requested orders belong to this church (security check)
-  const ownedOrders = await (db.order.findMany as Function)({
+  const ownedOrders = await (db.order.findMany as PrismaBypass)({
     where: {
       id: { in: ids },
       churchId,

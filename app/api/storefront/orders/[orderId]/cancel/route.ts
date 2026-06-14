@@ -17,7 +17,7 @@ export async function POST(
 ) {
   const { orderId } = await params
 
-  const order = await (db.order.findUnique as Function)({
+  const order = await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: {
       id: true,
@@ -40,7 +40,7 @@ export async function POST(
   }
 
   // Look up the church's self-cancel window
-  const settings = await (db.churchSettings.findUnique as Function)({
+  const settings = await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: order.churchId },
     select: { customerSelfCancelWindowMinutes: true },
     _bypassTenancyCheck: true,

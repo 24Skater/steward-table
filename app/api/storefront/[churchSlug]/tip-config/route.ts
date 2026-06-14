@@ -7,7 +7,7 @@ export async function GET(
 ) {
   const { churchSlug } = await params;
 
-  const church = await (db.church.findFirst as Function)({
+  const church = await (db.church.findFirst as PrismaBypass)({
     where: { slug: churchSlug, status: "ACTIVE" },
     select: { id: true, settings: { select: { brandTokens: true } } },
     _bypassTenancyCheck: true,

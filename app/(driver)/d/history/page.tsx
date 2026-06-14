@@ -26,7 +26,7 @@ export default async function DriverHistoryPage() {
   const churchId = membership.churchId;
   const userId = session.user.id;
 
-  const rawCompleted = await (db.deliveryInfo.findMany as Function)({
+  const rawCompleted = await (db.deliveryInfo.findMany as PrismaBypass)({
     where: {
       driverId: userId,
       order: {

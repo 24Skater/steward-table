@@ -48,7 +48,7 @@ export async function POST(
   const { reason, refundAll, amountCents } = body as RefundBody;
 
   // Fetch the order with its payments, scoped to this church
-  const order = await (db.order.findFirst as Function)({
+  const order = await (db.order.findFirst as PrismaBypass)({
     where: { id: orderId, churchId },
     include: {
       payments: {
@@ -100,7 +100,7 @@ export async function POST(
   // Enforce STAFF refund cap — ADMIN/OWNER are exempt
   const isAdminOrOwner = activeMembership.roles.some((r) => r === "ADMIN" || r === "OWNER");
   if (!isAdminOrOwner) {
-    const settings = await (db.churchSettings.findUnique as Function)({
+    const settings = await (db.churchSettings.findUnique as PrismaBypass)({
       where: { churchId },
       select: { staffRefundCapCents: true },
       _bypassTenancyCheck: true,

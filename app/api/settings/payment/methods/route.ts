@@ -40,7 +40,7 @@ export async function PATCH(req: NextRequest) {
   if (typeof body.acceptCash === "boolean") data.acceptCash = body.acceptCash;
   if (typeof body.acceptZelle === "boolean") data.acceptZelle = body.acceptZelle;
 
-  await (db.churchSettings.upsert as Function)({
+  await (db.churchSettings.upsert as PrismaBypass)({
     where: { churchId: membership.churchId },
     create: { churchId: membership.churchId, ...data },
     update: data,
