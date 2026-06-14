@@ -49,8 +49,7 @@ export function OrderRow({ order, drivers = [] }: OrderRowProps) {
   const [driverInFlight, setDriverInFlight] = useState(false);
   const nextStep = getNextStep(order.status, order.fulfillment);
   const displayTime = order.scheduledFor ?? order.createdAt;
-  const isFutureScheduled =
-    order.scheduledFor !== null && order.scheduledFor > new Date();
+  const isFutureScheduled = order.scheduledFor !== null && order.scheduledFor > new Date();
 
   async function handleNextStep() {
     if (!nextStep || inFlight) return;
@@ -102,16 +101,12 @@ export function OrderRow({ order, drivers = [] }: OrderRowProps) {
 
       {/* Items */}
       <td className="py-3 px-3 text-center">
-        <span className="text-sm text-slate-500 tabular-nums">
-          {order._count.items}
-        </span>
+        <span className="text-sm text-slate-500 tabular-nums">{order._count.items}</span>
       </td>
 
       {/* Fulfillment */}
       <td className="py-3 px-3">
-        <span className="text-sm text-slate-500">
-          {FULFILLMENT_LABELS[order.fulfillment]}
-        </span>
+        <span className="text-sm text-slate-500">{FULFILLMENT_LABELS[order.fulfillment]}</span>
       </td>
 
       {/* Status */}

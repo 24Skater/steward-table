@@ -37,7 +37,7 @@ export function LangSwitcher({ churchSlug }: { churchSlug: string }) {
     if (hasSpanish) {
       setLocale("ES");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function switchLocale(next: Locale) {
@@ -62,11 +62,7 @@ export function LangSwitcher({ churchSlug }: { churchSlug: string }) {
 
       {open && (
         <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpen(false)}
-            aria-hidden="true"
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
           <div className="absolute right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
             {LOCALES.map((l) => (
               <button
