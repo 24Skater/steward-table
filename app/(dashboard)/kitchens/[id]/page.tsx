@@ -1,8 +1,8 @@
-import { notFound } from "next/navigation";
+import { CatalogAssignment } from "@/components/kitchens/catalog-assignment";
+import { TopBar } from "@/components/layout/top-bar";
 import { requireActiveMembership } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { TopBar } from "@/components/layout/top-bar";
-import { CatalogAssignment } from "@/components/kitchens/catalog-assignment";
+import { notFound } from "next/navigation";
 
 export default async function KitchenEditPage({
   params,

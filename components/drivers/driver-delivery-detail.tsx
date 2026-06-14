@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface DeliveryItem {
   itemName: string;
@@ -44,9 +44,7 @@ export function DriverDeliveryDetail({
 
   const isReady = status === "READY";
   const actionLabel = isReady ? "Picked up" : "Delivered";
-  const nextStatus: "OUT_FOR_DELIVERY" | "DELIVERED" = isReady
-    ? "OUT_FOR_DELIVERY"
-    : "DELIVERED";
+  const nextStatus: "OUT_FOR_DELIVERY" | "DELIVERED" = isReady ? "OUT_FOR_DELIVERY" : "DELIVERED";
 
   function showToast(msg: string) {
     setToast(msg);
@@ -125,9 +123,7 @@ export function DriverDeliveryDetail({
 
         {/* Items */}
         <div className="rounded-xl bg-white border border-slate-200 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
-            Items
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Items</p>
           <ul className="space-y-3">
             {items.map((item, i) => (
               <li key={i}>

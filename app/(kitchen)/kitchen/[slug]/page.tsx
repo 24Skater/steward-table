@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
 import { KitchenDisplay } from "@/components/kitchen/kitchen-display";
 import { requireActiveMembership } from "@/lib/auth/helpers";
+import { db } from "@/lib/db";
+import { notFound } from "next/navigation";
 
 export default async function KitchenSlugPage({
   params,

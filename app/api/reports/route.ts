@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
-import { getKitchenRevenue } from "@/lib/kitchens/reporting";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { getKitchenRevenue } from "@/lib/kitchens/reporting";
+import { can } from "@/lib/rbac/can";
 import type { OrderStatus } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 
 // Statuses that represent a successfully fulfilled order
 const COMPLETED_STATUSES: OrderStatus[] = ["PICKED_UP", "DELIVERED", "SERVED", "COMPLETED"];

@@ -1,6 +1,6 @@
 "use client";
 
-import { Wifi, WifiOff, Printer } from "lucide-react";
+import { Printer, Wifi, WifiOff } from "lucide-react";
 
 interface KitchenTopBarProps {
   orderCount: number;

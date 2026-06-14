@@ -1,6 +1,6 @@
-import Stripe from "stripe";
-import { db } from "@/lib/db";
 import { decrypt } from "@/lib/crypto/aes";
+import { db } from "@/lib/db";
+import Stripe from "stripe";
 
 export async function getStripeForChurch(churchId: string): Promise<Stripe | null> {
   const apiKey = await (db.apiKey.findFirst as PrismaBypass)({

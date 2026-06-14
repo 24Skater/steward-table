@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { AlertCircle } from "lucide-react"
-import Link from "next/link"
+import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 interface GlobalErrorProps {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
@@ -16,12 +16,9 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
             <AlertCircle className="h-6 w-6 text-red-500" />
           </div>
-          <h1 className="mb-2 text-xl font-semibold text-slate-800">
-            Something went wrong
-          </h1>
+          <h1 className="mb-2 text-xl font-semibold text-slate-800">Something went wrong</h1>
           <p className="mb-6 text-sm text-slate-500">
-            An unexpected error occurred. Please try again or return to the
-            dashboard.
+            An unexpected error occurred. Please try again or return to the dashboard.
           </p>
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
             <button
@@ -38,12 +35,10 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             </Link>
           </div>
           {error.digest && (
-            <p className="mt-6 text-xs text-slate-400">
-              Error reference: {error.digest}
-            </p>
+            <p className="mt-6 text-xs text-slate-400">Error reference: {error.digest}</p>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

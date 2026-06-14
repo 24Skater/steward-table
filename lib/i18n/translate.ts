@@ -26,7 +26,7 @@ export function translate(
   }
 
   const blob = translations as Record<string, unknown>;
-  const esBlock = blob["es"];
+  const esBlock = blob.es;
 
   if (esBlock === null || typeof esBlock !== "object") {
     return defaultValue;

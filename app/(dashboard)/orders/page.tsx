@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { TopBar } from "@/components/layout/top-bar";
 import { OrdersPage } from "@/components/orders";
-import type { OrderRowData, DriverOption } from "@/components/orders";
+import type { DriverOption, OrderRowData } from "@/components/orders";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { redirect } from "next/navigation";
 
 export type DateRange = "today" | "week" | "month" | "all" | "scheduled";
 
@@ -45,9 +45,7 @@ export default async function OrdersPageRoute({ searchParams }: OrdersPageRouteP
     redirect("/auth/sign-in");
   }
 
-  const activeMembership = session.user.memberships?.find(
-    (m) => m.status === "ACTIVE",
-  );
+  const activeMembership = session.user.memberships?.find((m) => m.status === "ACTIVE");
   if (!activeMembership) {
     redirect("/auth/sign-in");
   }
@@ -56,9 +54,8 @@ export default async function OrdersPageRoute({ searchParams }: OrdersPageRouteP
 
   const resolvedParams = await searchParams;
   const rawRange = resolvedParams.range;
-  const rangeParam = typeof rawRange === "string" && VALID_RANGES.has(rawRange)
-    ? (rawRange as DateRange)
-    : "today";
+  const rangeParam =
+    typeof rawRange === "string" && VALID_RANGES.has(rawRange) ? (rawRange as DateRange) : "today";
 
   const rangeStart = getRangeStart(rangeParam);
 

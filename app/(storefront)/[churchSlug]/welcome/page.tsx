@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
 interface WelcomePageProps {
   params: Promise<{ churchSlug: string }>;

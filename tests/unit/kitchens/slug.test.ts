@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { generateUniqueKitchenSlug, slugifyKitchenName } from "@/lib/kitchens/slug";
+import { describe, expect, it } from "vitest";
 
 describe("slugifyKitchenName", () => {
   it("lowercases and hyphenates a multi-word name", () => {
@@ -29,8 +29,8 @@ describe("generateUniqueKitchenSlug", () => {
   });
 
   it("increments the suffix past existing numbered slugs", () => {
-    expect(
-      generateUniqueKitchenSlug("Main Kitchen", ["main-kitchen", "main-kitchen-2"]),
-    ).toBe("main-kitchen-3");
+    expect(generateUniqueKitchenSlug("Main Kitchen", ["main-kitchen", "main-kitchen-2"])).toBe(
+      "main-kitchen-3",
+    );
   });
 });

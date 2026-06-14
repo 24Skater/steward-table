@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
 import type { Role } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface RouteContext {
   params: Promise<{ membershipId: string }>;
@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: result.reason ?? "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as { roles?: Role[] } | null;
+  const body = (await req.json().catch(() => null)) as { roles?: Role[] } | null;
   if (!body?.roles || !Array.isArray(body.roles) || body.roles.length === 0) {
     return NextResponse.json({ error: "roles array is required" }, { status: 400 });
   }

@@ -1,6 +1,6 @@
-import Link from "next/link";
+import { CheckCircle, CreditCard, Github, Monitor } from "lucide-react";
 import Image from "next/image";
-import { CheckCircle, Monitor, CreditCard, Github } from "lucide-react";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -12,16 +12,10 @@ export default function HomePage() {
             Steward Table
           </span>
           <nav className="flex items-center gap-6">
-            <a
-              href="#"
-              className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
-            >
+            <a href="#" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
               GitHub
             </a>
-            <a
-              href="#"
-              className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
-            >
+            <a href="#" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
               Docs
             </a>
             <Link
@@ -48,9 +42,8 @@ export default function HomePage() {
                 <span className="text-emerald-600">built for churches.</span>
               </h1>
               <p className="text-xl text-slate-500 leading-relaxed mb-10 max-w-lg">
-                A free, open-source platform for food ministries — tamales,
-                pupusas, holiday dinners. No platform fees. Your data, your
-                Stripe keys.
+                A free, open-source platform for food ministries — tamales, pupusas, holiday
+                dinners. No platform fees. Your data, your Stripe keys.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link
@@ -94,13 +87,10 @@ export default function HomePage() {
                 <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center mb-5">
                   <Monitor className="w-5 h-5 text-emerald-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-3">
-                  Kitchen-first design
-                </h3>
+                <h3 className="text-lg font-semibold text-slate-900 mb-3">Kitchen-first design</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  Large touch targets, WakeLock API to keep the screen on, and
-                  instant order updates. Built for cooks with flour on their
-                  hands.
+                  Large touch targets, WakeLock API to keep the screen on, and instant order
+                  updates. Built for cooks with flour on their hands.
                 </p>
               </div>
 
@@ -108,12 +98,10 @@ export default function HomePage() {
                 <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center mb-5">
                   <CreditCard className="w-5 h-5 text-emerald-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-3">
-                  No platform fees
-                </h3>
+                <h3 className="text-lg font-semibold text-slate-900 mb-3">No platform fees</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  Bring your own Stripe keys. Every dollar your congregation
-                  pays goes directly to your ministry — not to a middleman.
+                  Bring your own Stripe keys. Every dollar your congregation pays goes directly to
+                  your ministry — not to a middleman.
                 </p>
               </div>
 
@@ -121,13 +109,10 @@ export default function HomePage() {
                 <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center mb-5">
                   <Github className="w-5 h-5 text-emerald-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-3">
-                  Open source
-                </h3>
+                <h3 className="text-lg font-semibold text-slate-900 mb-3">Open source</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  MIT licensed. Self-host on your own infrastructure, or use
-                  our managed service. Audit the code, fork it, contribute to
-                  it.
+                  MIT licensed. Self-host on your own infrastructure, or use our managed service.
+                  Audit the code, fork it, contribute to it.
                 </p>
               </div>
             </div>
@@ -140,9 +125,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold text-slate-900 mb-4">
               From catalog to kitchen in minutes
             </h2>
-            <p className="text-slate-500">
-              Set up your church once, then focus on your ministry.
-            </p>
+            <p className="text-slate-500">Set up your church once, then focus on your ministry.</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -172,9 +155,7 @@ export default function HomePage() {
                 <div className="text-5xl font-bold text-slate-100 leading-none mb-4 select-none">
                   {step}
                 </div>
-                <h3 className="text-base font-semibold text-slate-900 mb-2">
-                  {title}
-                </h3>
+                <h3 className="text-base font-semibold text-slate-900 mb-2">{title}</h3>
                 <p className="text-sm text-slate-500 leading-relaxed">{body}</p>
               </div>
             ))}
@@ -188,21 +169,16 @@ export default function HomePage() {
               Built on proven open-source technology
             </p>
             <div className="flex flex-wrap justify-center gap-x-10 gap-y-4">
-              {[
-                "Next.js 15",
-                "Prisma ORM",
-                "PostgreSQL",
-                "Auth.js",
-                "Stripe",
-                "Resend",
-              ].map((tech) => (
-                <span
-                  key={tech}
-                  className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors cursor-default"
-                >
-                  {tech}
-                </span>
-              ))}
+              {["Next.js 15", "Prisma ORM", "PostgreSQL", "Auth.js", "Stripe", "Resend"].map(
+                (tech) => (
+                  <span
+                    key={tech}
+                    className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors cursor-default"
+                  >
+                    {tech}
+                  </span>
+                ),
+              )}
             </div>
           </div>
         </section>
@@ -211,12 +187,10 @@ export default function HomePage() {
         <section className="mx-auto max-w-6xl px-6 py-24">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">
-                Every role. Every need.
-              </h2>
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">Every role. Every need.</h2>
               <p className="text-slate-500 mb-8 leading-relaxed">
-                Steward Table ships with six roles out of the box. Each person
-                on your team sees exactly what they need — nothing more.
+                Steward Table ships with six roles out of the box. Each person on your team sees
+                exactly what they need — nothing more.
               </p>
               <ul className="space-y-3">
                 {[
@@ -230,10 +204,7 @@ export default function HomePage() {
                   <li key={role} className="flex items-start gap-3">
                     <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
                     <span className="text-sm text-slate-600">
-                      <span className="font-semibold text-slate-800">
-                        {role}
-                      </span>{" "}
-                      — {desc}
+                      <span className="font-semibold text-slate-800">{role}</span> — {desc}
                     </span>
                   </li>
                 ))}
@@ -256,9 +227,7 @@ export default function HomePage() {
         {/* CTA */}
         <section className="bg-emerald-600">
           <div className="mx-auto max-w-6xl px-6 py-20 text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Start taking orders today
-            </h2>
+            <h2 className="text-3xl font-bold text-white mb-4">Start taking orders today</h2>
             <p className="text-emerald-100 mb-8 text-lg">
               Free forever for self-hosted. Managed hosting available.
             </p>
@@ -283,20 +252,12 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-slate-100 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-slate-400">
-            Steward Table is open source. AGPL-3.0.
-          </p>
+          <p className="text-sm text-slate-400">Steward Table is open source. AGPL-3.0.</p>
           <nav className="flex items-center gap-6">
-            <a
-              href="#"
-              className="text-sm text-slate-400 hover:text-slate-700 transition-colors"
-            >
+            <a href="#" className="text-sm text-slate-400 hover:text-slate-700 transition-colors">
               GitHub
             </a>
-            <a
-              href="#"
-              className="text-sm text-slate-400 hover:text-slate-700 transition-colors"
-            >
+            <a href="#" className="text-sm text-slate-400 hover:text-slate-700 transition-colors">
               Documentation
             </a>
             <Link

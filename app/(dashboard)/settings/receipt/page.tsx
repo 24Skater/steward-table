@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
 import { TopBar } from "@/components/layout/top-bar";
 import { ReceiptSettingsForm } from "@/components/settings/receipt-settings-form";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import { redirect } from "next/navigation";
 
 export default async function ReceiptSettingsPage() {
   const session = await auth();

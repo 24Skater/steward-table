@@ -1,7 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server";
-import type Stripe from "stripe";
 import { db } from "@/lib/db";
 import { getStripeForChurch } from "@/lib/stripe/client";
+import { type NextRequest, NextResponse } from "next/server";
+import type Stripe from "stripe";
 
 interface CartModifierPayload {
   groupName: string;
@@ -54,7 +54,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { churchSlug, customerName, phone, email, notes, fulfillment, zoneId, deliveryAddress, scheduledFor, smsOptIn, tip, items } = body;
+  const {
+    churchSlug,
+    customerName,
+    phone,
+    email,
+    notes,
+    fulfillment,
+    zoneId,
+    deliveryAddress,
+    scheduledFor,
+    smsOptIn,
+    tip,
+    items,
+  } = body;
 
   if (!churchSlug || !customerName?.trim() || !items?.length) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -121,7 +134,7 @@ export async function POST(req: NextRequest) {
       const updates: Record<string, unknown> = {};
       if (smsOptIn) updates.smsOptIn = true;
       if (emailNormalized) {
-        updates.email = email!.trim();
+        updates.email = email?.trim();
         updates.emailNormalized = emailNormalized;
       }
       if (Object.keys(updates).length > 0) {
@@ -155,7 +168,7 @@ export async function POST(req: NextRequest) {
         data: {
           churchId: church.id as string,
           name: customerName.trim(),
-          email: email!.trim(),
+          email: email?.trim(),
           emailNormalized,
         },
         select: { id: true },
@@ -205,8 +218,7 @@ export async function POST(req: NextRequest) {
       receiptLanguageVersion: 1,
       items: {
         create: items.map((item) => {
-          const unitPrice =
-            item.basePrice + item.modifiers.reduce((s, m) => s + m.priceDelta, 0);
+          const unitPrice = item.basePrice + item.modifiers.reduce((s, m) => s + m.priceDelta, 0);
           const itemSubtotal = unitPrice * item.quantity;
           return {
             itemId: item.itemId,
@@ -255,17 +267,16 @@ export async function POST(req: NextRequest) {
 
   // Build Stripe line items
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map((item) => {
-      const unitAmount =
-        item.basePrice + item.modifiers.reduce((s, m) => s + m.priceDelta, 0);
-      return {
-        price_data: {
-          currency: (church.currency as string).toLowerCase(),
-          product_data: { name: item.itemName },
-          unit_amount: unitAmount,
-        },
-        quantity: item.quantity,
-      } satisfies Stripe.Checkout.SessionCreateParams.LineItem;
-    });
+    const unitAmount = item.basePrice + item.modifiers.reduce((s, m) => s + m.priceDelta, 0);
+    return {
+      price_data: {
+        currency: (church.currency as string).toLowerCase(),
+        product_data: { name: item.itemName },
+        unit_amount: unitAmount,
+      },
+      quantity: item.quantity,
+    } satisfies Stripe.Checkout.SessionCreateParams.LineItem;
+  });
 
   // Add delivery fee as a separate line item if applicable
   if (deliveryFeeCents > 0) {
@@ -296,7 +307,7 @@ export async function POST(req: NextRequest) {
     payment_method_types: ["card"],
     line_items: lineItems,
     metadata: { orderId, churchId: church.id as string },
-    ...(emailNormalized ? { customer_email: email!.trim() } : {}),
+    ...(emailNormalized ? { customer_email: email?.trim() } : {}),
     success_url: `${baseUrl}/${churchSlug}/checkout/success?session_id={CHECKOUT_SESSION_ID}&orderId=${orderId}`,
     cancel_url: `${baseUrl}/${churchSlug}/checkout/cancel?orderId=${orderId}`,
   });

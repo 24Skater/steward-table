@@ -17,7 +17,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="bg-white" style={{ backgroundColor: "white", colorScheme: "only light" }}>
+    <html
+      lang="en"
+      className="bg-white"
+      style={{ backgroundColor: "white", colorScheme: "only light" }}
+    >
       <head>
         {/*
           Synchronous inline script — runs during HTML parsing, before Chrome creates
@@ -25,13 +29,16 @@ export default function RootLayout({
           overriding the canvas color, which causes a black artifact on Windows Chrome.
         */}
         <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: static, developer-authored inline script (no user input)
           dangerouslySetInnerHTML={{
             __html:
               'document.documentElement.style.backgroundColor="white";document.documentElement.style.colorScheme="only light"',
           }}
         />
       </head>
-      <body className="bg-white" style={{ backgroundColor: "white" }}>{children}</body>
+      <body className="bg-white" style={{ backgroundColor: "white" }}>
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Copy, CheckCheck, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CheckCheck, Copy, ExternalLink } from "lucide-react";
+import { useState } from "react";
 
 interface StorefrontShareCardProps {
   url: string;
@@ -31,13 +31,7 @@ export function StorefrontShareCard({ url }: StorefrontShareCardProps) {
           className="font-mono text-xs bg-slate-50 text-slate-600 cursor-default"
           aria-label="Storefront URL"
         />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleCopy}
-          className="shrink-0"
-        >
+        <Button type="button" variant="outline" size="sm" onClick={handleCopy} className="shrink-0">
           {copied ? (
             <span className="flex items-center gap-1">
               <CheckCheck size={14} />

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface FulfillmentPrefs {
   pickupEnabled: boolean;
@@ -37,16 +37,12 @@ function parseFulfillmentPrefs(brandTokens: unknown): FulfillmentPrefs {
     dineInEnabled: typeof raw.dineInEnabled === "boolean" ? raw.dineInEnabled : false,
     deliveryRadiusMiles:
       typeof raw.deliveryRadiusMiles === "number" ? raw.deliveryRadiusMiles : null,
-    pickupInstructions:
-      typeof raw.pickupInstructions === "string" ? raw.pickupInstructions : null,
+    pickupInstructions: typeof raw.pickupInstructions === "string" ? raw.pickupInstructions : null,
     pickupWindowStartHour:
       typeof raw.pickupWindowStartHour === "number" ? raw.pickupWindowStartHour : 10,
-    pickupWindowEndHour:
-      typeof raw.pickupWindowEndHour === "number" ? raw.pickupWindowEndHour : 20,
-    slotIntervalMinutes:
-      typeof raw.slotIntervalMinutes === "number" ? raw.slotIntervalMinutes : 30,
-    maxOrdersPerSlot:
-      typeof raw.maxOrdersPerSlot === "number" ? raw.maxOrdersPerSlot : 0,
+    pickupWindowEndHour: typeof raw.pickupWindowEndHour === "number" ? raw.pickupWindowEndHour : 20,
+    slotIntervalMinutes: typeof raw.slotIntervalMinutes === "number" ? raw.slotIntervalMinutes : 30,
+    maxOrdersPerSlot: typeof raw.maxOrdersPerSlot === "number" ? raw.maxOrdersPerSlot : 0,
   };
 }
 
@@ -103,7 +99,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as Partial<FulfillmentPrefs> | null;
+  const body = (await req.json().catch(() => null)) as Partial<FulfillmentPrefs> | null;
 
   if (!body) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
@@ -122,7 +118,9 @@ export async function PATCH(req: NextRequest) {
     deliveryEnabled: body.deliveryEnabled ?? current.deliveryEnabled,
     dineInEnabled: body.dineInEnabled ?? current.dineInEnabled,
     deliveryRadiusMiles:
-      body.deliveryRadiusMiles !== undefined ? body.deliveryRadiusMiles : current.deliveryRadiusMiles,
+      body.deliveryRadiusMiles !== undefined
+        ? body.deliveryRadiusMiles
+        : current.deliveryRadiusMiles,
     pickupInstructions:
       body.pickupInstructions !== undefined ? body.pickupInstructions : current.pickupInstructions,
     pickupWindowStartHour: body.pickupWindowStartHour ?? current.pickupWindowStartHour,

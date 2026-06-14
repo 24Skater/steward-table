@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
 import { AlertTriangle } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { KitchenOrderCard } from "./kitchen-order-card";
 import { KitchenTopBar } from "./kitchen-top-bar";
 
@@ -151,7 +151,7 @@ export function KitchenDisplay({ slug, kitchenName }: KitchenDisplayProps) {
         clearTimeout(timer);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const handleMarkReady = useCallback(async (orderId: string) => {
@@ -167,9 +167,7 @@ export function KitchenDisplay({ slug, kitchenName }: KitchenDisplayProps) {
   }, []);
 
   const handleMarkAllReady = useCallback(async () => {
-    const inKitchenIds = orders
-      .filter((o) => o.status === "IN_KITCHEN")
-      .map((o) => o.id);
+    const inKitchenIds = orders.filter((o) => o.status === "IN_KITCHEN").map((o) => o.id);
 
     if (inKitchenIds.length === 0) return;
 
@@ -246,12 +244,8 @@ function CanceledOrderOverlay({ order }: { order: KitchenOrder }) {
     >
       {/* Red CANCELED — STOP banner */}
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-red-950/90 gap-3">
-        <div className="text-red-300 text-4xl font-black tracking-widest animate-pulse">
-          STOP
-        </div>
-        <div className="text-white text-lg font-bold text-center px-4">
-          Order #{order.number}
-        </div>
+        <div className="text-red-300 text-4xl font-black tracking-widest animate-pulse">STOP</div>
+        <div className="text-white text-lg font-bold text-center px-4">Order #{order.number}</div>
         <div className="text-red-300 text-sm font-semibold uppercase tracking-widest">
           {order.status === "REFUNDED" ? "REFUNDED" : "CANCELED"}
         </div>

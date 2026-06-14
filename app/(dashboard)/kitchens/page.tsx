@@ -1,7 +1,7 @@
+import { KitchenManager } from "@/components/kitchens/kitchen-manager";
+import { TopBar } from "@/components/layout/top-bar";
 import { requireActiveMembership } from "@/lib/auth/helpers";
 import { db } from "@/lib/db";
-import { TopBar } from "@/components/layout/top-bar";
-import { KitchenManager } from "@/components/kitchens/kitchen-manager";
 
 export default async function KitchensPage() {
   const { membership } = await requireActiveMembership();

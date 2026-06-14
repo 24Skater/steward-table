@@ -1,5 +1,5 @@
-import { Search } from "lucide-react"
-import Link from "next/link"
+import { Search } from "lucide-react";
+import Link from "next/link";
 
 export default function NotFound() {
   return (
@@ -9,9 +9,7 @@ export default function NotFound() {
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
             <Search className="h-6 w-6 text-slate-500" />
           </div>
-          <h1 className="mb-2 text-xl font-semibold text-slate-800">
-            Page not found
-          </h1>
+          <h1 className="mb-2 text-xl font-semibold text-slate-800">Page not found</h1>
           <p className="mb-6 text-sm text-slate-500">
             The page you&apos;re looking for doesn&apos;t exist.
           </p>
@@ -32,5 +30,5 @@ export default function NotFound() {
         </div>
       </div>
     </div>
-  )
+  );
 }

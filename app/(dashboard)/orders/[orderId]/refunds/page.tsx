@@ -1,10 +1,10 @@
-import { redirect, notFound } from "next/navigation";
-import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { TopBar } from "@/components/layout/top-bar";
 import { Badge } from "@/components/ui/badge";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import type { RefundStatus } from "@prisma/client";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 
 function formatPrice(cents: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -23,8 +23,8 @@ function formatDate(date: Date): string {
 function RefundStatusBadge({ status }: { status: RefundStatus }) {
   const variantMap: Record<RefundStatus, { label: string; className: string }> = {
     COMPLETED: { label: "Completed", className: "bg-green-50 text-green-700 border-green-200" },
-    PENDING:   { label: "Pending",   className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-    FAILED:    { label: "Failed",    className: "bg-red-50 text-red-700 border-red-200" },
+    PENDING: { label: "Pending", className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
+    FAILED: { label: "Failed", className: "bg-red-50 text-red-700 border-red-200" },
   };
 
   const { label, className } = variantMap[status];
@@ -46,30 +46,28 @@ export default async function RefundsPage({
 
   const { orderId } = await params;
 
-  const activeMembership = session.user.memberships?.find(
-    (m) => m.status === "ACTIVE",
-  );
+  const activeMembership = session.user.memberships?.find((m) => m.status === "ACTIVE");
   if (!activeMembership) redirect("/auth/sign-in");
 
   const { churchId } = activeMembership;
 
   // Confirm the order belongs to this church
-  const order = await (db.order.findFirst as PrismaBypass)({
+  const order = (await (db.order.findFirst as PrismaBypass)({
     where: { id: orderId, churchId },
     select: { id: true, number: true },
     _bypassTenancyCheck: true,
-  }) as { id: string; number: number } | null;
+  })) as { id: string; number: number } | null;
 
   if (!order) notFound();
 
-  const refunds = await (db.refund.findMany as PrismaBypass)({
+  const refunds = (await (db.refund.findMany as PrismaBypass)({
     where: { orderId },
     orderBy: { createdAt: "desc" },
     include: {
       actor: { select: { name: true } },
     },
     _bypassTenancyCheck: true,
-  }) as Array<{
+  })) as Array<{
     id: string;
     amount: number;
     reason: string;
@@ -142,9 +140,7 @@ export default async function RefundsPage({
                     <td className="px-5 py-3">
                       <RefundStatusBadge status={refund.status} />
                     </td>
-                    <td className="px-5 py-3 text-slate-600 max-w-xs truncate">
-                      {refund.reason}
-                    </td>
+                    <td className="px-5 py-3 text-slate-600 max-w-xs truncate">{refund.reason}</td>
                     <td className="px-5 py-3 text-slate-600 whitespace-nowrap">
                       {refund.actor?.name ?? "System"}
                     </td>

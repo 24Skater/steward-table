@@ -1,7 +1,7 @@
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
 
 interface OrderHistoryPageProps {
   params: Promise<{ churchSlug: string }>;
@@ -51,9 +51,7 @@ const STATUS_COLORS: Record<string, string> = {
   REFUNDED: "bg-orange-50 text-orange-700",
 };
 
-export default async function OrderHistoryPage({
-  params,
-}: OrderHistoryPageProps) {
+export default async function OrderHistoryPage({ params }: OrderHistoryPageProps) {
   const { churchSlug } = await params;
   const session = await auth();
 
@@ -73,9 +71,7 @@ export default async function OrderHistoryPage({
     return (
       <div className="mx-auto max-w-lg">
         <h1 className="mb-2 text-2xl font-bold text-slate-800">Your Orders</h1>
-        <p className="mb-6 text-slate-500">
-          Sign in to view your order history at {church.name}.
-        </p>
+        <p className="mb-6 text-slate-500">Sign in to view your order history at {church.name}.</p>
         <Link
           href="/auth/sign-in"
           className="inline-block rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
@@ -94,11 +90,7 @@ export default async function OrderHistoryPage({
   const customer = await db.customer.findFirst({
     where: {
       churchId: church.id,
-      ...(userId
-        ? { userId }
-        : email
-        ? { emailNormalized: email.toLowerCase() }
-        : { id: "never" }),
+      ...(userId ? { userId } : email ? { emailNormalized: email.toLowerCase() } : { id: "never" }),
     },
     include: {
       orders: {
@@ -116,9 +108,7 @@ export default async function OrderHistoryPage({
     return (
       <div className="mx-auto max-w-lg">
         <h1 className="mb-2 text-2xl font-bold text-slate-800">Your Orders</h1>
-        <p className="text-slate-500">
-          You haven&apos;t placed any orders at {church.name} yet.
-        </p>
+        <p className="text-slate-500">You haven&apos;t placed any orders at {church.name} yet.</p>
         <div className="mt-6">
           <Link
             href={`/${churchSlug}/menu`}
@@ -138,8 +128,7 @@ export default async function OrderHistoryPage({
       <ul className="space-y-3">
         {customer.orders.map((order) => {
           const statusLabel = STATUS_LABELS[order.status] ?? order.status;
-          const statusColor =
-            STATUS_COLORS[order.status] ?? "bg-slate-100 text-slate-600";
+          const statusColor = STATUS_COLORS[order.status] ?? "bg-slate-100 text-slate-600";
           const itemSummary = order.items
             .map((item) => `${item.quantity}x ${item.itemName}`)
             .join(", ");
@@ -151,29 +140,19 @@ export default async function OrderHistoryPage({
                 className="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-md"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-800">
-                    Order #{order.number}
-                  </span>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor}`}
-                  >
+                  <span className="font-semibold text-slate-800">Order #{order.number}</span>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor}`}>
                     {statusLabel}
                   </span>
                 </div>
 
                 <div className="mt-1 flex items-center justify-between">
-                  <p className="text-sm text-slate-500">
-                    {formatDate(order.createdAt)}
-                  </p>
-                  <p className="text-sm font-semibold text-slate-700">
-                    {formatCents(order.total)}
-                  </p>
+                  <p className="text-sm text-slate-500">{formatDate(order.createdAt)}</p>
+                  <p className="text-sm font-semibold text-slate-700">{formatCents(order.total)}</p>
                 </div>
 
                 {itemSummary && (
-                  <p className="mt-1.5 truncate text-sm text-slate-400">
-                    {itemSummary}
-                  </p>
+                  <p className="mt-1.5 truncate text-sm text-slate-400">{itemSummary}</p>
                 )}
               </Link>
             </li>

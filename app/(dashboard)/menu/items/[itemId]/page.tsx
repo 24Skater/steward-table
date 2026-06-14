@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation";
+import { ItemEditPage } from "@/components/menu/item-edit-page";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import { ItemEditPage } from "@/components/menu/item-edit-page";
-import type { SessionMembership } from "@/lib/auth/types";
+import { redirect } from "next/navigation";
 
 export default async function ItemDetailPage({
   params,

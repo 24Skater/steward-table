@@ -1,5 +1,5 @@
-import type { Role } from "@prisma/client";
 import { db } from "@/lib/db";
+import type { Role } from "@prisma/client";
 
 // All possible actions in the system
 export type Action =
@@ -72,11 +72,7 @@ function expandRoles(roles: Role[]): Set<Role> {
   return expanded;
 }
 
-async function writeDenyAuditLog(
-  ctx: CanContext,
-  action: Action,
-  reason: string,
-): Promise<void> {
+async function writeDenyAuditLog(ctx: CanContext, action: Action, reason: string): Promise<void> {
   try {
     await db.auditLog.create({
       data: {
@@ -107,10 +103,7 @@ function allow(restrictions?: Record<string, unknown>): CanResult {
  * Core permission gate. Every API route and server action calls this at entry.
  * No ad-hoc role checks anywhere else in the codebase.
  */
-export async function can(
-  action: Action,
-  ctx: CanContext,
-): Promise<CanResult> {
+export async function can(action: Action, ctx: CanContext): Promise<CanResult> {
   const effectiveRoles = expandRoles(ctx.roles);
 
   const result = await resolvePermission(action, ctx, effectiveRoles);
@@ -226,13 +219,17 @@ async function resolvePermission(
     case "order.read": {
       if (roles.has("STAFF")) return allow();
       if (roles.has("COOK")) {
-        return allow({ restriction: "status IN (CONFIRMED, IN_KITCHEN, READY), OPEN catalogs only" });
+        return allow({
+          restriction: "status IN (CONFIRMED, IN_KITCHEN, READY), OPEN catalogs only",
+        });
       }
       if (roles.has("DRIVER")) {
         return allow({ restriction: "own deliveries only" });
       }
       if (roles.has("VIEWER")) {
-        return allow({ restriction: "aggregated counts/totals only; no individual rows; no customer PII" });
+        return allow({
+          restriction: "aggregated counts/totals only; no individual rows; no customer PII",
+        });
       }
       return deny("Requires STAFF, ADMIN, OWNER, COOK, DRIVER, or VIEWER");
     }

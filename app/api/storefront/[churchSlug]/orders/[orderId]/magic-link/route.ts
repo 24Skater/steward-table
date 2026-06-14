@@ -1,20 +1,20 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { createMagicLinkToken } from "@/lib/auth/create-phone-session";
 import { db } from "@/lib/db";
 import { sendSms } from "@/lib/sms";
-import { createMagicLinkToken } from "@/lib/auth/create-phone-session";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface RouteParams {
   params: Promise<{ churchSlug: string; orderId: string }>;
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export async function POST(_req: NextRequest, { params }: RouteParams) {
   const { churchSlug, orderId } = await params;
 
-  const church = await (db.church.findFirst as PrismaBypass)({
+  const church = (await (db.church.findFirst as PrismaBypass)({
     where: { slug: churchSlug, status: "ACTIVE" },
     select: { id: true, name: true },
     _bypassTenancyCheck: true,
-  }) as { id: string; name: string } | null;
+  })) as { id: string; name: string } | null;
 
   if (!church) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -46,11 +46,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const callbackUrl = `/${churchSlug}/order/${orderId}`;
   const magicUrl = `${baseUrl}/${churchSlug}/auth/verify?token=${token}&phone=${encodeURIComponent(phone)}&orderId=${orderId}&next=${encodeURIComponent(callbackUrl)}`;
 
-  await sendSms(
-    phone,
-    `Your Steward Table order tracking link:\n${magicUrl}`,
-    church.id,
-  );
+  await sendSms(phone, `Your Steward Table order tracking link:\n${magicUrl}`, church.id);
 
   return NextResponse.json({ sent: true });
 }

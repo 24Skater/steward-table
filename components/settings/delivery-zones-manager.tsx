@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
 
 interface DeliveryZone {
   id: string;
@@ -71,14 +71,14 @@ export function DeliveryZonesManager({ initialZones }: DeliveryZonesManagerProps
       return;
     }
 
-    const feeValue = parseFloat(formFee);
-    if (isNaN(feeValue) || feeValue < 0) {
+    const feeValue = Number.parseFloat(formFee);
+    if (Number.isNaN(feeValue) || feeValue < 0) {
       setAddError("Delivery fee must be a non-negative number.");
       return;
     }
 
-    const minOrderValue = formMinOrder.trim() === "" ? 0 : parseFloat(formMinOrder);
-    if (isNaN(minOrderValue) || minOrderValue < 0) {
+    const minOrderValue = formMinOrder.trim() === "" ? 0 : Number.parseFloat(formMinOrder);
+    if (Number.isNaN(minOrderValue) || minOrderValue < 0) {
       setAddError("Minimum order must be a non-negative number.");
       return;
     }
@@ -131,7 +131,7 @@ export function DeliveryZonesManager({ initialZones }: DeliveryZonesManagerProps
                 <th className="px-4 py-2.5 text-left font-medium text-slate-700">Postal codes</th>
                 <th className="px-4 py-2.5 text-left font-medium text-slate-700">Fee</th>
                 <th className="px-4 py-2.5 text-left font-medium text-slate-700">Min. order</th>
-                <th className="px-4 py-2.5 text-right font-medium text-slate-700"></th>
+                <th className="px-4 py-2.5 text-right font-medium text-slate-700" />
               </tr>
             </thead>
             <tbody>
@@ -169,9 +169,7 @@ export function DeliveryZonesManager({ initialZones }: DeliveryZonesManagerProps
         </div>
       )}
 
-      {deleteError && (
-        <p className="text-sm text-rose-600">{deleteError}</p>
-      )}
+      {deleteError && <p className="text-sm text-rose-600">{deleteError}</p>}
 
       {/* Add zone form */}
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
@@ -225,9 +223,7 @@ export function DeliveryZonesManager({ initialZones }: DeliveryZonesManagerProps
             </div>
           </div>
 
-          {addError && (
-            <p className="text-sm text-rose-600">{addError}</p>
-          )}
+          {addError && <p className="text-sm text-rose-600">{addError}</p>}
 
           <Button type="submit" disabled={adding}>
             {adding ? "Adding…" : "Add zone"}

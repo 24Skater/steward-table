@@ -27,11 +27,6 @@
     }
   },
   "files": {
-    "ignore": [
-      "node_modules",
-      ".next",
-      "prisma/generated",
-      "*.generated.ts"
-    ]
+    "ignore": ["node_modules", ".next", "prisma/generated", "*.generated.ts"]
   }
 }

@@ -1,17 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { MoreHorizontal, Trash2 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,15 +19,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import type { MembershipStatus, Role } from "@prisma/client";
+import { MoreHorizontal, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { RoleBadge } from "./role-badge";
-import type { Role, MembershipStatus } from "@prisma/client";
 
 export interface MemberRow {
   id: string;
@@ -87,7 +87,7 @@ export function MembersTable({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roles }),
       });
-      const data = await res.json().catch(() => ({ error: "Unexpected error" })) as {
+      const data = (await res.json().catch(() => ({ error: "Unexpected error" }))) as {
         error?: string;
       };
       if (!res.ok) {
@@ -110,7 +110,7 @@ export function MembersTable({
         method: "DELETE",
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({ error: "Unexpected error" })) as {
+        const data = (await res.json().catch(() => ({ error: "Unexpected error" }))) as {
           error?: string;
         };
         setError(data.error ?? "Failed to remove member");
@@ -148,7 +148,10 @@ export function MembersTable({
         <TableBody>
           {members.length === 0 && (
             <TableRow>
-              <TableCell colSpan={isAdmin ? 5 : 4} className="text-center text-muted-foreground py-8">
+              <TableCell
+                colSpan={isAdmin ? 5 : 4}
+                className="text-center text-muted-foreground py-8"
+              >
                 No members found.
               </TableCell>
             </TableRow>
@@ -160,12 +163,8 @@ export function MembersTable({
 
             return (
               <TableRow key={member.id}>
-                <TableCell className="font-medium">
-                  {member.user.name ?? "Unnamed user"}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {member.user.email ?? "-"}
-                </TableCell>
+                <TableCell className="font-medium">{member.user.name ?? "Unnamed user"}</TableCell>
+                <TableCell className="text-muted-foreground">{member.user.email ?? "-"}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {member.roles.map((role) => (
@@ -204,7 +203,9 @@ export function MembersTable({
                             >
                               {label}
                               {member.roles.includes(value) && member.roles.length === 1 && (
-                                <span className="ml-auto text-xs text-muted-foreground">Current</span>
+                                <span className="ml-auto text-xs text-muted-foreground">
+                                  Current
+                                </span>
                               )}
                             </DropdownMenuItem>
                           ))}

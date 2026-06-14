@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac/can";
 import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 

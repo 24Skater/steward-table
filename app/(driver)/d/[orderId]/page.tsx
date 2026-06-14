@@ -1,9 +1,9 @@
-import { notFound, redirect } from "next/navigation";
+import { DriverDeliveryDetail } from "@/components/drivers/driver-delivery-detail";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import Link from "next/link";
-import type { SessionMembership } from "@/lib/auth/types";
-import { DriverDeliveryDetail } from "@/components/drivers/driver-delivery-detail";
+import { notFound, redirect } from "next/navigation";
 
 interface DriverOrderPageProps {
   params: Promise<{ orderId: string }>;
@@ -94,11 +94,7 @@ export default async function DriverOrderPage({ params }: DriverOrderPageProps) 
     };
   });
 
-  const fullAddress = [
-    info.line1,
-    info.line2,
-    `${info.city}, ${info.region} ${info.postalCode}`,
-  ]
+  const fullAddress = [info.line1, info.line2, `${info.city}, ${info.region} ${info.postalCode}`]
     .filter(Boolean)
     .join(", ");
 

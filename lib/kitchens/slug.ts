@@ -8,8 +8,9 @@ export function slugifyKitchenName(name: string): string {
   const slug = name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/['']/g, "")
+    // biome-ignore lint/suspicious/noMisleadingCharacterClass: intentional \u2014 strips NFD combining diacritics
+    .replace(/[\u0300-\u036f]/gu, "")
+    .replace(/['’]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return slug.length > 0 ? slug : FALLBACK_SLUG;

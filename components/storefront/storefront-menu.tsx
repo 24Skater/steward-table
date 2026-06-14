@@ -1,8 +1,8 @@
 "use client";
 
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { ClipboardList, Info, Mail, Menu, X } from "lucide-react";
 import { useState } from "react";
-import { Menu, X, Info, Mail, ClipboardList } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface StorefrontMenuProps {
   churchSlug: string;
@@ -20,8 +20,7 @@ export function StorefrontMenu({
   const [open, setOpen] = useState(false);
 
   const hasRecentOrder =
-    typeof window !== "undefined" &&
-    !!localStorage.getItem("steward-last-order-" + churchSlug);
+    typeof window !== "undefined" && !!localStorage.getItem(`steward-last-order-${churchSlug}`);
 
   return (
     <>

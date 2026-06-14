@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   _req: NextRequest,
@@ -28,7 +28,11 @@ export async function GET(
   });
 
   const stripeEnabled = !!(apiKey?.encrypted && (apiKey.encrypted as Buffer).length > 0);
-  const settings = church.settings as { acceptCash?: boolean; acceptZelle?: boolean; brandTokens?: unknown } | null;
+  const settings = church.settings as {
+    acceptCash?: boolean;
+    acceptZelle?: boolean;
+    brandTokens?: unknown;
+  } | null;
 
   const tokens =
     settings?.brandTokens && typeof settings.brandTokens === "object"

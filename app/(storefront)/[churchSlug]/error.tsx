@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { AlertCircle } from "lucide-react"
-import { usePathname } from "next/navigation"
+import { AlertCircle } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 interface StorefrontErrorProps {
-  error: Error
-  reset: () => void
+  error: Error;
+  reset: () => void;
 }
 
 export default function StorefrontError({ reset }: StorefrontErrorProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
   // Extract the church slug from the path (first segment after the leading slash)
-  const churchSlug = pathname?.split("/")[1] ?? ""
+  const churchSlug = pathname?.split("/")[1] ?? "";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-4">
@@ -20,9 +20,7 @@ export default function StorefrontError({ reset }: StorefrontErrorProps) {
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50">
             <AlertCircle className="h-6 w-6 text-slate-400" />
           </div>
-          <h1 className="mb-2 text-xl font-semibold text-slate-800">
-            Oops, something went wrong.
-          </h1>
+          <h1 className="mb-2 text-xl font-semibold text-slate-800">Oops, something went wrong.</h1>
           <p className="mb-6 text-sm text-slate-500">
             Please try again or contact the church for assistance.
           </p>
@@ -43,5 +41,5 @@ export default function StorefrontError({ reset }: StorefrontErrorProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

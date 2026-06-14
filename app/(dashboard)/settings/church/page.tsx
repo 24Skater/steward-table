@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
 import { TopBar } from "@/components/layout/top-bar";
 import { ChurchSettingsForm } from "@/components/settings/church-settings-form";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import { redirect } from "next/navigation";
 
 export default async function ChurchSettingsPage() {
   const session = await auth();
@@ -63,9 +63,7 @@ export default async function ChurchSettingsPage() {
           <div className="rounded-lg border border-slate-200 bg-white p-6">
             <div className="mb-5">
               <h2 className="text-base font-semibold text-slate-900">Profile</h2>
-              <p className="text-sm text-slate-500 mt-0.5">
-                Basic information about your church.
-              </p>
+              <p className="text-sm text-slate-500 mt-0.5">Basic information about your church.</p>
             </div>
             <ChurchSettingsForm
               church={{
@@ -81,8 +79,7 @@ export default async function ChurchSettingsPage() {
               settings={{
                 replyToEmail: settings?.replyToEmail ?? null,
                 displayName: settings?.displayName ?? null,
-                customerSelfCancelWindowMinutes:
-                  settings?.customerSelfCancelWindowMinutes ?? 5,
+                customerSelfCancelWindowMinutes: settings?.customerSelfCancelWindowMinutes ?? 5,
                 smsEnabled: settings?.smsEnabled ?? false,
               }}
             />

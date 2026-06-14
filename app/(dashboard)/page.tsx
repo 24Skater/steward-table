@@ -1,11 +1,11 @@
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import type { Route } from "next";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { TopBar } from "@/components/layout/top-bar";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
 import type { OrderStatus } from "@prisma/client";
+import type { Route } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -124,12 +124,7 @@ export default async function DashboardHomePage() {
     "AWAITING_PICKUP",
     "OUT_FOR_DELIVERY",
   ];
-  const completedStatuses: OrderStatus[] = [
-    "COMPLETED",
-    "DELIVERED",
-    "SERVED",
-    "PICKED_UP",
-  ];
+  const completedStatuses: OrderStatus[] = ["COMPLETED", "DELIVERED", "SERVED", "PICKED_UP"];
 
   const totalOrders = todayOrders.length;
   const activeOrders = todayOrders.filter((o) =>
@@ -141,9 +136,7 @@ export default async function DashboardHomePage() {
   const totalRevenue = todayOrders.reduce((sum, o) => sum + o.total, 0);
 
   const lowStock = (lowStockItems as LowStockRow[]).filter(
-    (inv) =>
-      inv.lowStockThreshold !== null &&
-      inv.quantityOnHand < inv.lowStockThreshold,
+    (inv) => inv.lowStockThreshold !== null && inv.quantityOnHand < inv.lowStockThreshold,
   );
 
   return (
@@ -168,15 +161,11 @@ export default async function DashboardHomePage() {
           {/* Left: activity feed (2/3) */}
           <div className="lg:col-span-2 rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="px-4 py-3 border-b border-slate-200">
-              <h3 className="text-sm font-semibold text-slate-800">
-                Recent Activity
-              </h3>
+              <h3 className="text-sm font-semibold text-slate-800">Recent Activity</h3>
             </div>
             <ul className="divide-y divide-slate-100">
               {(recentEvents as OrderEventRow[]).length === 0 ? (
-                <li className="px-4 py-6 text-sm text-slate-400 text-center">
-                  No recent activity
-                </li>
+                <li className="px-4 py-6 text-sm text-slate-400 text-center">No recent activity</li>
               ) : (
                 (recentEvents as OrderEventRow[]).map((event) => (
                   <li key={event.id}>
@@ -189,9 +178,7 @@ export default async function DashboardHomePage() {
 
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-slate-800 leading-snug">
-                          <span className="font-medium">
-                            Order #{event.order.number}
-                          </span>{" "}
+                          <span className="font-medium">Order #{event.order.number}</span>{" "}
                           {event.fromStatus ? (
                             <>
                               <StatusBadge status={event.fromStatus} />{" "}
@@ -217,9 +204,7 @@ export default async function DashboardHomePage() {
             {/* Quick Actions */}
             <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
               <div className="px-4 py-3 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-800">
-                  Quick Actions
-                </h3>
+                <h3 className="text-sm font-semibold text-slate-800">Quick Actions</h3>
               </div>
               <ul className="divide-y divide-slate-100">
                 <QuickActionItem href={"/orders" as Route} label="New Order" />
@@ -233,19 +218,12 @@ export default async function DashboardHomePage() {
             {lowStock.length > 0 && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 shadow-sm">
                 <div className="px-4 py-3 border-b border-amber-200">
-                  <h3 className="text-sm font-semibold text-amber-800">
-                    Low Stock Alerts
-                  </h3>
+                  <h3 className="text-sm font-semibold text-amber-800">Low Stock Alerts</h3>
                 </div>
                 <ul className="divide-y divide-amber-100">
                   {lowStock.slice(0, 5).map((inv) => (
-                    <li
-                      key={inv.itemId}
-                      className="flex items-center justify-between px-4 py-2.5"
-                    >
-                      <span className="text-sm text-amber-900 truncate">
-                        {inv.item.name}
-                      </span>
+                    <li key={inv.itemId} className="flex items-center justify-between px-4 py-2.5">
+                      <span className="text-sm text-amber-900 truncate">{inv.item.name}</span>
                       <span className="text-xs font-medium text-amber-700 ml-2 shrink-0">
                         {inv.quantityOnHand} left
                       </span>
@@ -268,9 +246,7 @@ export default async function DashboardHomePage() {
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white shadow-sm px-4 py-4">
-      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-        {label}
-      </p>
+      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
       <p className="mt-1 text-2xl font-bold text-slate-800">{value}</p>
     </div>
   );

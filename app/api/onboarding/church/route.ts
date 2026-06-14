@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createDefaultKitchen } from "@/lib/kitchens/defaults";
+import { type NextRequest, NextResponse } from "next/server";
 
 const SLUG_REGEX = /^[a-z0-9-]{3,50}$/;
 

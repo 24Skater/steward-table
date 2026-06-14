@@ -1,11 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { type NextRequest, NextResponse } from "next/server";
 
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -36,10 +33,7 @@ export async function POST(
   });
 
   if (existing?.status === "ACTIVE") {
-    return NextResponse.json(
-      { error: "You are already a member of this church" },
-      { status: 409 },
-    );
+    return NextResponse.json({ error: "You are already a member of this church" }, { status: 409 });
   }
 
   await db.$transaction(async (tx) => {

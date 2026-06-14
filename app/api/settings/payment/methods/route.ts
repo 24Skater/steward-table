@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
 import type { Role } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(req: NextRequest) {
   const session = await auth();
@@ -27,7 +27,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     acceptCash?: boolean;
     acceptZelle?: boolean;
   } | null;

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { transition } from "@/lib/orders/transitions";
 import { effectQueue } from "@/lib/orders/effect-queue";
+import { transition } from "@/lib/orders/transitions";
+import { type NextRequest, NextResponse } from "next/server";
 
 function isUnauthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
@@ -16,11 +16,11 @@ export async function GET(req: NextRequest) {
   }
 
   // Load per-church no-show timeout settings
-  const settings = await (db.churchSettings.findMany as PrismaBypass)({
+  const settings = (await (db.churchSettings.findMany as PrismaBypass)({
     where: { noShowTimeoutHours: { gt: 0 } },
     select: { churchId: true, noShowTimeoutHours: true },
     _bypassTenancyCheck: true,
-  }) as Array<{ churchId: string; noShowTimeoutHours: number }>;
+  })) as Array<{ churchId: string; noShowTimeoutHours: number }>;
 
   if (settings.length === 0) {
     return NextResponse.json({ swept: 0, errors: 0 });
@@ -34,18 +34,15 @@ export async function GET(req: NextRequest) {
     settings.map(async ({ churchId, noShowTimeoutHours }) => {
       const cutoff = new Date(now - noShowTimeoutHours * 60 * 60 * 1000);
 
-      const staleOrders = await (db.order.findMany as PrismaBypass)({
+      const staleOrders = (await (db.order.findMany as PrismaBypass)({
         where: {
           churchId,
           status: "AWAITING_PICKUP",
-          OR: [
-            { scheduledFor: { lt: cutoff } },
-            { scheduledFor: null, updatedAt: { lt: cutoff } },
-          ],
+          OR: [{ scheduledFor: { lt: cutoff } }, { scheduledFor: null, updatedAt: { lt: cutoff } }],
         },
         select: { id: true },
         _bypassTenancyCheck: true,
-      }) as Array<{ id: string }>;
+      })) as Array<{ id: string }>;
 
       await Promise.allSettled(
         staleOrders.map(async (order) => {

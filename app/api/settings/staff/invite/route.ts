@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
 import { Role } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface PostBody {
   email: string;
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as PostBody | null;
+  const body = (await req.json().catch(() => null)) as PostBody | null;
   if (!body?.email || typeof body.email !== "string") {
     return NextResponse.json({ error: "email is required" }, { status: 400 });
   }
@@ -40,11 +40,11 @@ export async function POST(req: NextRequest) {
   const email = body.email.trim().toLowerCase();
 
   // Check if a user with this email exists
-  const existingUser = await (db.user.findUnique as PrismaBypass)({
+  const existingUser = (await (db.user.findUnique as PrismaBypass)({
     where: { email },
     select: { id: true },
     ...({ _bypassTenancyCheck: true } as object),
-  }) as { id: string } | null;
+  })) as { id: string } | null;
 
   if (!existingUser) {
     return NextResponse.json(
@@ -54,11 +54,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Check if they already have a membership for this church
-  const existingMembership = await (db.membership.findFirst as PrismaBypass)({
+  const existingMembership = (await (db.membership.findFirst as PrismaBypass)({
     where: { userId: existingUser.id, churchId: membership.churchId },
     select: { id: true, status: true },
     ...({ _bypassTenancyCheck: true } as object),
-  }) as { id: string; status: string } | null;
+  })) as { id: string; status: string } | null;
 
   if (existingMembership) {
     return NextResponse.json(

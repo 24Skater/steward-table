@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
 import { buildKitchenOrderWhere, getKitchenCatalogIds } from "@/lib/kitchens/scope";
+import { describe, expect, it, vi } from "vitest";
 
 function makeDb(rows: Array<{ id: string }>) {
   return {
@@ -18,11 +18,12 @@ describe("getKitchenCatalogIds", () => {
 
     // Assert
     expect(ids).toEqual(["c1", "c2"]);
-    expect((db as never as { catalog: { findMany: ReturnType<typeof vi.fn> } }).catalog.findMany)
-      .toHaveBeenCalledWith({
-        where: { churchId: "church-1", kitchenId: "k1" },
-        select: { id: true },
-      });
+    expect(
+      (db as never as { catalog: { findMany: ReturnType<typeof vi.fn> } }).catalog.findMany,
+    ).toHaveBeenCalledWith({
+      where: { churchId: "church-1", kitchenId: "k1" },
+      select: { id: true },
+    });
   });
 
   it("for the default kitchen, also includes catalogs with kitchenId null", async () => {
@@ -34,14 +35,15 @@ describe("getKitchenCatalogIds", () => {
     await getKitchenCatalogIds(db, "church-1", kitchen);
 
     // Assert
-    expect((db as never as { catalog: { findMany: ReturnType<typeof vi.fn> } }).catalog.findMany)
-      .toHaveBeenCalledWith({
-        where: {
-          churchId: "church-1",
-          OR: [{ kitchenId: "k-default" }, { kitchenId: null }],
-        },
-        select: { id: true },
-      });
+    expect(
+      (db as never as { catalog: { findMany: ReturnType<typeof vi.fn> } }).catalog.findMany,
+    ).toHaveBeenCalledWith({
+      where: {
+        churchId: "church-1",
+        OR: [{ kitchenId: "k-default" }, { kitchenId: null }],
+      },
+      select: { id: true },
+    });
   });
 });
 

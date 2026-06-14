@@ -453,7 +453,7 @@ describe("can() — RBAC permission gate", () => {
       const result = await can("church.update", makeCtx(["STAFF"]));
       expect(result.allowed).toBe(false);
       expect(typeof result.reason).toBe("string");
-      expect(result.reason!.length).toBeGreaterThan(0);
+      expect(result.reason?.length).toBeGreaterThan(0);
     });
 
     it("allowed result has allowed=true and no reason", async () => {

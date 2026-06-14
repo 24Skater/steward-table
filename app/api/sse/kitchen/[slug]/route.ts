@@ -1,10 +1,10 @@
-import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth/index";
 import { db } from "@/lib/db";
+import { buildKitchenOrderWhere, getKitchenCatalogIds } from "@/lib/kitchens/scope";
 import { effectQueue } from "@/lib/orders/effect-queue";
 import { transition } from "@/lib/orders/transitions";
-import { buildKitchenOrderWhere, getKitchenCatalogIds } from "@/lib/kitchens/scope";
-import { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@prisma/client";
+import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 
@@ -91,10 +91,7 @@ function shapeOrder(order: RawOrder) {
   };
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ slug: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return new Response("Unauthorized", { status: 401 });

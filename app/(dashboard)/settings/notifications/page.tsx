@@ -1,11 +1,11 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
 import { TopBar } from "@/components/layout/top-bar";
 import { NotificationPreferencesForm } from "@/components/settings/notification-preferences-form";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
 import type { Role } from "@prisma/client";
+import { redirect } from "next/navigation";
 
 interface NotificationBrandTokens {
   emailConfirmationEnabled?: boolean;
@@ -28,19 +28,13 @@ function parseNotificationPrefs(brandTokens: unknown): NotificationBrandTokens {
   const raw = brandTokens as Record<string, unknown>;
   return {
     emailConfirmationEnabled:
-      typeof raw.emailConfirmationEnabled === "boolean"
-        ? raw.emailConfirmationEnabled
-        : true,
-    emailStatusEnabled:
-      typeof raw.emailStatusEnabled === "boolean" ? raw.emailStatusEnabled : true,
+      typeof raw.emailConfirmationEnabled === "boolean" ? raw.emailConfirmationEnabled : true,
+    emailStatusEnabled: typeof raw.emailStatusEnabled === "boolean" ? raw.emailStatusEnabled : true,
     emailStaffOnNewOrder:
       typeof raw.emailStaffOnNewOrder === "boolean" ? raw.emailStaffOnNewOrder : false,
     smsConfirmationEnabled:
-      typeof raw.smsConfirmationEnabled === "boolean"
-        ? raw.smsConfirmationEnabled
-        : false,
-    smsReadyEnabled:
-      typeof raw.smsReadyEnabled === "boolean" ? raw.smsReadyEnabled : false,
+      typeof raw.smsConfirmationEnabled === "boolean" ? raw.smsConfirmationEnabled : false,
+    smsReadyEnabled: typeof raw.smsReadyEnabled === "boolean" ? raw.smsReadyEnabled : false,
   };
 }
 
@@ -70,14 +64,14 @@ export default async function NotificationsSettingsPage() {
     );
   }
 
-  const settings = await (db.churchSettings.findUnique as PrismaBypass)({
+  const settings = (await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: {
       smsEnabled: true,
       brandTokens: true,
     },
     ...({ _bypassTenancyCheck: true } as object),
-  }) as { smsEnabled: boolean; brandTokens: unknown } | null;
+  })) as { smsEnabled: boolean; brandTokens: unknown } | null;
 
   const notificationPrefs = parseNotificationPrefs(settings?.brandTokens);
   const smsEnabled = settings?.smsEnabled ?? false;
@@ -89,9 +83,7 @@ export default async function NotificationsSettingsPage() {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-2xl space-y-6">
           <div>
-            <h1 className="text-lg font-semibold text-slate-900">
-              Notification Preferences
-            </h1>
+            <h1 className="text-lg font-semibold text-slate-900">Notification Preferences</h1>
             <p className="mt-1 text-sm text-slate-500">
               Control how your church communicates with customers and staff about orders.
             </p>

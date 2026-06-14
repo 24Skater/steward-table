@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth/index";
 import { db } from "@/lib/db";
 import type { OrderStatus } from "@prisma/client";
+import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 

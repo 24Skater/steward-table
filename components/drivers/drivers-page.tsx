@@ -13,9 +13,7 @@ interface DriversPageProps {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function groupByDriver(
-  orders: DeliveryOrderCardData[],
-): Map<string, DeliveryOrderCardData[]> {
+function groupByDriver(orders: DeliveryOrderCardData[]): Map<string, DeliveryOrderCardData[]> {
   const map = new Map<string, DeliveryOrderCardData[]>();
   for (const order of orders) {
     const driverId = order.deliveryInfo?.driverId;

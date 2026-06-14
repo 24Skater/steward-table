@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import type { SessionMembership, Role } from "./types";
+import { redirect } from "next/navigation";
+import type { Role, SessionMembership } from "./types";
 
 /**
  * Require an authenticated user with an active church membership.
@@ -47,10 +47,7 @@ export function resolveChurchMembership(
  * Get the effective roles for a user at a given church.
  * Returns empty array if no membership exists.
  */
-export function getEffectiveRoles(
-  memberships: SessionMembership[],
-  churchId: string,
-): Role[] {
+export function getEffectiveRoles(memberships: SessionMembership[], churchId: string): Role[] {
   const membership = resolveChurchMembership(memberships, churchId);
   return membership?.roles ?? [];
 }

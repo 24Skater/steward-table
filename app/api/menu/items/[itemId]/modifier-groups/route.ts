@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const postSchema = z.object({
   name: z.string().min(1).max(200),
@@ -12,10 +12,7 @@ const postSchema = z.object({
   maxSelections: z.number().int().min(1).optional().default(1),
 });
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ itemId: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ itemId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

@@ -1,11 +1,11 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { TopBar } from "@/components/layout/top-bar";
 import { ReportsPage } from "@/components/reports";
 import type { ReportsData } from "@/components/reports";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { getKitchenRevenue } from "@/lib/kitchens/reporting";
 import type { OrderStatus } from "@prisma/client";
+import { redirect } from "next/navigation";
 
 const COMPLETED_STATUSES: OrderStatus[] = ["PICKED_UP", "DELIVERED", "SERVED", "COMPLETED"];
 

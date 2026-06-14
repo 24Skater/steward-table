@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const UpdateProfileSchema = z.object({

@@ -1,14 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
   _req: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ itemId: string; groupId: string; optionId: string }> },
+  { params }: { params: Promise<{ itemId: string; groupId: string; optionId: string }> },
 ) {
   const session = await auth();
   if (!session?.user?.id) {

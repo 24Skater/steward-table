@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
 import { createDefaultKitchen } from "@/lib/kitchens/defaults";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const onboardingSchema = z.object({
   churchName: z.string().min(1, "Church name is required"),
@@ -30,10 +30,7 @@ export async function POST(req: NextRequest) {
     (m: SessionMembership) => m.status === "ACTIVE",
   );
   if (hasActiveMembership) {
-    return NextResponse.json(
-      { error: "You already belong to a church." },
-      { status: 409 },
-    );
+    return NextResponse.json({ error: "You already belong to a church." }, { status: 409 });
   }
 
   const rawBody: unknown = await req.json().catch(() => null);
@@ -44,10 +41,7 @@ export async function POST(req: NextRequest) {
   const parsed = onboardingSchema.safeParse(rawBody);
   if (!parsed.success) {
     const firstError = parsed.error.errors[0];
-    return NextResponse.json(
-      { error: firstError?.message ?? "Validation error" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: firstError?.message ?? "Validation error" }, { status: 400 });
   }
 
   const { churchName, slug, timezone, displayName, phone } = parsed.data;

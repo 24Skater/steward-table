@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
-import { transition } from "@/lib/orders/transitions";
 import { effectQueue } from "@/lib/orders/effect-queue";
+import { transition } from "@/lib/orders/transitions";
+import { can } from "@/lib/rbac/can";
 import { getStripeForChurch } from "@/lib/stripe/client";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface RefundBody {
   reason?: string;
@@ -12,18 +12,13 @@ interface RefundBody {
   amountCents?: number;
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ orderId: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ orderId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
-  const activeMembership = session.user.memberships?.find(
-    (m) => m.status === "ACTIVE",
-  );
+  const activeMembership = session.user.memberships?.find((m) => m.status === "ACTIVE");
   if (!activeMembership) {
     return NextResponse.json({ error: "No active membership" }, { status: 403 });
   }
@@ -48,7 +43,7 @@ export async function POST(
   const { reason, refundAll, amountCents } = body as RefundBody;
 
   // Fetch the order with its payments, scoped to this church
-  const order = await (db.order.findFirst as PrismaBypass)({
+  const order = (await (db.order.findFirst as PrismaBypass)({
     where: { id: orderId, churchId },
     include: {
       payments: {
@@ -57,7 +52,7 @@ export async function POST(
       },
     },
     _bypassTenancyCheck: true,
-  }) as {
+  })) as {
     id: string;
     churchId: string;
     status: string;
@@ -76,10 +71,7 @@ export async function POST(
   }
 
   if (order.status !== "COMPLETED") {
-    return NextResponse.json(
-      { error: "Only COMPLETED orders can be refunded" },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: "Only COMPLETED orders can be refunded" }, { status: 422 });
   }
 
   // Determine refund amount
@@ -91,10 +83,7 @@ export async function POST(
     return NextResponse.json({ error: "Refund amount must be positive" }, { status: 400 });
   }
   if (resolvedAmount > totalCaptured) {
-    return NextResponse.json(
-      { error: "Refund amount exceeds captured payment" },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: "Refund amount exceeds captured payment" }, { status: 422 });
   }
 
   // Enforce STAFF refund cap — ADMIN/OWNER are exempt
@@ -108,15 +97,16 @@ export async function POST(
     const cap: number = settings?.staffRefundCapCents ?? 5000;
     if (cap > 0 && resolvedAmount > cap) {
       return NextResponse.json(
-        { error: `Staff refunds are limited to $${(cap / 100).toFixed(2)}. Contact an admin for larger refunds.` },
+        {
+          error: `Staff refunds are limited to $${(cap / 100).toFixed(2)}. Contact an admin for larger refunds.`,
+        },
         { status: 403 },
       );
     }
   }
 
   const isStripePayment =
-    capturedPayment?.method === "STRIPE_CARD" ||
-    capturedPayment?.method === "STRIPE_OTHER";
+    capturedPayment?.method === "STRIPE_CARD" || capturedPayment?.method === "STRIPE_OTHER";
 
   let stripeRefundId: string | undefined;
 

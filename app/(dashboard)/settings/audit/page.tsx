@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
+import { TopBar } from "@/components/layout/top-bar";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import { TopBar } from "@/components/layout/top-bar";
-import type { SessionMembership } from "@/lib/auth/types";
 import type { Role } from "@prisma/client";
+import { redirect } from "next/navigation";
 
 interface AuditLogRow {
   id: string;
@@ -67,7 +67,7 @@ export default async function AuditLogPage() {
     );
   }
 
-  const rawLogs = await (db.auditLog.findMany as PrismaBypass)({
+  const rawLogs = (await (db.auditLog.findMany as PrismaBypass)({
     where: { churchId: membership.churchId },
     orderBy: { createdAt: "desc" },
     take: 100,
@@ -83,7 +83,7 @@ export default async function AuditLogPage() {
       },
     },
     ...({ _bypassTenancyCheck: true } as object),
-  }) as AuditLogRow[];
+  })) as AuditLogRow[];
 
   return (
     <div className="flex flex-col h-full">
@@ -122,9 +122,7 @@ export default async function AuditLogPage() {
                     <td className="px-4 py-3 whitespace-nowrap">
                       {log.actor ? (
                         <div>
-                          <p className="font-medium text-slate-800">
-                            {log.actor.name ?? "—"}
-                          </p>
+                          <p className="font-medium text-slate-800">{log.actor.name ?? "—"}</p>
                           {log.actor.email && (
                             <p className="text-xs text-slate-500">{log.actor.email}</p>
                           )}

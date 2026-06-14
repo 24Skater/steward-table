@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { db } from "@/lib/db";
 import { requireActiveMembership } from "@/lib/auth/helpers";
+import { db } from "@/lib/db";
+import Link from "next/link";
 
 export default async function KitchenPickerPage() {
   const { membership } = await requireActiveMembership();

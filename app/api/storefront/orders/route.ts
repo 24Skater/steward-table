@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server";
-import type { PaymentMethod } from "@prisma/client";
 import { db } from "@/lib/db";
 import { effectQueue } from "@/lib/orders/effect-queue";
 import { transition } from "@/lib/orders/transitions";
+import type { PaymentMethod } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface CartModifierPayload {
   groupName: string;
@@ -56,7 +56,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { churchSlug, customerName, phone, email, notes, fulfillment, paymentMethod, scheduledFor, smsOptIn, tip, zoneId, deliveryAddress, items } = body;
+  const {
+    churchSlug,
+    customerName,
+    phone,
+    email,
+    notes,
+    fulfillment,
+    paymentMethod,
+    scheduledFor,
+    smsOptIn,
+    tip,
+    zoneId,
+    deliveryAddress,
+    items,
+  } = body;
 
   if (!churchSlug || !customerName?.trim() || !items?.length) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -108,7 +122,7 @@ export async function POST(req: NextRequest) {
       const updates: Record<string, unknown> = {};
       if (smsOptIn) updates.smsOptIn = true;
       if (emailNormalized) {
-        updates.email = email!.trim();
+        updates.email = email?.trim();
         updates.emailNormalized = emailNormalized;
       }
       if (Object.keys(updates).length > 0) {
@@ -143,7 +157,7 @@ export async function POST(req: NextRequest) {
         data: {
           churchId: church.id,
           name: customerName.trim(),
-          email: email!.trim(),
+          email: email?.trim(),
           emailNormalized,
         },
         select: { id: true },
@@ -175,9 +189,7 @@ export async function POST(req: NextRequest) {
   const orderTotal = subtotal + tipAmount;
 
   const resolvedPaymentMethod: PaymentMethod =
-    paymentMethod === "cash" ? "CASH"
-    : paymentMethod === "zelle" ? "ZELLE"
-    : "PAY_ON_PICKUP";
+    paymentMethod === "cash" ? "CASH" : paymentMethod === "zelle" ? "ZELLE" : "PAY_ON_PICKUP";
 
   const order = await db.order.create({
     data: {

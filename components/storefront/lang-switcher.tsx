@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { Route } from "next";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const LOCALES = ["EN", "ES"] as const;
 type Locale = (typeof LOCALES)[number];
@@ -23,10 +23,10 @@ export function LangSwitcher({ churchSlug }: { churchSlug: string }) {
     const fromParam = searchParams.get("lang")?.toUpperCase();
     if (fromParam === "EN" || fromParam === "ES") {
       setLocale(fromParam);
-      localStorage.setItem(LOCALE_STORAGE_KEY + "-" + churchSlug, fromParam);
+      localStorage.setItem(`${LOCALE_STORAGE_KEY}-${churchSlug}`, fromParam);
       return;
     }
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY + "-" + churchSlug);
+    const stored = localStorage.getItem(`${LOCALE_STORAGE_KEY}-${churchSlug}`);
     if (stored === "EN" || stored === "ES") {
       setLocale(stored);
       return;
@@ -43,7 +43,7 @@ export function LangSwitcher({ churchSlug }: { churchSlug: string }) {
   function switchLocale(next: Locale) {
     setLocale(next);
     setOpen(false);
-    localStorage.setItem(LOCALE_STORAGE_KEY + "-" + churchSlug, next);
+    localStorage.setItem(`${LOCALE_STORAGE_KEY}-${churchSlug}`, next);
     const params = new URLSearchParams(searchParams.toString());
     params.set("lang", next.toLowerCase());
     router.push(`${pathname}?${params.toString()}` as Route);

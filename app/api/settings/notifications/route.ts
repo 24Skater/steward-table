@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface NotificationSettingsBody {
   emailConfirmationEnabled: boolean;
@@ -63,11 +63,11 @@ export async function PUT(req: NextRequest) {
   } = rawBody;
 
   // Fetch existing brandTokens to merge — avoid clobbering unrelated keys
-  const existing = await (db.churchSettings.findUnique as PrismaBypass)({
+  const existing = (await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: { brandTokens: true },
     ...({ _bypassTenancyCheck: true } as object),
-  }) as { brandTokens: unknown } | null;
+  })) as { brandTokens: unknown } | null;
 
   const existingTokens =
     existing?.brandTokens && typeof existing.brandTokens === "object"

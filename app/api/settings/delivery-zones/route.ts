@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   const session = await auth();
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     name?: string;
     postalCodes?: string[];
     feeCents?: number;
@@ -77,7 +77,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "feeCents must be a non-negative integer" }, { status: 400 });
   }
   if (typeof minOrderCents !== "number" || minOrderCents < 0) {
-    return NextResponse.json({ error: "minOrderCents must be a non-negative integer" }, { status: 400 });
+    return NextResponse.json(
+      { error: "minOrderCents must be a non-negative integer" },
+      { status: 400 },
+    );
   }
 
   const zone = await (db.deliveryZone.create as PrismaBypass)({

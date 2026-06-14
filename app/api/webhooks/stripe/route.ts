@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { db } from "@/lib/db";
-import { getStripeForChurch, getStripeWebhookSecret } from "@/lib/stripe/client";
-import { transition } from "@/lib/orders/transitions";
 import { effectQueue } from "@/lib/orders/effect-queue";
+import { transition } from "@/lib/orders/transitions";
+import { getStripeForChurch, getStripeWebhookSecret } from "@/lib/stripe/client";
+import { type NextRequest, NextResponse } from "next/server";
+import type Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -59,7 +59,11 @@ export async function POST(req: NextRequest) {
   try {
     switch (event.type) {
       case "checkout.session.completed":
-        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, orderId, churchId);
+        await handleCheckoutCompleted(
+          event.data.object as Stripe.Checkout.Session,
+          orderId,
+          churchId,
+        );
         break;
 
       case "checkout.session.expired":
@@ -99,13 +103,13 @@ export async function POST(req: NextRequest) {
 async function handleCheckoutCompleted(
   session: Stripe.Checkout.Session,
   orderId: string,
-  churchId: string,
+  _churchId: string,
 ): Promise<void> {
-  const order = await (db.order.findUnique as PrismaBypass)({
+  const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: { id: true, status: true, payments: { select: { id: true, status: true } } },
     _bypassTenancyCheck: true,
-  }) as { id: string; status: string; payments: Array<{ id: string; status: string }> } | null;
+  })) as { id: string; status: string; payments: Array<{ id: string; status: string }> } | null;
 
   if (!order) return;
 
@@ -118,7 +122,7 @@ async function handleCheckoutCompleted(
         status: "CAPTURED",
         externalId: session.payment_intent as string | null,
         amount: session.amount_total ?? 0,
-        currency: (session.currency?.toUpperCase()) ?? "USD",
+        currency: session.currency?.toUpperCase() ?? "USD",
       },
     });
   }
@@ -142,11 +146,11 @@ async function handleCheckoutCompleted(
 }
 
 async function handleCheckoutExpired(orderId: string): Promise<void> {
-  const order = await (db.order.findUnique as PrismaBypass)({
+  const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: { id: true, status: true },
     _bypassTenancyCheck: true,
-  }) as { id: string; status: string } | null;
+  })) as { id: string; status: string } | null;
 
   if (!order || order.status !== "DRAFT") return;
 
@@ -161,11 +165,11 @@ async function handlePaymentFailed(
   _paymentIntent: Stripe.PaymentIntent,
   orderId: string,
 ): Promise<void> {
-  const order = await (db.order.findUnique as PrismaBypass)({
+  const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: { id: true, status: true },
     _bypassTenancyCheck: true,
-  }) as { id: string; status: string } | null;
+  })) as { id: string; status: string } | null;
 
   if (!order || order.status !== "DRAFT") return;
 

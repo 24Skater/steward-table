@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import type { CustomerRow } from "./customer-detail-drawer";
 
 interface CustomersTableProps {
@@ -20,10 +20,7 @@ function relativeTime(date: Date): string {
   return `${diffMonths} month${diffMonths === 1 ? "" : "s"} ago`;
 }
 
-export function CustomersTable({
-  customers,
-  onViewCustomer,
-}: CustomersTableProps) {
+export function CustomersTable({ customers, onViewCustomer }: CustomersTableProps) {
   const router = useRouter();
 
   function handleView(customer: CustomerRow) {
@@ -126,13 +123,9 @@ export function CustomersTable({
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-sm font-medium text-slate-800">
-                  {customer.name}
-                </p>
+                <p className="text-sm font-medium text-slate-800">{customer.name}</p>
                 {customer.phone && (
-                  <p className="text-xs text-slate-500 mt-0.5 tabular-nums">
-                    {customer.phone}
-                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5 tabular-nums">{customer.phone}</p>
                 )}
                 {customer.email && (
                   <p className="text-xs text-slate-500 mt-0.5">{customer.email}</p>
@@ -147,9 +140,7 @@ export function CustomersTable({
             </div>
             <div className="flex items-center justify-between pt-1">
               <span className="text-xs text-slate-400">
-                {customer.lastOrderAt
-                  ? relativeTime(new Date(customer.lastOrderAt))
-                  : "No orders"}
+                {customer.lastOrderAt ? relativeTime(new Date(customer.lastOrderAt)) : "No orders"}
               </span>
               <Button
                 variant="outline"

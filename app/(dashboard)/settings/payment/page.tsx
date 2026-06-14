@@ -1,13 +1,13 @@
-import { redirect } from "next/navigation";
+import { TopBar } from "@/components/layout/top-bar";
+import { CashZelleSettingsForm } from "@/components/settings/cash-zelle-settings-form";
+import { StripeSettingsForm } from "@/components/settings/stripe-settings-form";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
+import { decrypt } from "@/lib/crypto/aes";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import { decrypt } from "@/lib/crypto/aes";
-import { TopBar } from "@/components/layout/top-bar";
-import { StripeSettingsForm } from "@/components/settings/stripe-settings-form";
-import { CashZelleSettingsForm } from "@/components/settings/cash-zelle-settings-form";
-import type { SessionMembership } from "@/lib/auth/types";
 import type { Role } from "@prisma/client";
+import { redirect } from "next/navigation";
 
 export default async function PaymentSettingsPage() {
   const session = await auth();
@@ -35,11 +35,11 @@ export default async function PaymentSettingsPage() {
     );
   }
 
-  const churchSettings = await (db.churchSettings.findUnique as PrismaBypass)({
+  const churchSettings = (await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: { acceptCash: true, acceptZelle: true },
     _bypassTenancyCheck: true,
-  }) as { acceptCash: boolean; acceptZelle: boolean } | null;
+  })) as { acceptCash: boolean; acceptZelle: boolean } | null;
 
   const [stripeKey, webhookKey] = await Promise.all([
     (db.apiKey.findFirst as PrismaBypass)({
@@ -117,9 +117,12 @@ export default async function PaymentSettingsPage() {
           </div>
 
           <div className="mt-8">
-            <h2 className="text-lg font-semibold text-slate-900 mb-1">Alternative payment methods</h2>
+            <h2 className="text-lg font-semibold text-slate-900 mb-1">
+              Alternative payment methods
+            </h2>
             <p className="text-sm text-slate-500 mb-4">
-              Enable cash or Zelle as payment options at checkout. These are always available even without Stripe.
+              Enable cash or Zelle as payment options at checkout. These are always available even
+              without Stripe.
             </p>
             <div className="rounded-lg border border-slate-200 bg-white p-6">
               <CashZelleSettingsForm

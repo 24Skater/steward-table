@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { TopBar } from "@/components/layout/top-bar";
 import { ProfileForm } from "@/components/settings/profile-form";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { redirect } from "next/navigation";
 
 export default async function ProfilePage() {
   const session = await auth();

@@ -66,14 +66,14 @@ export async function POST(
   }
 
   // Optimistic lock: only claim if still unassigned
-  const updated = await (db.deliveryInfo.updateMany as PrismaBypass)({
+  const updated = (await (db.deliveryInfo.updateMany as PrismaBypass)({
     where: {
       id: order.deliveryInfo.id,
       driverId: null,
     },
     data: { driverId: session.user.id },
     _bypassTenancyCheck: true,
-  }) as { count: number };
+  })) as { count: number };
 
   if (updated.count === 0) {
     return NextResponse.json(
@@ -84,7 +84,10 @@ export async function POST(
 
   // Redirect for form-based submissions
   const contentType = _req.headers.get("content-type") ?? "";
-  if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
+  if (
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data")
+  ) {
     return new NextResponse(null, { status: 303, headers: { Location: "/d" } });
   }
 

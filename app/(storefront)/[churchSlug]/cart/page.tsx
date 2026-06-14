@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
+import { Minus, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
 function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
@@ -33,10 +33,7 @@ export default function CartPage() {
 
       <ul className="space-y-4">
         {items.map((item) => (
-          <li
-            key={item.id}
-            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-          >
+          <li key={item.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <p className="font-medium text-slate-800">{item.itemName}</p>
@@ -57,11 +54,12 @@ export default function CartPage() {
                 )}
               </div>
               <div className="text-right">
-                <p className="font-semibold text-emerald-700">
-                  {formatCents(item.totalPrice)}
-                </p>
+                <p className="font-semibold text-emerald-700">{formatCents(item.totalPrice)}</p>
                 <p className="text-xs text-slate-400">
-                  {formatCents(item.basePrice + item.modifiers.reduce((s, m) => s + m.priceDelta, 0))} each
+                  {formatCents(
+                    item.basePrice + item.modifiers.reduce((s, m) => s + m.priceDelta, 0),
+                  )}{" "}
+                  each
                 </p>
               </div>
             </div>

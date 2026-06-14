@@ -1,14 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import type { Route } from "next";
-import { useState, useTransition } from "react";
 import {
   archiveKitchen,
   createKitchen,
   renameKitchen,
   setDefaultKitchen,
 } from "@/app/(dashboard)/kitchens/actions";
+import type { Route } from "next";
+import Link from "next/link";
+import { useState, useTransition } from "react";
 
 export interface KitchenRow {
   id: string;
@@ -87,7 +87,10 @@ export function KitchenManager({ initialKitchens }: KitchenManagerProps) {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-3 text-sm">
-              <Link className="text-blue-600 hover:underline" href={`/kitchens/${kitchen.id}` as Route}>
+              <Link
+                className="text-blue-600 hover:underline"
+                href={`/kitchens/${kitchen.id}` as Route}
+              >
                 Assign catalogs
               </Link>
               <button
@@ -97,7 +100,7 @@ export function KitchenManager({ initialKitchens }: KitchenManagerProps) {
                 disabled={isPending}
                 onClick={() => {
                   const name = window.prompt("Rename kitchen", kitchen.name);
-                  if (name && name.trim()) run(() => renameKitchen(kitchen.id, name.trim()));
+                  if (name?.trim()) run(() => renameKitchen(kitchen.id, name.trim()));
                 }}
               >
                 Rename
@@ -120,7 +123,11 @@ export function KitchenManager({ initialKitchens }: KitchenManagerProps) {
                   className="text-red-600 hover:underline disabled:opacity-50"
                   disabled={isPending}
                   onClick={() => {
-                    if (window.confirm(`Archive "${kitchen.name}"? Its catalogs move to the default kitchen.`)) {
+                    if (
+                      window.confirm(
+                        `Archive "${kitchen.name}"? Its catalogs move to the default kitchen.`,
+                      )
+                    ) {
                       run(() => archiveKitchen(kitchen.id));
                     }
                   }}

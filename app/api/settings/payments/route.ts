@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
+import { encrypt } from "@/lib/crypto/aes";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import { encrypt } from "@/lib/crypto/aes";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   const session = await auth();
@@ -77,7 +77,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     stripeSecretKey?: string;
     stripeWebhookSecret?: string;
   } | null;
@@ -88,7 +88,7 @@ export async function PATCH(req: NextRequest) {
 
   const ops: Promise<unknown>[] = [];
 
-  if (body.stripeSecretKey && body.stripeSecretKey.trim()) {
+  if (body.stripeSecretKey?.trim()) {
     const trimmed = body.stripeSecretKey.trim();
     const encryptedKey = encrypt(trimmed);
     // Determine live vs test from key prefix
@@ -124,7 +124,7 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  if (body.stripeWebhookSecret && body.stripeWebhookSecret.trim()) {
+  if (body.stripeWebhookSecret?.trim()) {
     const trimmed = body.stripeWebhookSecret.trim();
     const encryptedWebhook = encrypt(trimmed);
 

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { rollUpKitchenRevenue } from "@/lib/kitchens/reporting";
+import { describe, expect, it } from "vitest";
 
 const kitchens = [
   { id: "k-main", name: "Main Kitchen", isDefault: true },

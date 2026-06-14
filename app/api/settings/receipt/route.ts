@@ -1,9 +1,9 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac/can";
 import { db } from "@/lib/db";
-import { z } from "zod";
+import { can } from "@/lib/rbac/can";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { z } from "zod";
 
 const schema = z.object({
   receiptLanguage: z.enum(["OFF", "US_501C3", "CUSTOM"]),
@@ -47,8 +47,7 @@ export async function PATCH(req: NextRequest) {
       where: { churchId },
       data: {
         receiptLanguage,
-        receiptCustomFooter:
-          receiptLanguage === "CUSTOM" ? (receiptCustomFooter ?? null) : null,
+        receiptCustomFooter: receiptLanguage === "CUSTOM" ? (receiptCustomFooter ?? null) : null,
         receiptLanguageVersion: { increment: 1 },
       },
     }),

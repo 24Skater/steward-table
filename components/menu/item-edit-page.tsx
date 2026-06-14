@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
-import Link from "next/link";
-import { ArrowLeft, Trash2, Plus, X, ImageIcon, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, ImageIcon, Loader2, Plus, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { useRef, useState } from "react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -80,8 +80,8 @@ function centsToDisplay(cents: number): string {
 }
 
 function displayToCents(value: string): number {
-  const parsed = parseFloat(value);
-  if (isNaN(parsed) || parsed < 0) return 0;
+  const parsed = Number.parseFloat(value);
+  if (Number.isNaN(parsed) || parsed < 0) return 0;
   return Math.round(parsed * 100);
 }
 
@@ -123,17 +123,17 @@ function AddGroupForm({ itemId, onAdded, onCancel }: AddGroupFormProps) {
         body: JSON.stringify({
           name: trimmedName,
           required,
-          minSelections: parseInt(minSel, 10),
-          maxSelections: parseInt(maxSel, 10),
+          minSelections: Number.parseInt(minSel, 10),
+          maxSelections: Number.parseInt(maxSel, 10),
         }),
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Failed to add modifier group");
       }
 
-      const data = await res.json() as { binding: ItemModifierGroup };
+      const data = (await res.json()) as { binding: ItemModifierGroup };
       onAdded(data.binding);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -194,11 +194,7 @@ function AddGroupForm({ itemId, onAdded, onCancel }: AddGroupFormProps) {
         </div>
 
         <div className="flex items-center gap-2 pt-5">
-          <Switch
-            id="group-required"
-            checked={required}
-            onCheckedChange={setRequired}
-          />
+          <Switch id="group-required" checked={required} onCheckedChange={setRequired} />
           <Label htmlFor="group-required">Required</Label>
         </div>
       </div>
@@ -241,24 +237,21 @@ function AddOptionForm({ itemId, groupId, onAdded, onCancel }: AddOptionFormProp
     setError(null);
 
     try {
-      const res = await fetch(
-        `/api/menu/items/${itemId}/modifier-groups/${groupId}/options`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: trimmedName,
-            priceDelta: displayToCents(priceStr),
-          }),
-        },
-      );
+      const res = await fetch(`/api/menu/items/${itemId}/modifier-groups/${groupId}/options`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: trimmedName,
+          priceDelta: displayToCents(priceStr),
+        }),
+      });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Failed to add option");
       }
 
-      const data = await res.json() as { option: ModifierOption };
+      const data = (await res.json()) as { option: ModifierOption };
       onAdded(data.option);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -300,13 +293,7 @@ function AddOptionForm({ itemId, groupId, onAdded, onCancel }: AddOptionFormProp
       <Button type="submit" size="sm" disabled={saving || !name.trim()}>
         {saving ? "…" : "Add"}
       </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        onClick={onCancel}
-        className="px-2"
-      >
+      <Button type="button" size="sm" variant="outline" onClick={onCancel} className="px-2">
         <X size={14} />
       </Button>
     </form>
@@ -347,10 +334,9 @@ function ModifierGroupCard({
     }
     setDeleting(true);
     try {
-      const res = await fetch(
-        `/api/menu/items/${itemId}/modifier-groups/${binding.id}`,
-        { method: "DELETE" },
-      );
+      const res = await fetch(`/api/menu/items/${itemId}/modifier-groups/${binding.id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("Failed to delete group");
       onGroupDeleted(binding.id);
     } catch {
@@ -489,17 +475,11 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
 
   // ── Bilingual fields ──
   const [langTab, setLangTab] = useState<"EN" | "ES">("EN");
-  const [nameEs, setNameEs] = useState(
-    item.translations?.es?.name ?? "",
-  );
-  const [descriptionEs, setDescriptionEs] = useState(
-    item.translations?.es?.description ?? "",
-  );
+  const [nameEs, setNameEs] = useState(item.translations?.es?.name ?? "");
+  const [descriptionEs, setDescriptionEs] = useState(item.translations?.es?.description ?? "");
 
   // ── Modifier groups ──
-  const [modifierGroups, setModifierGroups] = useState<ItemModifierGroup[]>(
-    item.modifierGroups,
-  );
+  const [modifierGroups, setModifierGroups] = useState<ItemModifierGroup[]>(item.modifierGroups);
   const [showAddGroup, setShowAddGroup] = useState(false);
 
   // ── Image upload state ──
@@ -524,10 +504,10 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
         `/api/upload/presign?contentType=${encodeURIComponent(file.type)}`,
       );
       if (!presignRes.ok) {
-        const data = await presignRes.json().catch(() => ({})) as { error?: string };
+        const data = (await presignRes.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Failed to get upload URL");
       }
-      const { uploadUrl, publicUrl } = await presignRes.json() as {
+      const { uploadUrl, publicUrl } = (await presignRes.json()) as {
         uploadUrl: string;
         publicUrl: string;
         key: string;
@@ -578,7 +558,7 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Failed to save item");
       }
 
@@ -639,10 +619,7 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
           <h2 className="text-base font-semibold text-slate-800 truncate max-w-xs">
             {name || "Untitled item"}
           </h2>
-          <Badge
-            variant={isActive ? "default" : "destructive"}
-            className="text-xs shrink-0"
-          >
+          <Badge variant={isActive ? "default" : "destructive"} className="text-xs shrink-0">
             {isActive ? "Active" : "Inactive"}
           </Badge>
         </div>
@@ -668,9 +645,7 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
             <div className="space-y-5">
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-slate-700">
-                    Item details
-                  </h3>
+                  <h3 className="text-sm font-semibold text-slate-700">Item details</h3>
                   {/* Language tab toggle */}
                   <div className="flex items-center gap-1 text-xs font-medium">
                     <button
@@ -777,11 +752,7 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <Switch
-                      id="item-active"
-                      checked={isActive}
-                      onCheckedChange={setIsActive}
-                    />
+                    <Switch id="item-active" checked={isActive} onCheckedChange={setIsActive} />
                     <Label htmlFor="item-active">
                       {isActive ? "Active (visible to customers)" : "Inactive (hidden)"}
                     </Label>
@@ -837,29 +808,26 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
                       {imageUrl && !uploading && (
                         <button
                           type="button"
-                          onClick={() => { setImageUrl(""); setUploadError(null); }}
+                          onClick={() => {
+                            setImageUrl("");
+                            setUploadError(null);
+                          }}
                           className="text-xs text-red-500 hover:text-red-700"
                         >
                           Remove
                         </button>
                       )}
 
-                      {uploadError && (
-                        <p className="text-xs text-red-600">{uploadError}</p>
-                      )}
+                      {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Save button + feedback */}
-              {saveError && (
-                <p className="text-sm text-red-600">{saveError}</p>
-              )}
+              {saveError && <p className="text-sm text-red-600">{saveError}</p>}
               {savedAt && !saveError && (
-                <p className="text-sm text-green-600">
-                  Saved at {savedAt.toLocaleTimeString()}
-                </p>
+                <p className="text-sm text-green-600">Saved at {savedAt.toLocaleTimeString()}</p>
               )}
               <Button type="submit" disabled={saving || !name.trim()}>
                 {saving ? "Saving…" : "Save changes"}
@@ -869,9 +837,7 @@ export function ItemEditPage({ item }: ItemEditPageProps) {
             {/* ── Right column: modifiers ── */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-700">
-                  Modifier groups
-                </h3>
+                <h3 className="text-sm font-semibold text-slate-700">Modifier groups</h3>
                 {!showAddGroup && (
                   <Button
                     type="button"

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import { setKitchenCatalogs } from "@/app/(dashboard)/kitchens/actions";
+import { useState, useTransition } from "react";
 
 interface CatalogOption {
   id: string;

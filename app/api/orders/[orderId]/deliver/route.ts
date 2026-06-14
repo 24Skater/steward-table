@@ -8,10 +8,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 const DRIVER_ALLOWED_TARGETS = new Set<OrderStatus>(["OUT_FOR_DELIVERY", "DELIVERED"]);
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ orderId: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ orderId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -22,13 +19,21 @@ export async function POST(
   // Support both JSON body and form data
   let targetStatus: string | null = null;
   const contentType = req.headers.get("content-type") ?? "";
-  if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
+  if (
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data")
+  ) {
     const formData = await req.formData().catch(() => null);
     const val = formData?.get("status");
     if (typeof val === "string") targetStatus = val;
   } else {
     const body: unknown = await req.json().catch(() => null);
-    if (body && typeof body === "object" && "status" in body && typeof (body as Record<string, unknown>).status === "string") {
+    if (
+      body &&
+      typeof body === "object" &&
+      "status" in body &&
+      typeof (body as Record<string, unknown>).status === "string"
+    ) {
       targetStatus = (body as { status: string }).status;
     }
   }
@@ -95,7 +100,9 @@ export async function POST(
       await transition(orderId, "COMPLETED", { queue: effectQueue });
     }
 
-    const isFormSubmit = contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data");
+    const isFormSubmit =
+      contentType.includes("application/x-www-form-urlencoded") ||
+      contentType.includes("multipart/form-data");
     if (isFormSubmit) {
       return new NextResponse(null, { status: 303, headers: { Location: "/d" } });
     }

@@ -1,9 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_KITCHEN_NAME,
   DEFAULT_KITCHEN_SLUG,
   createDefaultKitchen,
 } from "@/lib/kitchens/defaults";
+import { describe, expect, it, vi } from "vitest";
 
 describe("createDefaultKitchen", () => {
   it("creates a kitchen named 'Main Kitchen' with slug 'main' and isDefault true", async () => {

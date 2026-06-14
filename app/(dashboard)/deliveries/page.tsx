@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { TopBar } from "@/components/layout/top-bar";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
-import type { OrderStatus, FulfillmentType } from "@prisma/client";
+import { db } from "@/lib/db";
+import type { FulfillmentType, OrderStatus } from "@prisma/client";
+import { redirect } from "next/navigation";
 
 interface DeliveryOrderRow {
   id: string;
@@ -61,9 +61,7 @@ function formatAddress(info: NonNullable<DeliveryOrderRow["deliveryInfo"]>): str
 }
 
 function formatItemSummary(items: DeliveryOrderRow["items"]): string {
-  return items
-    .map((i) => `${i.quantity}x ${i.itemName}`)
-    .join(", ");
+  return items.map((i) => `${i.quantity}x ${i.itemName}`).join(", ");
 }
 
 function formatScheduled(d: Date | null): string {
@@ -85,7 +83,7 @@ export default async function DeliveriesPage() {
 
   const churchId = membership.churchId;
 
-  const [rawDeliveries, rawAvailable] = await Promise.all([
+  const [rawDeliveries, rawAvailable] = (await Promise.all([
     // Assigned to this driver, active statuses
     (db.deliveryInfo.findMany as PrismaBypass)({
       where: {
@@ -142,7 +140,7 @@ export default async function DeliveriesPage() {
       orderBy: [{ scheduledFor: "asc" }, { createdAt: "asc" }],
       _bypassTenancyCheck: true,
     }),
-  ]) as [
+  ])) as [
     Array<{
       recipientName: string;
       line1: string;
@@ -227,11 +225,8 @@ export default async function DeliveriesPage() {
             <ul className="space-y-4">
               {deliveries.map((delivery) => {
                 const statusLabel = STATUS_LABELS[delivery.status] ?? delivery.status;
-                const statusColor =
-                  STATUS_COLORS[delivery.status] ?? "bg-slate-100 text-slate-700";
-                const address = delivery.deliveryInfo
-                  ? formatAddress(delivery.deliveryInfo)
-                  : null;
+                const statusColor = STATUS_COLORS[delivery.status] ?? "bg-slate-100 text-slate-700";
+                const address = delivery.deliveryInfo ? formatAddress(delivery.deliveryInfo) : null;
                 const itemSummary = formatItemSummary(delivery.items);
 
                 return (
@@ -241,9 +236,7 @@ export default async function DeliveriesPage() {
                   >
                     {/* Header row */}
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-semibold text-slate-800">
-                        #{delivery.number}
-                      </span>
+                      <span className="font-semibold text-slate-800">#{delivery.number}</span>
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statusColor}`}
                       >
@@ -253,9 +246,7 @@ export default async function DeliveriesPage() {
 
                     {/* Customer */}
                     <div>
-                      <p className="text-sm font-medium text-slate-800">
-                        {delivery.customer.name}
-                      </p>
+                      <p className="text-sm font-medium text-slate-800">{delivery.customer.name}</p>
                       {delivery.customer.phone && (
                         <a
                           href={`tel:${delivery.customer.phone}`}
@@ -267,14 +258,10 @@ export default async function DeliveriesPage() {
                     </div>
 
                     {/* Items */}
-                    {itemSummary && (
-                      <p className="text-sm text-slate-600">{itemSummary}</p>
-                    )}
+                    {itemSummary && <p className="text-sm text-slate-600">{itemSummary}</p>}
 
                     {/* Address */}
-                    {address && (
-                      <p className="text-sm text-slate-500">{address}</p>
-                    )}
+                    {address && <p className="text-sm text-slate-500">{address}</p>}
 
                     {/* Navigate + Call row */}
                     <div className="flex gap-2">

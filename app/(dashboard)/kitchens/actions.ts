@@ -1,10 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth/helpers";
-import { can } from "@/lib/rbac/can";
 import { db } from "@/lib/db";
 import { generateUniqueKitchenSlug } from "@/lib/kitchens/slug";
+import { can } from "@/lib/rbac/can";
+import { revalidatePath } from "next/cache";
 
 async function requireCatalogEdit() {
   const session = await requireAuth();

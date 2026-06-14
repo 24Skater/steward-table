@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { CustomersTable } from "./customers-table";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { CustomerDetailDrawer } from "./customer-detail-drawer";
 import type { CustomerRow } from "./customer-detail-drawer";
+import { CustomersTable } from "./customers-table";
 
 interface CustomersPageProps {
   customers: CustomerRow[];
@@ -13,7 +13,11 @@ interface CustomersPageProps {
   canExport?: boolean;
 }
 
-export function CustomersPage({ customers, initialSearch = "", canExport = false }: CustomersPageProps) {
+export function CustomersPage({
+  customers,
+  initialSearch = "",
+  canExport = false,
+}: CustomersPageProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null);
@@ -91,10 +95,7 @@ export function CustomersPage({ customers, initialSearch = "", canExport = false
           </div>
         ) : (
           <div className="px-6 py-4">
-            <CustomersTable
-              customers={customers}
-              onViewCustomer={handleViewCustomer}
-            />
+            <CustomersTable customers={customers} onViewCustomer={handleViewCustomer} />
           </div>
         )}
       </div>

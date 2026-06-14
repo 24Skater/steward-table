@@ -1,8 +1,8 @@
-import { auth } from "@/lib/auth";
-import { redirect, notFound } from "next/navigation";
-import { db } from "@/lib/db";
-import type { SessionMembership } from "@/lib/auth/types";
 import { ItemModifiersManager } from "@/components/item-modifiers";
+import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { notFound, redirect } from "next/navigation";
 
 export default async function ItemModifiersPage({
   params,
