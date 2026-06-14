@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 async function resolveInventoryItem(itemId: string) {
   return db.inventoryItem.findUnique({
@@ -12,10 +12,7 @@ async function resolveInventoryItem(itemId: string) {
   });
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ itemId: string }> },
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ itemId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -23,7 +20,7 @@ export async function PATCH(
 
   const { itemId } = await params;
 
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     quantityOnHand?: number;
     lowStockThreshold?: number | null;
     trackingEnabled?: boolean;
@@ -35,8 +32,7 @@ export async function PATCH(
   }
 
   const membership = session.user.memberships?.find(
-    (m: SessionMembership) =>
-      m.churchId === existing.churchId && m.status === "ACTIVE",
+    (m: SessionMembership) => m.churchId === existing.churchId && m.status === "ACTIVE",
   );
   if (!membership) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -97,8 +93,7 @@ export async function DELETE(
   }
 
   const membership = session.user.memberships?.find(
-    (m: SessionMembership) =>
-      m.churchId === existing.churchId && m.status === "ACTIVE",
+    (m: SessionMembership) => m.churchId === existing.churchId && m.status === "ACTIVE",
   );
   if (!membership) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

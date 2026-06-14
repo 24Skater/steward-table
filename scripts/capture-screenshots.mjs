@@ -1,6 +1,6 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
-import path from "path";
-import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.join(__dirname, "../public/screenshots");

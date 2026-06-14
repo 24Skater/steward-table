@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
+import { type NextRequest, NextResponse } from "next/server";
 
 // NOTE on schema:
 // `driverId` lives on DeliveryInfo (delivery.prisma), not on Order.
@@ -30,7 +30,7 @@ export async function PATCH(req: NextRequest) {
     driverId?: string | null;
   };
 
-  const order = await (db.order.findUnique as Function)({
+  const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: {
       id: true,
@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest) {
       deliveryInfo: { select: { id: true } },
     },
     _bypassTenancyCheck: true,
-  }) as {
+  })) as {
     id: string;
     churchId: string;
     fulfillment: string;
@@ -51,10 +51,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (order.fulfillment !== "DELIVERY") {
-    return NextResponse.json(
-      { error: "Order is not a delivery order" },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: "Order is not a delivery order" }, { status: 422 });
   }
 
   if (!order.deliveryInfo) {
@@ -86,7 +83,7 @@ export async function PATCH(req: NextRequest) {
   // If assigning to a specific driver, verify that driver is an active DRIVER
   // member of this church.
   if (driverId) {
-    const driverMembership = await (db.membership.findFirst as Function)({
+    const driverMembership = (await (db.membership.findFirst as PrismaBypass)({
       where: {
         userId: driverId,
         churchId: order.churchId,
@@ -94,7 +91,7 @@ export async function PATCH(req: NextRequest) {
       },
       select: { id: true, roles: true },
       _bypassTenancyCheck: true,
-    }) as { id: string; roles: string[] } | null;
+    })) as { id: string; roles: string[] } | null;
 
     if (!driverMembership) {
       return NextResponse.json(
@@ -104,14 +101,11 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (!driverMembership.roles.includes("DRIVER")) {
-      return NextResponse.json(
-        { error: "User does not have the Driver role" },
-        { status: 422 },
-      );
+      return NextResponse.json({ error: "User does not have the Driver role" }, { status: 422 });
     }
   }
 
-  await (db.deliveryInfo.update as Function)({
+  await (db.deliveryInfo.update as PrismaBypass)({
     where: { id: order.deliveryInfo.id },
     data: { driverId: driverId ?? null },
     _bypassTenancyCheck: true,

@@ -121,7 +121,8 @@ export function ReceiptSettingsForm({
             className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
           />
           <p className="text-xs text-slate-400 mt-1">
-            Appears on receipts as: &ldquo;{churchName} is a 501(c)(3) nonprofit. EIN: {ein || "—"}&rdquo;
+            Appears on receipts as: &ldquo;{churchName} is a 501(c)(3) nonprofit. EIN: {ein || "—"}
+            &rdquo;
           </p>
         </div>
       )}

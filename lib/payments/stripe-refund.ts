@@ -10,7 +10,7 @@ import { getStripeForChurch } from "@/lib/stripe/client";
  */
 export async function handleStripeRefundEffect(orderId: string): Promise<void> {
   try {
-    const order = await (db.order.findUnique as Function)({
+    const order = (await (db.order.findUnique as PrismaBypass)({
       where: { id: orderId },
       select: {
         id: true,
@@ -28,7 +28,7 @@ export async function handleStripeRefundEffect(orderId: string): Promise<void> {
         },
       },
       _bypassTenancyCheck: true,
-    }) as {
+    })) as {
       id: string;
       churchId: string;
       total: number;
@@ -42,8 +42,7 @@ export async function handleStripeRefundEffect(orderId: string): Promise<void> {
     if (!capturedPayment) return;
 
     const isStripePayment =
-      capturedPayment.method === "STRIPE_CARD" ||
-      capturedPayment.method === "STRIPE_OTHER";
+      capturedPayment.method === "STRIPE_CARD" || capturedPayment.method === "STRIPE_OTHER";
     if (!isStripePayment || !capturedPayment.externalId) return;
 
     // Skip if a full refund has already been issued

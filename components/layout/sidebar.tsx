@@ -1,26 +1,26 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { signOutAction } from "@/lib/auth/actions";
+import { cn } from "@/lib/utils";
 import {
-  ClipboardList,
-  ChefHat,
+  BarChart3,
   BookOpen,
-  UtensilsCrossed,
+  ChefHat,
+  ClipboardList,
+  LogOut,
+  Package,
+  Search,
+  Settings,
   SlidersHorizontal,
+  Truck,
+  UserCircle,
   Users,
   Users2,
-  Package,
-  Truck,
-  Settings,
-  BarChart3,
-  LogOut,
-  UserCircle,
-  Search,
+  UtensilsCrossed,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { NotificationBell } from "@/components/layout/notification-bell";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/orders", label: "Orders", icon: ClipboardList },

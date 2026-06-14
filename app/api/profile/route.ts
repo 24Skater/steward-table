@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const UpdateProfileSchema = z.object({
@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest) {
   if (name !== undefined) data.name = name ?? null;
   if (phone !== undefined) data.phone = phone ?? null;
 
-  await (db.user.update as Function)({
+  await (db.user.update as PrismaBypass)({
     where: { id: session.user.id },
     data,
     _bypassTenancyCheck: true,

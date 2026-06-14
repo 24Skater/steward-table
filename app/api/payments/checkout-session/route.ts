@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getPaymentAdapter } from "@/lib/payments";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface RequestBody {
   orderId?: string;

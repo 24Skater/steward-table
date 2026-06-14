@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Role, MembershipStatus } from "@prisma/client";
+import type { MembershipStatus, Role } from "@prisma/client";
+import { useState } from "react";
 
 interface StaffMembership {
   id: string;
@@ -74,7 +74,10 @@ export function StaffManager({
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [inviteMessage, setInviteMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [inviteMessage, setInviteMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
 
   function startEdit(m: StaffMembership) {
@@ -103,7 +106,7 @@ export function StaffManager({
         body: JSON.stringify({ membershipId, roles: editingRoles }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         setRowErrors((prev) => ({ ...prev, [membershipId]: data.error ?? "Failed to save roles" }));
       } else {
         setLocalMemberships((prev) =>
@@ -129,7 +132,7 @@ export function StaffManager({
         body: JSON.stringify({ membershipId: m.id, status: newStatus }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         setRowErrors((prev) => ({ ...prev, [m.id]: data.error ?? "Failed to update status" }));
       } else {
         setLocalMemberships((prev) =>
@@ -154,7 +157,7 @@ export function StaffManager({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: inviteEmail.trim() }),
       });
-      const data = await res.json().catch(() => ({})) as {
+      const data = (await res.json().catch(() => ({}))) as {
         invited?: boolean;
         message?: string;
         error?: string;
@@ -272,9 +275,7 @@ export function StaffManager({
                         <p className="font-medium text-slate-800">
                           {m.user.name ?? m.user.email ?? "Unknown"}
                           {self && (
-                            <span className="ml-1.5 text-xs text-slate-400 font-normal">
-                              (You)
-                            </span>
+                            <span className="ml-1.5 text-xs text-slate-400 font-normal">(You)</span>
                           )}
                         </p>
                         {m.user.name && m.user.email && (
@@ -378,11 +379,7 @@ export function StaffManager({
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => startEdit(m)}
-                          >
+                          <Button size="sm" variant="outline" onClick={() => startEdit(m)}>
                             Edit roles
                           </Button>
                           <Button
@@ -404,9 +401,7 @@ export function StaffManager({
                           </Button>
                         </div>
                       )}
-                      {rowError && (
-                        <p className="text-xs text-red-600 mt-1">{rowError}</p>
-                      )}
+                      {rowError && <p className="text-xs text-red-600 mt-1">{rowError}</p>}
                     </td>
                   )}
                 </tr>

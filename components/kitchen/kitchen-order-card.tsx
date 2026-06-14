@@ -3,13 +3,6 @@
 import { useTransition } from "react";
 import type { KitchenOrder } from "./kitchen-display";
 
-interface UrgencyLevel {
-  urgent: boolean;
-  border: string;
-  header: string;
-  badge?: string;
-}
-
 interface UrgencyConfig {
   urgent: boolean;
   border: string;
@@ -80,18 +73,14 @@ function printOrder(order: KitchenOrder) {
     .map((item) => {
       const modsHtml = Array.isArray(item.modifierSnapshot)
         ? item.modifierSnapshot
-            .flatMap((g) =>
-              g.options.map((o) => `<div class="mod">+ ${o.name}</div>`),
-            )
+            .flatMap((g) => g.options.map((o) => `<div class="mod">+ ${o.name}</div>`))
             .join("")
         : "";
       return `<div class="item"><strong>${item.quantity}&times; ${item.itemName}</strong>${modsHtml}</div>`;
     })
     .join("");
 
-  const noteHtml = order.notes
-    ? `<div class="note">&#9888; ${order.notes}</div>`
-    : "";
+  const noteHtml = order.notes ? `<div class="note">&#9888; ${order.notes}</div>` : "";
 
   win.document.write(`<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Order #${order.number}</title>
@@ -121,7 +110,9 @@ ${noteHtml}
 </body></html>`);
   win.document.close();
   win.focus();
-  setTimeout(() => { win.print(); }, 250);
+  setTimeout(() => {
+    win.print();
+  }, 250);
 }
 
 interface KitchenOrderCardProps {
@@ -138,9 +129,8 @@ export function KitchenOrderCard({ order, currentTime, onMarkReady }: KitchenOrd
     : formatOrderTime(order.createdAt);
 
   // "In kitchen 1h+" badge — only for IN_KITCHEN orders
-  const inKitchenMs = order.status === "IN_KITCHEN"
-    ? currentTime.getTime() - new Date(order.createdAt).getTime()
-    : 0;
+  const inKitchenMs =
+    order.status === "IN_KITCHEN" ? currentTime.getTime() - new Date(order.createdAt).getTime() : 0;
   const showStalebadge = inKitchenMs > 60 * 60 * 1000;
 
   function handlePrint() {
@@ -161,9 +151,7 @@ export function KitchenOrderCard({ order, currentTime, onMarkReady }: KitchenOrd
     >
       {/* Header */}
       <header className={`flex items-center justify-between px-4 py-3 ${urgency.header}`}>
-        <span className="text-white font-semibold text-lg tabular-nums">
-          #{order.number}
-        </span>
+        <span className="text-white font-semibold text-lg tabular-nums">#{order.number}</span>
         <div className="flex items-center gap-2">
           {showStalebadge && (
             <span className="text-xs font-semibold bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded">
@@ -182,15 +170,16 @@ export function KitchenOrderCard({ order, currentTime, onMarkReady }: KitchenOrd
               <p className="text-white font-medium text-xl leading-tight">
                 {item.quantity} &times; {item.itemName}
               </p>
-              {Array.isArray(item.modifierSnapshot) && item.modifierSnapshot.map((group) => (
-                <div key={group.groupName} className="pl-4 mt-0.5">
-                  {group.options.map((opt) => (
-                    <p key={opt.name} className="text-slate-400 text-base leading-snug">
-                      {group.groupName}: {opt.name}
-                    </p>
-                  ))}
-                </div>
-              ))}
+              {Array.isArray(item.modifierSnapshot) &&
+                item.modifierSnapshot.map((group) => (
+                  <div key={group.groupName} className="pl-4 mt-0.5">
+                    {group.options.map((opt) => (
+                      <p key={opt.name} className="text-slate-400 text-base leading-snug">
+                        {group.groupName}: {opt.name}
+                      </p>
+                    ))}
+                  </div>
+                ))}
             </div>
           ))}
         </div>
@@ -198,9 +187,7 @@ export function KitchenOrderCard({ order, currentTime, onMarkReady }: KitchenOrd
         {/* Customer note */}
         {order.notes && (
           <div className="px-4 py-2 bg-yellow-950/50 border-t border-yellow-800/30">
-            <p className="text-yellow-200 text-sm font-medium leading-snug">
-              Note: {order.notes}
-            </p>
+            <p className="text-yellow-200 text-sm font-medium leading-snug">Note: {order.notes}</p>
           </div>
         )}
 
@@ -221,8 +208,21 @@ export function KitchenOrderCard({ order, currentTime, onMarkReady }: KitchenOrd
             title="Print"
             style={{ minHeight: "88px", minWidth: "72px" }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
             </svg>
             <span className="sr-only">Print</span>
           </button>

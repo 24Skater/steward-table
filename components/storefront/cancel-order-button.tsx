@@ -1,34 +1,34 @@
-"use client"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+"use client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface CancelOrderButtonProps {
-  orderId: string
+  orderId: string;
 }
 
 export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleCancel() {
-    if (!confirm("Are you sure you want to cancel this order?")) return
-    setLoading(true)
-    setError(null)
+    if (!confirm("Are you sure you want to cancel this order?")) return;
+    setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/storefront/orders/${orderId}/cancel`, {
         method: "POST",
-      })
+      });
       if (!res.ok) {
-        const body = (await res.json()) as { error?: string }
-        setError(body.error ?? "Failed to cancel order")
-        return
+        const body = (await res.json()) as { error?: string };
+        setError(body.error ?? "Failed to cancel order");
+        return;
       }
-      router.refresh()
+      router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.")
+      setError("Something went wrong. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -43,5 +43,5 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
         {loading ? "Canceling…" : "Cancel order"}
       </button>
     </div>
-  )
+  );
 }

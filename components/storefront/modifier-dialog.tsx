@@ -1,16 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Minus, Plus } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import type { CartModifier } from "@/hooks/use-cart";
 import { useStorefrontStrings } from "@/components/storefront/storefront-locale-provider";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import type { CartModifier } from "@/hooks/use-cart";
+import { Minus, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface ModifierOption {
   id: string;
@@ -92,22 +87,26 @@ export function ModifierDialog({
       }
       setSelections(initial);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const [attempted, setAttempted] = useState(false);
 
-  const unmetGroups = modifierGroups
-    .filter((g) => g.isRequired && (selections[g.id]?.length ?? 0) < Math.max(g.minSelections, 1));
+  const unmetGroups = modifierGroups.filter(
+    (g) => g.isRequired && (selections[g.id]?.length ?? 0) < Math.max(g.minSelections, 1),
+  );
   const allRequiredMet = unmetGroups.length === 0;
 
   const modifierTotal = Object.entries(selections).reduce((sum, [groupId, selectedIds]) => {
     const group = modifierGroups.find((g) => g.id === groupId);
     if (!group) return sum;
-    return sum + selectedIds.reduce((s, optId) => {
-      const opt = group.options.find((o) => o.id === optId);
-      return s + (opt?.priceDelta ?? 0);
-    }, 0);
+    return (
+      sum +
+      selectedIds.reduce((s, optId) => {
+        const opt = group.options.find((o) => o.id === optId);
+        return s + (opt?.priceDelta ?? 0);
+      }, 0)
+    );
   }, 0);
 
   function toggleOption(group: ModifierGroup, optionId: string) {
@@ -158,12 +157,8 @@ export function ModifierDialog({
         </div>
 
         <SheetHeader className="px-5 pb-4">
-          <SheetTitle className="text-left text-lg font-bold text-slate-800">
-            {itemName}
-          </SheetTitle>
-          {itemDescription && (
-            <p className="mt-1 text-sm text-slate-500">{itemDescription}</p>
-          )}
+          <SheetTitle className="text-left text-lg font-bold text-slate-800">{itemName}</SheetTitle>
+          {itemDescription && <p className="mt-1 text-sm text-slate-500">{itemDescription}</p>}
         </SheetHeader>
 
         <div className="space-y-6 px-5 pb-4">
@@ -225,9 +220,7 @@ export function ModifierDialog({
             >
               <Minus className="h-4 w-4" />
             </button>
-            <span className="w-8 text-center text-lg font-semibold text-slate-800">
-              {quantity}
-            </span>
+            <span className="w-8 text-center text-lg font-semibold text-slate-800">{quantity}</span>
             <button
               type="button"
               onClick={() => setQuantity((q) => Math.min(maxQuantity ?? 99, q + 1))}
@@ -243,7 +236,9 @@ export function ModifierDialog({
             className="w-full py-6 text-base font-semibold text-white"
             style={{ backgroundColor: "var(--color-accent, #10b981)" }}
           >
-            {confirmLabel ?? s.addItem}{quantity > 1 ? ` ${quantity} × ` : " "}{s.toOrder} — {formatCents((itemBasePrice + modifierTotal) * quantity)}
+            {confirmLabel ?? s.addItem}
+            {quantity > 1 ? ` ${quantity} × ` : " "}
+            {s.toOrder} — {formatCents((itemBasePrice + modifierTotal) * quantity)}
           </Button>
         </div>
       </SheetContent>

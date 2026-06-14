@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
 import { TopBar } from "@/components/layout/top-bar";
 import { TeamPage } from "@/components/team";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import { redirect } from "next/navigation";
 
 export default async function TeamRoute() {
   const session = await auth();
@@ -34,7 +34,7 @@ export default async function TeamRoute() {
   }
 
   const [members, invitations] = await Promise.all([
-    (db.membership.findMany as Function)({
+    (db.membership.findMany as PrismaBypass)({
       where: {
         churchId: membership.churchId,
         status: { in: ["ACTIVE", "SUSPENDED"] },
@@ -51,7 +51,7 @@ export default async function TeamRoute() {
       _bypassTenancyCheck: true,
     }),
     inviteResult.allowed
-      ? (db.invitation.findMany as Function)({
+      ? (db.invitation.findMany as PrismaBypass)({
           where: {
             churchId: membership.churchId,
             status: "PENDING",

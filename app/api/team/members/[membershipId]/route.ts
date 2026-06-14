@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
 import type { Role } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface RouteContext {
   params: Promise<{ membershipId: string }>;
@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: result.reason ?? "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as { roles?: Role[] } | null;
+  const body = (await req.json().catch(() => null)) as { roles?: Role[] } | null;
   if (!body?.roles || !Array.isArray(body.roles) || body.roles.length === 0) {
     return NextResponse.json({ error: "roles array is required" }, { status: 400 });
   }
@@ -45,7 +45,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 
   // Prevent removing OWNER role if this is the last OWNER
-  const target = await (db.membership.findFirst as Function)({
+  const target = await (db.membership.findFirst as PrismaBypass)({
     where: { id: membershipId, churchId: membership.churchId },
     _bypassTenancyCheck: true,
   });
@@ -57,7 +57,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     (target.roles as Role[]).includes("OWNER") && !body.roles.includes("OWNER");
 
   if (isRemovingOwner) {
-    const ownerCount = await (db.membership.count as Function)({
+    const ownerCount = await (db.membership.count as PrismaBypass)({
       where: {
         churchId: membership.churchId,
         status: "ACTIVE",
@@ -73,7 +73,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     }
   }
 
-  const updated = await (db.membership.update as Function)({
+  const updated = await (db.membership.update as PrismaBypass)({
     where: { id: membershipId },
     data: { roles: body.roles },
     select: {
@@ -114,7 +114,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
   }
 
   // Cannot remove yourself if you are the last OWNER
-  const target = await (db.membership.findFirst as Function)({
+  const target = await (db.membership.findFirst as PrismaBypass)({
     where: { id: membershipId, churchId: membership.churchId },
     _bypassTenancyCheck: true,
   });
@@ -127,7 +127,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
   }
 
   if ((target.roles as Role[]).includes("OWNER")) {
-    const ownerCount = await (db.membership.count as Function)({
+    const ownerCount = await (db.membership.count as PrismaBypass)({
       where: {
         churchId: membership.churchId,
         status: "ACTIVE",
@@ -143,7 +143,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     }
   }
 
-  await (db.membership.update as Function)({
+  await (db.membership.update as PrismaBypass)({
     where: { id: membershipId },
     data: { status: "REMOVED" },
     _bypassTenancyCheck: true,

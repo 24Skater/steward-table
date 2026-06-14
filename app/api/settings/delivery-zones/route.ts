@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   const session = await auth();
@@ -17,7 +17,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const zones = await (db.deliveryZone.findMany as Function)({
+  const zones = await (db.deliveryZone.findMany as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: {
       id: true,
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     name?: string;
     postalCodes?: string[];
     feeCents?: number;
@@ -77,10 +77,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "feeCents must be a non-negative integer" }, { status: 400 });
   }
   if (typeof minOrderCents !== "number" || minOrderCents < 0) {
-    return NextResponse.json({ error: "minOrderCents must be a non-negative integer" }, { status: 400 });
+    return NextResponse.json(
+      { error: "minOrderCents must be a non-negative integer" },
+      { status: 400 },
+    );
   }
 
-  const zone = await (db.deliveryZone.create as Function)({
+  const zone = await (db.deliveryZone.create as PrismaBypass)({
     data: {
       churchId: membership.churchId,
       name: name.trim(),
@@ -129,7 +132,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Missing id query parameter" }, { status: 400 });
   }
 
-  const zone = await (db.deliveryZone.findFirst as Function)({
+  const zone = await (db.deliveryZone.findFirst as PrismaBypass)({
     where: { id, churchId: membership.churchId },
     select: { id: true },
   });
@@ -138,7 +141,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Delivery zone not found" }, { status: 404 });
   }
 
-  await (db.deliveryZone.update as Function)({
+  await (db.deliveryZone.update as PrismaBypass)({
     where: { id },
     data: { deletedAt: new Date() },
     _bypassTenancyCheck: true,

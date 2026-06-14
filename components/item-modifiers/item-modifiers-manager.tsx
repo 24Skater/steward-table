@@ -1,11 +1,11 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ModifierGroupCard } from "./modifier-group-card";
 import { AddModifierGroupDialog } from "./add-modifier-group-dialog";
+import { ModifierGroupCard } from "./modifier-group-card";
 
 interface ModifierOption {
   id: string;
@@ -43,10 +43,7 @@ interface ItemModifiersManagerProps {
   churchId: string;
 }
 
-export function ItemModifiersManager({
-  item,
-  catalogId,
-}: ItemModifiersManagerProps) {
+export function ItemModifiersManager({ item, catalogId }: ItemModifiersManagerProps) {
   const [addGroupOpen, setAddGroupOpen] = useState(false);
 
   return (
@@ -77,27 +74,19 @@ export function ItemModifiersManager({
         <div className="rounded-lg border border-dashed border-slate-200 bg-white p-10 text-center">
           <p className="text-slate-500 text-sm">No modifier groups yet.</p>
           <p className="text-slate-400 text-xs mt-1">
-            Add groups like "Pupusa Filling" or "Heat level" to give customers
-            customization options.
+            Add groups like "Pupusa Filling" or "Heat level" to give customers customization
+            options.
           </p>
         </div>
       ) : (
         <div className="space-y-3">
           {item.modifierGroups.map((binding) => (
-            <ModifierGroupCard
-              key={binding.id}
-              binding={binding}
-              itemId={item.id}
-            />
+            <ModifierGroupCard key={binding.id} binding={binding} itemId={item.id} />
           ))}
         </div>
       )}
 
-      <AddModifierGroupDialog
-        open={addGroupOpen}
-        onOpenChange={setAddGroupOpen}
-        itemId={item.id}
-      />
+      <AddModifierGroupDialog open={addGroupOpen} onOpenChange={setAddGroupOpen} itemId={item.id} />
     </div>
   );
 }

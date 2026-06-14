@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 type BulkAction =
   | { action: "set_status"; value: "ACTIVE" | "INACTIVE"; itemIds: string[] }
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as BulkAction | null;
+  const body = (await req.json().catch(() => null)) as BulkAction | null;
   if (!body?.action || !Array.isArray(body.itemIds) || body.itemIds.length === 0) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }

@@ -1,24 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { OrderStatusBadge } from "./order-status-badge";
+import type { FulfillmentType, OrderStatus } from "@prisma/client";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { AssignDriverSelect } from "./assign-driver-select";
 import type { DriverOption } from "./assign-driver-select";
-import { getNextStep, FULFILLMENT_LABELS, formatOrderTime } from "./order-utils";
-import type { OrderStatus, FulfillmentType } from "@prisma/client";
+import { OrderStatusBadge } from "./order-status-badge";
+import { FULFILLMENT_LABELS, formatOrderTime, getNextStep } from "./order-utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -107,7 +107,9 @@ function formatPrice(cents: number): string {
   }).format(cents / 100);
 }
 
-function parseModifiers(snapshot: unknown): Array<{ name: string; choice: string; priceDelta?: number }> {
+function parseModifiers(
+  snapshot: unknown,
+): Array<{ name: string; choice: string; priceDelta?: number }> {
   if (!snapshot || typeof snapshot !== "object") return [];
   if (!Array.isArray(snapshot)) return [];
   return snapshot.filter(
@@ -142,9 +144,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-lg border border-slate-200 bg-white p-5 ${className}`}>
-      {children}
-    </div>
+    <div className={`rounded-lg border border-slate-200 bg-white p-5 ${className}`}>{children}</div>
   );
 }
 
@@ -189,7 +189,7 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
         body: JSON.stringify({ refundAll: true, reason: refundReason || undefined }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         setRefundError(data.error ?? "Refund failed");
         setRefundInFlight(false);
         return;
@@ -211,13 +211,7 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
           href="/orders"
           className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors mb-3"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            aria-hidden="true"
-          >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path
               d="M8.5 2.5L4 7l4.5 4.5"
               stroke="currentColor"
@@ -235,24 +229,15 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
               #{order.number}
             </span>
             <OrderStatusBadge status={order.status} />
-            <Badge
-              variant="outline"
-              className="text-xs text-slate-500 border-slate-200"
-            >
+            <Badge variant="outline" className="text-xs text-slate-500 border-slate-200">
               {FULFILLMENT_LABELS[order.fulfillment]}
             </Badge>
-            <span className="text-sm text-slate-400">
-              {formatOrderTime(displayTime)}
-            </span>
+            <span className="text-sm text-slate-400">{formatOrderTime(displayTime)}</span>
           </div>
 
           <div className="flex items-center gap-2">
             {nextStep && !inFlight ? (
-              <Button
-                size="sm"
-                onClick={handleNextStep}
-                className="h-8 px-3 text-sm"
-              >
+              <Button size="sm" onClick={handleNextStep} className="h-8 px-3 text-sm">
                 {nextStep.label}
               </Button>
             ) : inFlight ? (
@@ -263,7 +248,10 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
                 size="sm"
                 variant="outline"
                 className="h-8 px-3 text-sm text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
-                onClick={() => { setRefundError(null); setRefundOpen(true); }}
+                onClick={() => {
+                  setRefundError(null);
+                  setRefundOpen(true);
+                }}
               >
                 Issue refund
               </Button>
@@ -381,9 +369,7 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
             <Card>
               <SectionHeading>Customer</SectionHeading>
               <div className="flex flex-col gap-1.5">
-                <p className="text-sm font-medium text-slate-800">
-                  {order.customer.name}
-                </p>
+                <p className="text-sm font-medium text-slate-800">{order.customer.name}</p>
                 {order.customer.phone && (
                   <p className="text-sm text-slate-600">{order.customer.phone}</p>
                 )}
@@ -399,10 +385,7 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-slate-600">Type</span>
-                  <Badge
-                    variant="outline"
-                    className="text-xs text-slate-600 border-slate-200"
-                  >
+                  <Badge variant="outline" className="text-xs text-slate-600 border-slate-200">
                     {FULFILLMENT_LABELS[order.fulfillment]}
                   </Badge>
                 </div>
@@ -410,9 +393,7 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
                 {order.scheduledFor && (
                   <div>
                     <p className="text-xs text-slate-500 mb-0.5">Scheduled for</p>
-                    <p className="text-sm text-slate-800">
-                      {formatOrderTime(order.scheduledFor)}
-                    </p>
+                    <p className="text-sm text-slate-800">{formatOrderTime(order.scheduledFor)}</p>
                   </div>
                 )}
 
@@ -477,10 +458,8 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
           <div className="flex flex-col gap-4 py-2">
             <p className="text-sm text-slate-600">
               This will refund the full amount of{" "}
-              <span className="font-medium tabular-nums">
-                {formatPrice(order.total)}
-              </span>{" "}
-              to the customer. This action cannot be undone.
+              <span className="font-medium tabular-nums">{formatPrice(order.total)}</span> to the
+              customer. This action cannot be undone.
             </p>
 
             <div className="flex flex-col gap-1.5">
@@ -602,9 +581,7 @@ function OrderTimeline({ order, auditLogs }: OrderTimelineProps) {
 }
 
 function TimelineDot() {
-  return (
-    <div className="w-2.5 h-2.5 rounded-full border-2 border-slate-300 bg-white shrink-0" />
-  );
+  return <div className="w-2.5 h-2.5 rounded-full border-2 border-slate-300 bg-white shrink-0" />;
 }
 
 interface TimelineItemProps {

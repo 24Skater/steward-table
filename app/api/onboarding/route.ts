@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { createDefaultKitchen } from "@/lib/kitchens/defaults";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const onboardingSchema = z.object({
   churchName: z.string().min(1, "Church name is required"),
@@ -29,10 +30,7 @@ export async function POST(req: NextRequest) {
     (m: SessionMembership) => m.status === "ACTIVE",
   );
   if (hasActiveMembership) {
-    return NextResponse.json(
-      { error: "You already belong to a church." },
-      { status: 409 },
-    );
+    return NextResponse.json({ error: "You already belong to a church." }, { status: 409 });
   }
 
   const rawBody: unknown = await req.json().catch(() => null);
@@ -43,16 +41,13 @@ export async function POST(req: NextRequest) {
   const parsed = onboardingSchema.safeParse(rawBody);
   if (!parsed.success) {
     const firstError = parsed.error.errors[0];
-    return NextResponse.json(
-      { error: firstError?.message ?? "Validation error" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: firstError?.message ?? "Validation error" }, { status: 400 });
   }
 
   const { churchName, slug, timezone, displayName, phone } = parsed.data;
 
   // Check slug uniqueness
-  const existingChurch = await (db.church.findUnique as Function)({
+  const existingChurch = await (db.church.findUnique as PrismaBypass)({
     where: { slug },
     select: { id: true },
     ...({ _bypassTenancyCheck: true } as object),
@@ -66,7 +61,7 @@ export async function POST(req: NextRequest) {
   }
 
   await db.$transaction(async (tx) => {
-    const church = await (tx.church.create as Function)({
+    const church = await (tx.church.create as PrismaBypass)({
       data: {
         name: churchName,
         slug,
@@ -74,7 +69,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await (tx.user.update as Function)({
+    await (tx.user.update as PrismaBypass)({
       where: { id: session.user.id },
       data: {
         name: displayName,
@@ -82,7 +77,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await (tx.membership.create as Function)({
+    await (tx.membership.create as PrismaBypass)({
       data: {
         userId: session.user.id,
         churchId: church.id,
@@ -91,16 +86,18 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await (tx.churchSettings.create as Function)({
+    await (tx.churchSettings.create as PrismaBypass)({
       data: { churchId: church.id },
     });
 
-    await (tx.orderCounter.create as Function)({
+    await (tx.orderCounter.create as PrismaBypass)({
       data: {
         churchId: church.id,
         value: 0,
       },
     });
+
+    await createDefaultKitchen(tx as never, church.id);
   });
 
   return NextResponse.json({ success: true }, { status: 201 });

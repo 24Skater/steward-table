@@ -1,5 +1,5 @@
 model AuditLog {
-  id         String   @id @default(cuid())
+  id         String  @id @default(cuid())
   churchId   String?
   actorId    String?
   action     String

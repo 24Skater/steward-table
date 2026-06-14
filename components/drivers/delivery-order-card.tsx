@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
+import { Badge } from "@/components/ui/badge";
 import type { OrderStatus } from "@prisma/client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -37,11 +37,7 @@ interface DeliveryOrderCardProps {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function DeliveryOrderCard({
-  order,
-  drivers,
-  canAssign,
-}: DeliveryOrderCardProps) {
+export function DeliveryOrderCard({ order, drivers, canAssign }: DeliveryOrderCardProps) {
   const router = useRouter();
   const [selectedDriverId, setSelectedDriverId] = useState<string>(
     order.deliveryInfo?.driverId ?? "",
@@ -98,9 +94,7 @@ export function DeliveryOrderCard({
     <div
       className={[
         "rounded-lg border bg-white p-4 flex flex-col gap-3",
-        isUnassigned
-          ? "border-l-4 border-l-amber-400 border-slate-200"
-          : "border-slate-200",
+        isUnassigned ? "border-l-4 border-l-amber-400 border-slate-200" : "border-slate-200",
       ].join(" ")}
     >
       {/* Header row */}
@@ -114,17 +108,13 @@ export function DeliveryOrderCard({
       {/* Recipient */}
       <div className="flex flex-col gap-0.5">
         <p className="text-sm font-medium text-slate-800">{recipientLine}</p>
-        {addressLine && (
-          <p className="text-xs text-slate-500 truncate">{addressLine}</p>
-        )}
+        {addressLine && <p className="text-xs text-slate-500 truncate">{addressLine}</p>}
       </div>
 
       {/* Driver assignment */}
       {canAssign ? (
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-500">
-            Assigned driver
-          </label>
+          <label className="text-xs font-medium text-slate-500">Assigned driver</label>
           <select
             value={selectedDriverId}
             disabled={inFlight}
@@ -138,9 +128,7 @@ export function DeliveryOrderCard({
               </option>
             ))}
           </select>
-          {inFlight && (
-            <p className="text-xs text-slate-400">Saving…</p>
-          )}
+          {inFlight && <p className="text-xs text-slate-400">Saving…</p>}
           {error && <p className="text-xs text-red-600">{error}</p>}
         </div>
       ) : order.deliveryInfo?.driverId ? (
@@ -148,8 +136,7 @@ export function DeliveryOrderCard({
           variant="outline"
           className="w-fit text-xs bg-slate-50 text-slate-600 border-slate-200"
         >
-          {drivers.find((d) => d.id === order.deliveryInfo?.driverId)?.name ??
-            "Driver assigned"}
+          {drivers.find((d) => d.id === order.deliveryInfo?.driverId)?.name ?? "Driver assigned"}
         </Badge>
       ) : (
         <Badge

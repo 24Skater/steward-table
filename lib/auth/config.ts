@@ -86,7 +86,7 @@ export const authConfig: NextAuthConfig = {
         },
       };
     },
-    async signIn({ user, account }) {
+    async signIn({ user }) {
       if (!user?.email) return false;
       // Allow sign-in for all valid users
       // Additional restrictions can be applied here (e.g., suspended users)

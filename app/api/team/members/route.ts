@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   const session = await auth();
@@ -26,7 +26,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const members = await (db.membership.findMany as Function)({
+  const members = await (db.membership.findMany as PrismaBypass)({
     where: {
       churchId: membership.churchId,
       status: { in: ["ACTIVE", "SUSPENDED"] },

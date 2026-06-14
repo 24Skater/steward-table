@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
   const body = parsed.data;
 
   // 3. Resolve catalog → churchId (bypass tenancy for lookup)
-  const catalog = (await (db.catalog.findUnique as Function)({
+  const catalog = (await (db.catalog.findUnique as PrismaBypass)({
     where: { id: body.catalogId },
     select: { id: true, churchId: true },
     _bypassTenancyCheck: true,
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 6. Fetch church for currency
-  const church = (await (db.church.findUnique as Function)({
+  const church = (await (db.church.findUnique as PrismaBypass)({
     where: { id: churchId },
     select: { currency: true },
     _bypassTenancyCheck: true,

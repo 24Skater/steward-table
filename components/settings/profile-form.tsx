@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Check } from "lucide-react";
+import { useState } from "react";
 
 interface ProfileUser {
   id: string;
@@ -40,9 +40,9 @@ function getInitials(name: string | null, email: string | null): string {
   if (name) {
     const parts = name.trim().split(/\s+/);
     if (parts.length >= 2) {
-      return `${parts[0]![0]}${parts[parts.length - 1]![0]}`.toUpperCase();
+      return `${parts[0]?.[0]}${parts[parts.length - 1]?.[0]}`.toUpperCase();
     }
-    return parts[0]!.slice(0, 2).toUpperCase();
+    return (parts[0] ?? "").slice(0, 2).toUpperCase();
   }
   if (email) {
     return email.slice(0, 2).toUpperCase();
@@ -177,9 +177,7 @@ export function ProfileForm({ user, membership, hasPassword = false }: ProfileFo
               disabled
               className="bg-slate-50 text-slate-400 cursor-not-allowed"
             />
-            <p className="text-xs text-slate-500">
-              Email address cannot be changed here.
-            </p>
+            <p className="text-xs text-slate-500">Email address cannot be changed here.</p>
           </div>
 
           <div className="space-y-1.5">
@@ -193,9 +191,7 @@ export function ProfileForm({ user, membership, hasPassword = false }: ProfileFo
             />
           </div>
 
-          {errorMessage && (
-            <p className="text-sm text-red-600">{errorMessage}</p>
-          )}
+          {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
           <Button type="submit" disabled={saveState === "saving"}>
             {saveState === "saving" && "Saving..."}
@@ -258,9 +254,7 @@ export function ProfileForm({ user, membership, hasPassword = false }: ProfileFo
               />
             </div>
 
-            {pwError && (
-              <p className="text-sm text-red-600">{pwError}</p>
-            )}
+            {pwError && <p className="text-sm text-red-600">{pwError}</p>}
 
             <Button type="submit" disabled={pwSaveState === "saving"} variant="outline">
               {pwSaveState === "saving" && "Saving..."}

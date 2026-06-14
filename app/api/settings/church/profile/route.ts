@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const putSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -15,7 +15,11 @@ const putSchema = z.object({
   timezone: z.string().min(1),
   legalName: z.string().max(200).nullable().optional(),
   logoUrl: z.string().url().nullable().optional(),
-  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Accent color must be a valid hex color").nullable().optional(),
+  accentColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Accent color must be a valid hex color")
+    .nullable()
+    .optional(),
   replyToEmail: z.string().email().nullable().optional(),
   displayName: z.string().max(100).nullable().optional(),
   customerSelfCancelWindowMinutes: z.number().int().min(0).max(1440).optional(),
@@ -73,7 +77,7 @@ export async function PUT(req: NextRequest) {
   } = parsed.data;
 
   const [updatedChurch] = await Promise.all([
-    (db.church.update as Function)({
+    (db.church.update as PrismaBypass)({
       where: { id: membership.churchId, ...({ _bypassTenancyCheck: true } as object) },
       data: {
         name,
@@ -84,9 +88,18 @@ export async function PUT(req: NextRequest) {
         ...(accentColor !== undefined && { accentColor }),
         ...(locale !== undefined && { locale }),
       },
-      select: { id: true, name: true, slug: true, timezone: true, legalName: true, logoUrl: true, accentColor: true, locale: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        timezone: true,
+        legalName: true,
+        logoUrl: true,
+        accentColor: true,
+        locale: true,
+      },
     }),
-    (db.churchSettings.upsert as Function)({
+    (db.churchSettings.upsert as PrismaBypass)({
       where: { churchId: membership.churchId, ...({ _bypassTenancyCheck: true } as object) },
       create: {
         churchId: membership.churchId,

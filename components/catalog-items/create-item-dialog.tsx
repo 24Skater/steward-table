@@ -118,7 +118,7 @@ export function CreateItemDialog({
       setError("Name is required.");
       return;
     }
-    if (isNaN(priceFloat) || priceFloat < 0) {
+    if (Number.isNaN(priceFloat) || priceFloat < 0) {
       setError("Enter a valid price (e.g. 12.99).");
       return;
     }
@@ -126,7 +126,12 @@ export function CreateItemDialog({
     setIsSubmitting(true);
     try {
       const translations = nameEs.trim()
-        ? { es: { name: nameEs.trim(), ...(descriptionEs.trim() && { description: descriptionEs.trim() }) } }
+        ? {
+            es: {
+              name: nameEs.trim(),
+              ...(descriptionEs.trim() && { description: descriptionEs.trim() }),
+            },
+          }
         : null;
 
       // Step 1: create the item

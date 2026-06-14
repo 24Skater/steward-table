@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import type { AssignedDelivery, AvailableDelivery } from "@/app/(driver)/d/page";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 function formatScheduled(iso: string | null): string {
   if (!iso) return "ASAP";
@@ -56,9 +56,7 @@ function AssignedCard({ delivery, onAction, inFlight }: AssignedCardProps) {
         </Link>
         <span
           className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-            isReady
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-blue-100 text-blue-800"
+            isReady ? "bg-yellow-100 text-yellow-800" : "bg-blue-100 text-blue-800"
           }`}
         >
           {isReady ? "Ready" : "Out for Delivery"}
@@ -75,9 +73,7 @@ function AssignedCard({ delivery, onAction, inFlight }: AssignedCardProps) {
         </div>
 
         {/* Items */}
-        {summary && (
-          <p className="text-sm text-slate-600 line-clamp-2">{summary}</p>
-        )}
+        {summary && <p className="text-sm text-slate-600 line-clamp-2">{summary}</p>}
 
         {/* Special instructions */}
         {delivery.deliveryInfo?.instructions && (
@@ -161,9 +157,7 @@ function AvailableCard({ delivery, onClaim }: AvailableCardProps) {
           Order #{delivery.number}
           {delivery.city ? ` · ${delivery.city}` : ""}
         </span>
-        <span className="text-xs text-slate-400">
-          {formatScheduled(delivery.scheduledFor)}
-        </span>
+        <span className="text-xs text-slate-400">{formatScheduled(delivery.scheduledFor)}</span>
       </div>
 
       <div className="px-4 pb-4 space-y-3">
@@ -318,9 +312,7 @@ export function DriverHome({ assigned, available }: DriverHomeProps) {
         </h2>
 
         {assigned.length === 0 ? (
-          <p className="text-slate-500 text-sm text-center py-8">
-            No deliveries assigned to you.
-          </p>
+          <p className="text-slate-500 text-sm text-center py-8">No deliveries assigned to you.</p>
         ) : (
           <div className="space-y-4">
             {assigned.map((d) => (

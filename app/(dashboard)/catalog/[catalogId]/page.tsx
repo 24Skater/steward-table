@@ -1,9 +1,9 @@
+import { CatalogItemsManager } from "@/components/catalog-items";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
-import type { SessionMembership } from "@/lib/auth/types";
-import { CatalogItemsManager } from "@/components/catalog-items";
 
 export default async function CatalogDetailPage({
   params,
@@ -54,10 +54,7 @@ export default async function CatalogDetailPage({
 
   return (
     <main className="p-6 space-y-6">
-      <CatalogItemsManager
-        catalog={catalog}
-        churchId={membership.churchId}
-      />
+      <CatalogItemsManager catalog={catalog} churchId={membership.churchId} />
     </main>
   );
 }

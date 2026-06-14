@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/hooks/use-cart";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 type FulfillmentType = "PICKUP" | "DELIVERY" | "DINE_IN";
 type PaymentMethod = "pay_online" | "pay_on_pickup" | "cash" | "zelle";
@@ -47,14 +47,28 @@ function getTodayStr(): string {
 function getNextSevenDays(): Array<{ value: string; label: string }> {
   const days = [];
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   for (let i = 0; i < 7; i++) {
     const d = new Date();
     d.setDate(d.getDate() + i);
     const value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    const label = i === 0
-      ? `Today ${monthNames[d.getMonth()]} ${d.getDate()}`
-      : `${dayNames[d.getDay()]} ${monthNames[d.getMonth()]} ${d.getDate()}`;
+    const label =
+      i === 0
+        ? `Today ${monthNames[d.getMonth()]} ${d.getDate()}`
+        : `${dayNames[d.getDay()]} ${monthNames[d.getMonth()]} ${d.getDate()}`;
     days.push({ value, label });
   }
   return days;
@@ -115,24 +129,36 @@ export default function CheckoutPage() {
       });
 
     fetch(`/api/storefront/${churchSlug}/payment-config`)
-      .then((res) => (res.ok ? res.json() : { stripeEnabled: false, acceptCash: true, acceptZelle: false }))
-      .then((data: { stripeEnabled: boolean; acceptCash?: boolean; acceptZelle?: boolean; pickupEnabled?: boolean; deliveryEnabled?: boolean; dineInEnabled?: boolean; churchName?: string }) => {
-        setStripeEnabled(data.stripeEnabled);
-        setAcceptCash(data.acceptCash ?? true);
-        setAcceptZelle(data.acceptZelle ?? false);
-        if (data.churchName) setChurchName(data.churchName);
-        const pickup = data.pickupEnabled ?? true;
-        const delivery = data.deliveryEnabled ?? false;
-        const dineIn = data.dineInEnabled ?? false;
-        setPickupEnabled(pickup);
-        setDeliveryEnabled(delivery);
-        setDineInEnabled(dineIn);
-        // Auto-select first available fulfillment type
-        if (!pickup) {
-          if (delivery) setFulfillment("DELIVERY");
-          else if (dineIn) setFulfillment("DINE_IN");
-        }
-      })
+      .then((res) =>
+        res.ok ? res.json() : { stripeEnabled: false, acceptCash: true, acceptZelle: false },
+      )
+      .then(
+        (data: {
+          stripeEnabled: boolean;
+          acceptCash?: boolean;
+          acceptZelle?: boolean;
+          pickupEnabled?: boolean;
+          deliveryEnabled?: boolean;
+          dineInEnabled?: boolean;
+          churchName?: string;
+        }) => {
+          setStripeEnabled(data.stripeEnabled);
+          setAcceptCash(data.acceptCash ?? true);
+          setAcceptZelle(data.acceptZelle ?? false);
+          if (data.churchName) setChurchName(data.churchName);
+          const pickup = data.pickupEnabled ?? true;
+          const delivery = data.deliveryEnabled ?? false;
+          const dineIn = data.dineInEnabled ?? false;
+          setPickupEnabled(pickup);
+          setDeliveryEnabled(delivery);
+          setDineInEnabled(dineIn);
+          // Auto-select first available fulfillment type
+          if (!pickup) {
+            if (delivery) setFulfillment("DELIVERY");
+            else if (dineIn) setFulfillment("DINE_IN");
+          }
+        },
+      )
       .catch(() => {
         // Silently ignore — payment config is best-effort
       });
@@ -244,7 +270,7 @@ export default function CheckoutPage() {
 
     if (paymentMethod === "pay_online") {
       try {
-        const res = await fetch(`/api/storefront/stripe/checkout`, {
+        const res = await fetch("/api/storefront/stripe/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(cartPayload),
@@ -273,7 +299,7 @@ export default function CheckoutPage() {
 
     // Cash / Zelle / pay-on-pickup — all go through the same order creation route
     try {
-      const res = await fetch(`/api/storefront/orders`, {
+      const res = await fetch("/api/storefront/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(cartPayload),
@@ -296,7 +322,7 @@ export default function CheckoutPage() {
   }
 
   const deliveryFee = fulfillment === "DELIVERY" && matchedZone ? matchedZone.feeCents : 0;
-  const tipCents = selectedTipPct !== null ? Math.round(total * selectedTipPct / 100) : 0;
+  const tipCents = selectedTipPct !== null ? Math.round((total * selectedTipPct) / 100) : 0;
   const orderTotal = total + deliveryFee + tipCents;
 
   const cartPayload = {
@@ -308,13 +334,16 @@ export default function CheckoutPage() {
     fulfillment,
     paymentMethod,
     zoneId: fulfillment === "DELIVERY" && matchedZone ? matchedZone.id : undefined,
-    deliveryAddress: fulfillment === "DELIVERY" ? {
-      line1: addressLine1.trim(),
-      city: addressCity.trim(),
-      region: addressRegion.trim() || "",
-      postalCode: postalCode.trim(),
-      country: "US",
-    } : undefined,
+    deliveryAddress:
+      fulfillment === "DELIVERY"
+        ? {
+            line1: addressLine1.trim(),
+            city: addressCity.trim(),
+            region: addressRegion.trim() || "",
+            postalCode: postalCode.trim(),
+            country: "US",
+          }
+        : undefined,
     scheduledFor: fulfillment === "PICKUP" && selectedSlot ? selectedSlot : null,
     smsOptIn: phone.trim() ? smsOptIn : false,
     tip: tipCents,
@@ -392,9 +421,11 @@ export default function CheckoutPage() {
           <div className="flex flex-wrap gap-2">
             {(Object.keys(FULFILLMENT_LABELS) as FulfillmentType[])
               .filter((type) =>
-                type === "PICKUP" ? pickupEnabled
-                : type === "DELIVERY" ? deliveryEnabled
-                : dineInEnabled
+                type === "PICKUP"
+                  ? pickupEnabled
+                  : type === "DELIVERY"
+                    ? deliveryEnabled
+                    : dineInEnabled,
               )
               .map((type) => (
                 <button
@@ -415,9 +446,7 @@ export default function CheckoutPage() {
 
         {fulfillment === "PICKUP" && (
           <div className="space-y-3">
-            <Label className="block text-sm font-medium text-slate-700">
-              Pickup time
-            </Label>
+            <Label className="block text-sm font-medium text-slate-700">Pickup time</Label>
 
             {/* ASAP option */}
             <button
@@ -480,7 +509,10 @@ export default function CheckoutPage() {
         {fulfillment === "DELIVERY" && (
           <div className="space-y-3">
             <div>
-              <Label htmlFor="address-line1" className="mb-1.5 block text-sm font-medium text-slate-700">
+              <Label
+                htmlFor="address-line1"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
                 Street address <span className="text-rose-500">*</span>
               </Label>
               <Input
@@ -495,7 +527,10 @@ export default function CheckoutPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="address-city" className="mb-1.5 block text-sm font-medium text-slate-700">
+                <Label
+                  htmlFor="address-city"
+                  className="mb-1.5 block text-sm font-medium text-slate-700"
+                >
                   City <span className="text-rose-500">*</span>
                 </Label>
                 <Input
@@ -509,7 +544,10 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="address-region" className="mb-1.5 block text-sm font-medium text-slate-700">
+                <Label
+                  htmlFor="address-region"
+                  className="mb-1.5 block text-sm font-medium text-slate-700"
+                >
                   State
                 </Label>
                 <Input
@@ -525,7 +563,10 @@ export default function CheckoutPage() {
               </div>
             </div>
             <div>
-              <Label htmlFor="postal-code" className="mb-1.5 block text-sm font-medium text-slate-700">
+              <Label
+                htmlFor="postal-code"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
                 Postal code <span className="text-rose-500">*</span>
               </Label>
               <Input
@@ -537,15 +578,17 @@ export default function CheckoutPage() {
                 autoComplete="postal-code"
                 className="max-w-xs"
               />
-              {zoneChecked && postalCode.trim() && (
-                matchedZone ? (
+              {zoneChecked &&
+                postalCode.trim() &&
+                (matchedZone ? (
                   <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
                     <span className="font-medium">{matchedZone.name}</span>
                     {" — "}
                     Delivery fee: {formatCents(matchedZone.feeCents)}
                     {matchedZone.minOrderCents > 0 && (
                       <span className="text-emerald-700">
-                        {" "}(min. order {formatCents(matchedZone.minOrderCents)})
+                        {" "}
+                        (min. order {formatCents(matchedZone.minOrderCents)})
                       </span>
                     )}
                   </div>
@@ -553,8 +596,7 @@ export default function CheckoutPage() {
                   <p className="mt-1 text-sm text-rose-600">
                     Delivery is not available to your area. You can switch to pickup instead.
                   </p>
-                )
-              )}
+                ))}
             </div>
           </div>
         )}
@@ -635,8 +677,14 @@ export default function CheckoutPage() {
               onChange={(e) => setSmsOptIn(e.target.checked)}
               className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-emerald-600 cursor-pointer"
             />
-            <label htmlFor="sms-opt-in" className="text-xs text-slate-600 cursor-pointer leading-relaxed">
-              By checking this box and providing your phone number, you agree to receive transactional SMS messages from {churchName || "this church"} about your order via Steward. Message frequency varies. Message and data rates may apply. Reply HELP for help, STOP to unsubscribe. Consent is not a condition of purchase.
+            <label
+              htmlFor="sms-opt-in"
+              className="text-xs text-slate-600 cursor-pointer leading-relaxed"
+            >
+              By checking this box and providing your phone number, you agree to receive
+              transactional SMS messages from {churchName || "this church"} about your order via
+              Steward. Message frequency varies. Message and data rates may apply. Reply HELP for
+              help, STOP to unsubscribe. Consent is not a condition of purchase.
             </label>
           </div>
         )}
@@ -671,7 +719,7 @@ export default function CheckoutPage() {
                       : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  {pct}% ({formatCents(Math.round(total * pct / 100))})
+                  {pct}% ({formatCents(Math.round((total * pct) / 100))})
                 </button>
               ))}
               <button

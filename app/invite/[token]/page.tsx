@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
+import { AcceptInviteCard } from "@/components/invite/accept-invite-card";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { AcceptInviteCard } from "@/components/invite/accept-invite-card";
+import { notFound } from "next/navigation";
 
 export default async function InvitePage({
   params,
@@ -10,7 +10,7 @@ export default async function InvitePage({
 }) {
   const { token } = await params;
 
-  const invitation = await (db.invitation.findUnique as Function)({
+  const invitation = await (db.invitation.findUnique as PrismaBypass)({
     where: { token },
     include: { church: { select: { name: true, slug: true } } },
     _bypassTenancyCheck: true,

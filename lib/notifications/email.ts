@@ -1,9 +1,7 @@
-import { Resend } from "resend";
 import { db } from "@/lib/db";
+import { Resend } from "resend";
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 interface OrderItemDetail {
   itemName: string;
@@ -86,10 +84,7 @@ const NOTIFICATION_MESSAGES: Partial<Record<string, NotificationMessage>> = {
   },
 };
 
-export async function sendOrderNotification(
-  orderId: string,
-  status: string,
-): Promise<void> {
+export async function sendOrderNotification(orderId: string, status: string): Promise<void> {
   const message = NOTIFICATION_MESSAGES[status];
   if (!message || !resend) return;
 
@@ -139,8 +134,7 @@ export async function sendOrderNotification(
     replyToEmail: order.church.settings?.replyToEmail ?? null,
   };
 
-  const fromAddress =
-    process.env.RESEND_FROM_EMAIL ?? "orders@table.steward.app";
+  const fromAddress = process.env.RESEND_FROM_EMAIL ?? "orders@table.steward.app";
   const subject = `${message.subject} — ${payload.churchName}`;
 
   const sendOptions: Parameters<typeof resend.emails.send>[0] = {
@@ -237,8 +231,8 @@ function buildFulfillmentLine(payload: OrderNotificationPayload): string {
     payload.fulfillment === "DELIVERY"
       ? "Delivery"
       : payload.fulfillment === "DINE_IN"
-      ? "Dine-in"
-      : "Pickup";
+        ? "Dine-in"
+        : "Pickup";
 
   const scheduledLine = payload.scheduledFor
     ? `<br><span style="color: #64748b;">
@@ -252,10 +246,7 @@ function buildFulfillmentLine(payload: OrderNotificationPayload): string {
   return `<p style="color: #64748b; font-size: 13px; margin: 12px 0 0;">${label}${scheduledLine}</p>`;
 }
 
-function buildSimpleBody(
-  payload: OrderNotificationPayload,
-  message: NotificationMessage,
-): string {
+function buildSimpleBody(payload: OrderNotificationPayload, message: NotificationMessage): string {
   const itemsTable = buildItemsTable(payload.items);
   const total = formatCents(payload.total);
 
@@ -303,7 +294,9 @@ export async function sendStaffNewOrderEmail(orderId: string): Promise<void> {
 
   const tokens = order.church.settings?.brandTokens;
   const staffNotifyEnabled =
-    tokens && typeof tokens === "object" && (tokens as Record<string, unknown>).emailStaffOnNewOrder === true;
+    tokens &&
+    typeof tokens === "object" &&
+    (tokens as Record<string, unknown>).emailStaffOnNewOrder === true;
   if (!staffNotifyEnabled) return;
 
   const staffMembers = await db.membership.findMany({
@@ -381,8 +374,7 @@ export async function sendWelcomeEmail(userId: string): Promise<void> {
   if (!user?.email) return;
 
   const displayName = user.name ?? user.email;
-  const fromAddress =
-    process.env.RESEND_FROM_EMAIL ?? "noreply@table.steward.app";
+  const fromAddress = process.env.RESEND_FROM_EMAIL ?? "noreply@table.steward.app";
 
   try {
     await resend.emails.send({
@@ -425,10 +417,7 @@ function buildWelcomeEmailHtml(displayName: string): string {
   `.trim();
 }
 
-function buildEmailHtml(
-  payload: OrderNotificationPayload,
-  message: NotificationMessage,
-): string {
+function buildEmailHtml(payload: OrderNotificationPayload, message: NotificationMessage): string {
   const bodyContent =
     payload.status === "SUBMITTED" || payload.status === "CONFIRMED"
       ? buildConfirmedBody(payload)

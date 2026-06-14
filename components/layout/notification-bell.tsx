@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { Bell, ShoppingBag, CheckCircle, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AlertTriangle, Bell, CheckCircle, ShoppingBag } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 interface Notification {
   id: string;
@@ -32,37 +32,21 @@ function relativeTime(isoString: string): string {
 
 function NotificationIcon({ type }: { type: string }) {
   if (type === "new_order" || type === "order") {
-    return (
-      <ShoppingBag
-        size={14}
-        className="shrink-0 text-blue-400 mt-0.5"
-        aria-hidden="true"
-      />
-    );
+    return <ShoppingBag size={14} className="shrink-0 text-blue-400 mt-0.5" aria-hidden="true" />;
   }
   if (type === "low_stock" || type === "stock") {
     return (
-      <AlertTriangle
-        size={14}
-        className="shrink-0 text-amber-400 mt-0.5"
-        aria-hidden="true"
-      />
+      <AlertTriangle size={14} className="shrink-0 text-amber-400 mt-0.5" aria-hidden="true" />
     );
   }
   // status_update and anything else
-  return (
-    <CheckCircle
-      size={14}
-      className="shrink-0 text-emerald-400 mt-0.5"
-      aria-hidden="true"
-    />
-  );
+  return <CheckCircle size={14} className="shrink-0 text-emerald-400 mt-0.5" aria-hidden="true" />;
 }
 
 export function NotificationBell() {
   const router = useRouter();
   const [data, setData] = useState<NotificationsResponse | null>(null);
-  const [prevUnread, setPrevUnread] = useState(0);
+  const [_prevUnread, setPrevUnread] = useState(0);
   const [pulsing, setPulsing] = useState(false);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -100,10 +84,7 @@ export function NotificationBell() {
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     }
@@ -192,9 +173,7 @@ export function NotificationBell() {
           {/* Notification list */}
           <ul className="max-h-72 overflow-y-auto divide-y divide-slate-700/60">
             {recent.length === 0 ? (
-              <li className="px-3 py-4 text-sm text-slate-400 text-center">
-                No notifications
-              </li>
+              <li className="px-3 py-4 text-sm text-slate-400 text-center">No notifications</li>
             ) : (
               recent.map((notification) => (
                 <li key={notification.id}>

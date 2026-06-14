@@ -1,11 +1,6 @@
 import { db } from "@/lib/db";
 import type { SideEffect } from "@/lib/orders/transitions";
-import {
-  sendSms,
-  smsOrderConfirmation,
-  smsOrderReady,
-  smsOutForDelivery,
-} from "@/lib/sms";
+import { sendSms, smsOrderConfirmation, smsOrderReady, smsOutForDelivery } from "@/lib/sms";
 
 export interface OrderWithCustomer {
   id: string;
@@ -19,9 +14,7 @@ export interface OrderWithCustomer {
   };
 }
 
-async function fetchOrderWithCustomer(
-  orderId: string,
-): Promise<OrderWithCustomer | null> {
+async function fetchOrderWithCustomer(orderId: string): Promise<OrderWithCustomer | null> {
   return db.order.findUnique({
     where: { id: orderId },
     select: {
@@ -59,10 +52,7 @@ export async function handleSmsEffect(
 
     case "sms.order_ready":
     case "sms.order_pickup_ready":
-      body = smsOrderReady(
-        number,
-        fulfillment === "DELIVERY" ? "DELIVERY" : "PICKUP",
-      );
+      body = smsOrderReady(number, fulfillment === "DELIVERY" ? "DELIVERY" : "PICKUP");
       break;
 
     case "sms.order_out_for_delivery":

@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@prisma/client";
+import { redirect } from "next/navigation";
 import { PrintButton } from "./print-button";
 
 const KITCHEN_STATUSES: OrderStatus[] = ["CONFIRMED", "IN_KITCHEN", "READY"];
@@ -178,17 +178,13 @@ export default async function KitchenPrintPage() {
                   {/* Notes */}
                   {order.notes && (
                     <div className="px-3 py-1.5 bg-yellow-50 border-t border-yellow-200">
-                      <p className="text-sm text-yellow-800 font-medium">
-                        Note: {order.notes}
-                      </p>
+                      <p className="text-sm text-yellow-800 font-medium">Note: {order.notes}</p>
                     </div>
                   )}
 
                   {/* Footer */}
                   <div className="px-3 py-2 border-t border-gray-200">
-                    <p className="text-sm text-gray-600">
-                      {order.customer?.name ?? "Guest"}
-                    </p>
+                    <p className="text-sm text-gray-600">{order.customer?.name ?? "Guest"}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {fulfillmentLabel(order.fulfillment)} &middot; {displayTime}
                     </p>
@@ -199,7 +195,6 @@ export default async function KitchenPrintPage() {
           </div>
         )}
       </div>
-
     </>
   );
 }

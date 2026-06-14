@@ -1,5 +1,5 @@
-import type { OrderStatus } from "@prisma/client";
 import { db } from "@/lib/db";
+import type { OrderStatus } from "@prisma/client";
 
 export class InvalidTransitionError extends Error {
   constructor(
@@ -109,10 +109,7 @@ function getSideEffects(from: OrderStatus, to: OrderStatus, orderId: string): Si
       ];
 
     case "SUBMITTED->CONFIRMED":
-      return [
-        key("notify.customer_order_status"),
-        key("inventory.confirm"),
-      ];
+      return [key("notify.customer_order_status"), key("inventory.confirm")];
 
     case "SUBMITTED->CANCELED":
     case "CONFIRMED->CANCELED":
@@ -152,11 +149,7 @@ function getSideEffects(from: OrderStatus, to: OrderStatus, orderId: string): Si
     case "AWAITING_PICKUP->REFUNDED":
     case "OUT_FOR_DELIVERY->REFUNDED":
     case "COMPLETED->REFUNDED":
-      return [
-        key("stripe.refund"),
-        key("inventory.restock"),
-        key("notify.customer_order_status"),
-      ];
+      return [key("stripe.refund"), key("inventory.restock"), key("notify.customer_order_status")];
 
     default:
       return [];

@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { CATALOG_TEMPLATES } from "@/lib/catalog-templates";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface CreatedCatalog {
   id: string;
@@ -131,9 +131,7 @@ export function CreateCatalogDialog({
 
       const data = await res.json();
       const catalogId: string =
-        mode === "blank"
-          ? (data as { id: string }).id
-          : (data as { catalogId: string }).catalogId;
+        mode === "blank" ? (data as { id: string }).id : (data as { catalogId: string }).catalogId;
 
       onCreated({
         id: catalogId,
@@ -198,7 +196,9 @@ export function CreateCatalogDialog({
                   )}
                 >
                   <span className="block font-medium">{template.name}</span>
-                  <span className="block text-xs text-muted-foreground">{template.description}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {template.description}
+                  </span>
                 </button>
               ))}
             </div>

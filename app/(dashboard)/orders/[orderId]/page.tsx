@@ -1,10 +1,10 @@
-import { redirect, notFound } from "next/navigation";
+import { TopBar } from "@/components/layout/top-bar";
+import type { DriverOption } from "@/components/orders/assign-driver-select";
+import { OrderDetail } from "@/components/orders/order-detail";
+import type { AuditLogEntry, OrderDetailData } from "@/components/orders/order-detail";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { TopBar } from "@/components/layout/top-bar";
-import { OrderDetail } from "@/components/orders/order-detail";
-import type { OrderDetailData, AuditLogEntry } from "@/components/orders/order-detail";
-import type { DriverOption } from "@/components/orders/assign-driver-select";
+import { notFound, redirect } from "next/navigation";
 
 export default async function OrderDetailPage({
   params,
@@ -16,9 +16,7 @@ export default async function OrderDetailPage({
 
   const { orderId } = await params;
 
-  const activeMembership = session.user.memberships?.find(
-    (m) => m.status === "ACTIVE",
-  );
+  const activeMembership = session.user.memberships?.find((m) => m.status === "ACTIVE");
   if (!activeMembership) redirect("/auth/sign-in");
 
   const { churchId } = activeMembership;
@@ -65,19 +63,20 @@ export default async function OrderDetailPage({
   if (!raw) notFound();
 
   // Fetch DRIVER members for the driver assignment select (only relevant for delivery orders)
-  const rawDrivers = raw.fulfillment === "DELIVERY"
-    ? await (db.membership.findMany as Function)({
-        where: {
-          churchId,
-          status: "ACTIVE",
-          roles: { has: "DRIVER" },
-        },
-        select: {
-          user: { select: { id: true, name: true } },
-        },
-        _bypassTenancyCheck: true,
-      })
-    : [];
+  const rawDrivers =
+    raw.fulfillment === "DELIVERY"
+      ? await (db.membership.findMany as PrismaBypass)({
+          where: {
+            churchId,
+            status: "ACTIVE",
+            roles: { has: "DRIVER" },
+          },
+          select: {
+            user: { select: { id: true, name: true } },
+          },
+          _bypassTenancyCheck: true,
+        })
+      : [];
 
   const drivers: DriverOption[] = (
     rawDrivers as Array<{ user: { id: string; name: string | null } }>

@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MembersTable, type MemberRow } from "./members-table";
-import { InvitationsTable, type InvitationRow } from "./invitations-table";
-import { InviteMemberDialog } from "./invite-member-dialog";
 import type { Role } from "@prisma/client";
+import { UserPlus } from "lucide-react";
+import { useCallback, useState } from "react";
+import { type InvitationRow, InvitationsTable } from "./invitations-table";
+import { InviteMemberDialog } from "./invite-member-dialog";
+import { type MemberRow, MembersTable } from "./members-table";
 
 interface TeamPageProps {
   initialMembers: MemberRow[];
@@ -36,11 +36,11 @@ export function TeamPage({
         fetch("/api/team/invitations/pending"),
       ]);
       if (membersRes.ok) {
-        const data = await membersRes.json() as MemberRow[];
+        const data = (await membersRes.json()) as MemberRow[];
         setMembers(data);
       }
       if (invitationsRes.ok) {
-        const data = await invitationsRes.json() as InvitationRow[];
+        const data = (await invitationsRes.json()) as InvitationRow[];
         setInvitations(data);
       }
     } catch {
@@ -88,9 +88,7 @@ export function TeamPage({
             <h3 id="invitations-heading" className="text-base font-semibold text-slate-800">
               Pending invitations
             </h3>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {invitations.length} pending
-            </p>
+            <p className="text-sm text-muted-foreground mt-0.5">{invitations.length} pending</p>
           </div>
 
           <div className="rounded-md border bg-white">
@@ -100,11 +98,7 @@ export function TeamPage({
       )}
 
       {canInvite && (
-        <InviteMemberDialog
-          open={inviteOpen}
-          onOpenChange={setInviteOpen}
-          onSuccess={refresh}
-        />
+        <InviteMemberDialog open={inviteOpen} onOpenChange={setInviteOpen} onSuccess={refresh} />
       )}
     </div>
   );

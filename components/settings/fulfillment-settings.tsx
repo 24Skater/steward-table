@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Check } from "lucide-react";
+import { useState } from "react";
 
 interface FulfillmentSettingsProps {
   pickupEnabled: boolean;
@@ -62,9 +62,7 @@ export function FulfillmentSettings({
 
     try {
       const radiusValue =
-        deliveryEnabled && deliveryRadiusMiles.trim()
-          ? Number(deliveryRadiusMiles)
-          : null;
+        deliveryEnabled && deliveryRadiusMiles.trim() ? Number(deliveryRadiusMiles) : null;
 
       const res = await fetch("/api/settings/fulfillment", {
         method: "PATCH",
@@ -246,9 +244,7 @@ export function FulfillmentSettings({
         />
       </div>
 
-      {errorMessage && (
-        <p className="text-sm text-red-600">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
       <Button type="submit" disabled={saveState === "saving"}>
         {saveState === "saving" && "Saving..."}

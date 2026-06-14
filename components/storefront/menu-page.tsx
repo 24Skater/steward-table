@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Search } from "lucide-react";
 import { ItemCard } from "@/components/storefront/item-card";
 import { useStorefrontStrings } from "@/components/storefront/storefront-locale-provider";
+import { Search } from "lucide-react";
+import { useState } from "react";
 
 interface ModifierOption {
   id: string;
@@ -54,9 +54,7 @@ export function MenuPage({
   const searchFiltered =
     query.trim() === ""
       ? items
-      : items.filter((item) =>
-          item.name.toLowerCase().includes(query.toLowerCase()),
-        );
+      : items.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
 
   const filtered =
     selectedCategory === null
@@ -74,9 +72,7 @@ export function MenuPage({
 
   return (
     <div>
-      {catalogDescription && (
-        <p className="mb-4 text-slate-500">{catalogDescription}</p>
-      )}
+      {catalogDescription && <p className="mb-4 text-slate-500">{catalogDescription}</p>}
 
       <div className="relative mb-4">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -98,7 +94,11 @@ export function MenuPage({
                 ? "text-white"
                 : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
             }`}
-            style={selectedCategory === null ? { backgroundColor: "var(--color-accent, #10b981)" } : undefined}
+            style={
+              selectedCategory === null
+                ? { backgroundColor: "var(--color-accent, #10b981)" }
+                : undefined
+            }
           >
             {s.allCategories}
           </button>
@@ -111,7 +111,11 @@ export function MenuPage({
                   ? "text-white"
                   : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
               }`}
-              style={selectedCategory === cat ? { backgroundColor: "var(--color-accent, #10b981)" } : undefined}
+              style={
+                selectedCategory === cat
+                  ? { backgroundColor: "var(--color-accent, #10b981)" }
+                  : undefined
+              }
             >
               {cat}
             </button>
@@ -122,9 +126,7 @@ export function MenuPage({
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-400">
           <p className="text-sm">
-            {query.trim() !== ""
-              ? `${s.noItemsMatchQuery} "${query}"`
-              : s.noItemsInCategory}
+            {query.trim() !== "" ? `${s.noItemsMatchQuery} "${query}"` : s.noItemsInCategory}
           </p>
         </div>
       ) : selectedCategory !== null ? (

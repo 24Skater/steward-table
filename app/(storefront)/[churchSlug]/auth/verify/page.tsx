@@ -1,12 +1,12 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import {
-  verifyMagicLinkToken,
+  createDatabaseSession,
   findOrCreateUserByPhone,
   linkCustomerToUser,
-  createDatabaseSession,
+  verifyMagicLinkToken,
 } from "@/lib/auth/create-phone-session";
+import { db } from "@/lib/db";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 interface VerifyPageProps {
   searchParams: Promise<{
@@ -35,11 +35,11 @@ export default async function MagicLinkVerifyPage({ searchParams }: VerifyPagePr
 
   // Link customer record if we have an orderId
   if (orderId) {
-    const order = await (db.order.findFirst as Function)({
+    const order = (await (db.order.findFirst as PrismaBypass)({
       where: { id: orderId },
       select: { customerId: true, customer: { select: { userId: true } } },
       _bypassTenancyCheck: true,
-    }) as { customerId: string; customer: { userId: string | null } } | null;
+    })) as { customerId: string; customer: { userId: string | null } } | null;
 
     if (order?.customerId && !order.customer.userId) {
       await linkCustomerToUser(order.customerId, userId);
@@ -49,9 +49,7 @@ export default async function MagicLinkVerifyPage({ searchParams }: VerifyPagePr
   const sessionToken = await createDatabaseSession(userId);
 
   const isProduction = process.env.NODE_ENV === "production";
-  const cookieName = isProduction
-    ? "__Secure-authjs.session-token"
-    : "authjs.session-token";
+  const cookieName = isProduction ? "__Secure-authjs.session-token" : "authjs.session-token";
 
   const cookieStore = await cookies();
   cookieStore.set(cookieName, sessionToken, {

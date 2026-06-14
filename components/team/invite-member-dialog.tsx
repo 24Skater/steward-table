@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Role } from "@prisma/client";
+import { UserPlus } from "lucide-react";
+import { useState } from "react";
 
 const INVITABLE_ROLES: { value: Role; label: string }[] = [
   { value: "ADMIN", label: "Admin" },
@@ -29,11 +29,7 @@ interface InviteMemberDialogProps {
   onSuccess: () => void;
 }
 
-export function InviteMemberDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-}: InviteMemberDialogProps) {
+export function InviteMemberDialog({ open, onOpenChange, onSuccess }: InviteMemberDialogProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("STAFF");
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +56,7 @@ export function InviteMemberDialog({
         body: JSON.stringify({ email: email.trim(), role }),
       });
 
-      const data = await res.json().catch(() => ({ error: "Unexpected error" })) as {
+      const data = (await res.json().catch(() => ({ error: "Unexpected error" }))) as {
         error?: string;
       };
 

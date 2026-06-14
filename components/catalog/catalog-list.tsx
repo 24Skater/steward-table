@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import type { Catalog } from "./catalog-card";
 import { CreateCatalogDialog } from "./create-catalog-dialog";
 import { EditCatalogDialog } from "./edit-catalog-dialog";
@@ -15,9 +14,7 @@ interface CatalogListProps {
 }
 
 function formatRevenue(cents: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    cents / 100,
-  );
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 }
 
 function formatWindow(catalog: Catalog): string {
@@ -63,7 +60,7 @@ function CatalogRow({ catalog, onUpdated, onDeleted }: CatalogRowProps) {
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
-        const updated = await res.json() as { status: string };
+        const updated = (await res.json()) as { status: string };
         onUpdated({ ...catalog, status: updated.status, isActive: updated.status === "OPEN" });
       }
     } finally {
@@ -92,7 +89,9 @@ function CatalogRow({ catalog, onUpdated, onDeleted }: CatalogRowProps) {
 
         {/* Status */}
         <td className="py-3 px-3">
-          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${statusColor}`}>
+          <span
+            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${statusColor}`}
+          >
             {catalog.status}
           </span>
         </td>
@@ -114,7 +113,11 @@ function CatalogRow({ catalog, onUpdated, onDeleted }: CatalogRowProps) {
 
         {/* Revenue */}
         <td className="py-3 px-3 text-sm text-slate-700 text-right tabular-nums whitespace-nowrap">
-          {(catalog.revenue ?? 0) > 0 ? formatRevenue(catalog.revenue!) : <span className="text-slate-300">—</span>}
+          {(catalog.revenue ?? 0) > 0 ? (
+            formatRevenue(catalog.revenue!)
+          ) : (
+            <span className="text-slate-300">—</span>
+          )}
         </td>
 
         {/* Actions */}
@@ -154,7 +157,10 @@ function CatalogRow({ catalog, onUpdated, onDeleted }: CatalogRowProps) {
         open={editOpen}
         onOpenChange={setEditOpen}
         catalog={catalog}
-        onUpdated={(updated) => { onUpdated(updated); setEditOpen(false); }}
+        onUpdated={(updated) => {
+          onUpdated(updated);
+          setEditOpen(false);
+        }}
       />
     </>
   );
@@ -206,12 +212,24 @@ export function CatalogList({ initialCatalogs, churchId }: CatalogListProps) {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50">
-                <th className="py-2.5 pl-4 pr-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Name</th>
-                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Status</th>
-                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Window</th>
-                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide text-center">Items</th>
-                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide text-center">Orders</th>
-                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide text-right">Revenue</th>
+                <th className="py-2.5 pl-4 pr-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                  Name
+                </th>
+                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                  Status
+                </th>
+                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                  Window
+                </th>
+                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide text-center">
+                  Items
+                </th>
+                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide text-center">
+                  Orders
+                </th>
+                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide text-right">
+                  Revenue
+                </th>
                 <th className="py-2.5 pl-3 pr-4" />
               </tr>
             </thead>

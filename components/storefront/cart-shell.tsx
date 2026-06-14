@@ -1,19 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { ShoppingCart, Minus, Plus, X } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { ModifierDialog } from "@/components/storefront/modifier-dialog";
-import { useCart, type CartItem } from "@/hooks/use-cart";
-import type { CartModifier } from "@/hooks/use-cart";
 import { useStorefrontStrings } from "@/components/storefront/storefront-locale-provider";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { type CartItem, useCart } from "@/hooks/use-cart";
+import type { CartModifier } from "@/hooks/use-cart";
+import { Minus, Plus, ShoppingCart, X } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 interface CartShellProps {
   churchSlug: string;
@@ -47,7 +42,12 @@ export function CartShell({ churchSlug }: CartShellProps) {
     const result: Record<string, string[]> = {};
     for (const group of item.modifierGroupDefs) {
       const selectedOptionIds = item.modifiers
-        .map((mod) => group.options.find((opt) => opt.name === mod.optionName && opt.priceDelta === mod.priceDelta)?.id)
+        .map(
+          (mod) =>
+            group.options.find(
+              (opt) => opt.name === mod.optionName && opt.priceDelta === mod.priceDelta,
+            )?.id,
+        )
         .filter((id): id is string => id !== undefined);
       if (selectedOptionIds.length > 0) result[group.id] = selectedOptionIds;
     }
@@ -79,7 +79,10 @@ export function CartShell({ churchSlug }: CartShellProps) {
             >
               {count}
             </span>
-            <span className="hidden text-xs font-semibold sm:inline" style={{ color: "var(--color-accent, #10b981)" }}>
+            <span
+              className="hidden text-xs font-semibold sm:inline"
+              style={{ color: "var(--color-accent, #10b981)" }}
+            >
               {formatCents(total)}
             </span>
           </>
@@ -167,13 +170,21 @@ export function CartShell({ churchSlug }: CartShellProps) {
                           onClick={canEdit ? () => setEditingItem(item) : undefined}
                           role={canEdit ? "button" : undefined}
                           tabIndex={canEdit ? 0 : undefined}
-                          onKeyDown={canEdit ? (e) => { if (e.key === "Enter" || e.key === " ") setEditingItem(item); } : undefined}
+                          onKeyDown={
+                            canEdit
+                              ? (e) => {
+                                  if (e.key === "Enter" || e.key === " ") setEditingItem(item);
+                                }
+                              : undefined
+                          }
                           aria-label={canEdit ? `Edit ${item.itemName}` : undefined}
                         >
                           <div className="flex items-center gap-1.5">
                             <p className="truncate font-medium text-slate-800">{item.itemName}</p>
                             {canEdit && (
-                              <span className="shrink-0 text-xs text-slate-400 underline underline-offset-2">{s.editItem}</span>
+                              <span className="shrink-0 text-xs text-slate-400 underline underline-offset-2">
+                                {s.editItem}
+                              </span>
                             )}
                           </div>
                           {item.modifiers.length > 0 && (
@@ -226,10 +237,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
                   <span className="font-medium text-slate-700">{s.subtotal}</span>
                   <span className="font-semibold text-slate-900">{formatCents(total)}</span>
                 </div>
-                <Link
-                  href={`/${churchSlug}/checkout`}
-                  onClick={() => setOpen(false)}
-                >
+                <Link href={`/${churchSlug}/checkout`} onClick={() => setOpen(false)}>
                   <Button
                     className="w-full py-6 text-base font-semibold text-white"
                     style={{ backgroundColor: "var(--color-accent, #10b981)" }}

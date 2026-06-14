@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 interface NavItem {
   label: string;

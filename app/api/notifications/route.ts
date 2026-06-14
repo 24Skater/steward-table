@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { type NextRequest, NextResponse } from "next/server";
 
 function getActiveMembership(memberships: SessionMembership[]): SessionMembership | undefined {
   return memberships.find((m) => m.status === "ACTIVE");
@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "No active membership" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as { id?: string; all?: boolean } | null;
+  const body = (await req.json().catch(() => null)) as { id?: string; all?: boolean } | null;
   if (!body) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }

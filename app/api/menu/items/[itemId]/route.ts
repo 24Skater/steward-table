@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import type { Prisma } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const translationsSchema = z
   .object({
@@ -27,10 +27,7 @@ const patchSchema = z.object({
   translations: translationsSchema,
 });
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ itemId: string }> },
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ itemId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -76,7 +73,8 @@ export async function PATCH(
     );
   }
 
-  const { name, description, defaultPrice, status, imageUrl, taxCategory, translations } = parsed.data;
+  const { name, description, defaultPrice, status, imageUrl, taxCategory, translations } =
+    parsed.data;
 
   const updated = await db.item.update({
     where: { id: itemId },

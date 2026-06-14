@@ -1,28 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +10,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { ArrowLeft, GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { CreateItemDialog } from "./create-item-dialog";
 
 interface ModifierOption {
@@ -95,7 +95,13 @@ interface InlinePriceProps {
   onSaved: (next: number | null) => void;
 }
 
-function InlinePrice({ catalogId, itemId, priceOverride, defaultPrice, onSaved }: InlinePriceProps) {
+function InlinePrice({
+  catalogId,
+  itemId,
+  priceOverride,
+  defaultPrice,
+  onSaved,
+}: InlinePriceProps) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(
     priceOverride !== null ? (priceOverride / 100).toFixed(2) : "",
@@ -116,8 +122,8 @@ function InlinePrice({ catalogId, itemId, priceOverride, defaultPrice, onSaved }
     if (trimmed === "" || trimmed === "0") {
       nextOverride = null;
     } else {
-      const parsed = parseFloat(trimmed);
-      if (isNaN(parsed) || parsed < 0) {
+      const parsed = Number.parseFloat(trimmed);
+      if (Number.isNaN(parsed) || parsed < 0) {
         setValue(priceOverride !== null ? (priceOverride / 100).toFixed(2) : "");
         setEditing(false);
         return;
@@ -127,14 +133,11 @@ function InlinePrice({ catalogId, itemId, priceOverride, defaultPrice, onSaved }
 
     setSaving(true);
     try {
-      const res = await fetch(
-        `/api/catalogs/${catalogId}/items?itemId=${itemId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ priceOverride: nextOverride }),
-        },
-      );
+      const res = await fetch(`/api/catalogs/${catalogId}/items?itemId=${itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceOverride: nextOverride }),
+      });
       if (res.ok) onSaved(nextOverride);
     } finally {
       setSaving(false);
@@ -154,7 +157,10 @@ function InlinePrice({ catalogId, itemId, priceOverride, defaultPrice, onSaved }
         onChange={(e) => setValue(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          }
           if (e.key === "Escape") {
             setValue(priceOverride !== null ? (priceOverride / 100).toFixed(2) : "");
             setEditing(false);
@@ -169,7 +175,11 @@ function InlinePrice({ catalogId, itemId, priceOverride, defaultPrice, onSaved }
     <button
       type="button"
       onClick={() => {
-        setValue(priceOverride !== null ? (priceOverride / 100).toFixed(2) : (defaultPrice / 100).toFixed(2));
+        setValue(
+          priceOverride !== null
+            ? (priceOverride / 100).toFixed(2)
+            : (defaultPrice / 100).toFixed(2),
+        );
         setEditing(true);
       }}
       className="text-sm font-medium text-slate-700 tabular-nums hover:underline underline-offset-2 focus:outline-none"
@@ -209,8 +219,8 @@ function InlineMaxQty({ catalogId, itemId, maxQuantityPerOrder, onSaved }: Inlin
     if (trimmed === "") {
       next = null;
     } else {
-      const parsed = parseInt(trimmed, 10);
-      if (isNaN(parsed) || parsed < 1) {
+      const parsed = Number.parseInt(trimmed, 10);
+      if (Number.isNaN(parsed) || parsed < 1) {
         setValue(maxQuantityPerOrder?.toString() ?? "");
         setEditing(false);
         return;
@@ -220,14 +230,11 @@ function InlineMaxQty({ catalogId, itemId, maxQuantityPerOrder, onSaved }: Inlin
 
     setSaving(true);
     try {
-      const res = await fetch(
-        `/api/catalogs/${catalogId}/items?itemId=${itemId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ maxQuantityPerOrder: next }),
-        },
-      );
+      const res = await fetch(`/api/catalogs/${catalogId}/items?itemId=${itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maxQuantityPerOrder: next }),
+      });
       if (res.ok) onSaved(next);
     } finally {
       setSaving(false);
@@ -247,7 +254,10 @@ function InlineMaxQty({ catalogId, itemId, maxQuantityPerOrder, onSaved }: Inlin
         onChange={(e) => setValue(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          }
           if (e.key === "Escape") {
             setValue(maxQuantityPerOrder?.toString() ?? "");
             setEditing(false);
@@ -268,9 +278,11 @@ function InlineMaxQty({ catalogId, itemId, maxQuantityPerOrder, onSaved }: Inlin
       className="text-xs text-slate-500 hover:underline underline-offset-2 focus:outline-none"
       title="Click to set max per order"
     >
-      {maxQuantityPerOrder !== null
-        ? `max ${maxQuantityPerOrder}`
-        : <span className="text-slate-300">no max</span>}
+      {maxQuantityPerOrder !== null ? (
+        `max ${maxQuantityPerOrder}`
+      ) : (
+        <span className="text-slate-300">no max</span>
+      )}
     </button>
   );
 }
@@ -296,14 +308,9 @@ function SortableCatalogItemRow({
   onMaxQtySaved,
   onRemove,
 }: SortableCatalogItemRowProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: ci.itemId });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: ci.itemId,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -329,22 +336,20 @@ function SortableCatalogItemRow({
 
       <div className="flex-1 min-w-0 space-y-0.5">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-slate-900 text-sm truncate">
-            {ci.item.name}
-          </span>
+          <span className="font-medium text-slate-900 text-sm truncate">{ci.item.name}</span>
           {!(ci.item.translations as ItemTranslations | null)?.es?.name?.trim() && (
-            <span title="Missing Spanish translation" className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+            <span
+              title="Missing Spanish translation"
+              className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"
+            />
           )}
         </div>
         {ci.item.description && (
-          <p className="text-xs text-slate-500 truncate">
-            {ci.item.description}
-          </p>
+          <p className="text-xs text-slate-500 truncate">{ci.item.description}</p>
         )}
         {ci.item.modifierGroups.length > 0 && (
           <p className="text-xs text-slate-400">
-            Modifiers:{" "}
-            {ci.item.modifierGroups.map((mg) => mg.group.name).join(", ")}
+            Modifiers: {ci.item.modifierGroups.map((mg) => mg.group.name).join(", ")}
           </p>
         )}
       </div>
@@ -371,7 +376,11 @@ function SortableCatalogItemRow({
           onClick={() => onToggleAvailability(ci)}
           title={ci.isAvailable ? "Mark unavailable" : "Mark available"}
           className="flex items-center focus:outline-none disabled:opacity-50"
-          aria-label={ci.isAvailable ? "Available — click to mark unavailable" : "Unavailable — click to mark available"}
+          aria-label={
+            ci.isAvailable
+              ? "Available — click to mark unavailable"
+              : "Unavailable — click to mark available"
+          }
         >
           <Badge
             variant={ci.isAvailable && ci.item.status === "ACTIVE" ? "default" : "secondary"}
@@ -405,7 +414,10 @@ function SortableCatalogItemRow({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function CatalogItemsManager({ catalog: initialCatalog, churchId }: CatalogItemsManagerProps) {
+export function CatalogItemsManager({
+  catalog: initialCatalog,
+  churchId,
+}: CatalogItemsManagerProps) {
   const router = useRouter();
   const [catalog, setCatalog] = useState(initialCatalog);
   const [removeTarget, setRemoveTarget] = useState<CatalogItem | null>(null);
@@ -429,9 +441,7 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
   function patchItem(itemId: string, patch: Partial<CatalogItem>) {
     setCatalog((prev) => ({
       ...prev,
-      items: prev.items.map((ci) =>
-        ci.itemId === itemId ? { ...ci, ...patch } : ci,
-      ),
+      items: prev.items.map((ci) => (ci.itemId === itemId ? { ...ci, ...patch } : ci)),
     }));
   }
 
@@ -440,14 +450,11 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
     patchItem(ci.itemId, { isAvailable: next });
     setTogglingId(ci.itemId);
     try {
-      const res = await fetch(
-        `/api/catalogs/${catalog.id}/items?itemId=${ci.itemId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ isAvailable: next }),
-        },
-      );
+      const res = await fetch(`/api/catalogs/${catalog.id}/items?itemId=${ci.itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isAvailable: next }),
+      });
       if (!res.ok) patchItem(ci.itemId, { isAvailable: ci.isAvailable });
     } catch {
       patchItem(ci.itemId, { isAvailable: ci.isAvailable });
@@ -512,10 +519,9 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
     if (!removeTarget) return;
     setIsRemoving(true);
     try {
-      const res = await fetch(
-        `/api/catalogs/${catalog.id}/items?itemId=${removeTarget.itemId}`,
-        { method: "DELETE" },
-      );
+      const res = await fetch(`/api/catalogs/${catalog.id}/items?itemId=${removeTarget.itemId}`, {
+        method: "DELETE",
+      });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error((body as { error?: string }).error ?? "Failed to remove item");
@@ -555,8 +561,7 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm text-slate-500">
-              {catalog.items.length}{" "}
-              {catalog.items.length === 1 ? "item" : "items"}
+              {catalog.items.length} {catalog.items.length === 1 ? "item" : "items"}
             </p>
             {missingEsCount > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-200">
@@ -572,7 +577,9 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
             <Button
               onClick={openPublishDialog}
               disabled={catalog.items.length === 0}
-              title={catalog.items.length === 0 ? "Add at least one item before publishing" : undefined}
+              title={
+                catalog.items.length === 0 ? "Add at least one item before publishing" : undefined
+              }
             >
               Publish
             </Button>
@@ -592,16 +599,10 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
       {catalog.items.length === 0 ? (
         <div className="rounded-lg border border-slate-200 bg-white p-12 text-center">
           <p className="text-slate-500 text-sm">No items in this catalog yet.</p>
-          <p className="text-slate-400 text-xs mt-1">
-            Add items to start building your catalog.
-          </p>
+          <p className="text-slate-400 text-xs mt-1">Add items to start building your catalog.</p>
         </div>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
             items={catalog.items.map((ci) => ci.itemId)}
             strategy={verticalListSortingStrategy}
@@ -614,7 +615,9 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
                   catalogId={catalog.id}
                   togglingId={togglingId}
                   onToggleAvailability={handleToggleAvailability}
-                  onPriceOverrideSaved={(itemId, next) => patchItem(itemId, { priceOverride: next })}
+                  onPriceOverrideSaved={(itemId, next) =>
+                    patchItem(itemId, { priceOverride: next })
+                  }
                   onMaxQtySaved={(itemId, next) => patchItem(itemId, { maxQuantityPerOrder: next })}
                   onRemove={setRemoveTarget}
                 />
@@ -637,7 +640,10 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
       <Dialog
         open={statusDialogOpen}
         onOpenChange={(open) => {
-          if (!open) { setStatusDialogOpen(false); setPendingStatus(null); }
+          if (!open) {
+            setStatusDialogOpen(false);
+            setPendingStatus(null);
+          }
         }}
       >
         <DialogContent>
@@ -650,7 +656,9 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
                 <>
                   {missingEsCount > 0 && (
                     <span className="block mb-2 text-amber-700 font-medium">
-                      {missingEsCount} {missingEsCount === 1 ? "item is" : "items are"} missing Spanish translations. Customers viewing in Spanish will see the English name as a fallback.
+                      {missingEsCount} {missingEsCount === 1 ? "item is" : "items are"} missing
+                      Spanish translations. Customers viewing in Spanish will see the English name
+                      as a fallback.
                     </span>
                   )}
                   Customers will be able to place orders once the catalog is open.
@@ -663,7 +671,10 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => { setStatusDialogOpen(false); setPendingStatus(null); }}
+              onClick={() => {
+                setStatusDialogOpen(false);
+                setPendingStatus(null);
+              }}
               disabled={isUpdatingStatus}
             >
               Cancel
@@ -672,8 +683,8 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
               {isUpdatingStatus
                 ? "Saving…"
                 : pendingStatus === "OPEN"
-                ? "Publish"
-                : "Close catalog"}
+                  ? "Publish"
+                  : "Close catalog"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -690,23 +701,15 @@ export function CatalogItemsManager({ catalog: initialCatalog, churchId }: Catal
           <DialogHeader>
             <DialogTitle>Remove item from catalog?</DialogTitle>
             <DialogDescription>
-              <strong>{removeTarget?.item.name}</strong> will be removed from this
-              catalog. The item itself will not be deleted and can be re-added later.
+              <strong>{removeTarget?.item.name}</strong> will be removed from this catalog. The item
+              itself will not be deleted and can be re-added later.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRemoveTarget(null)}
-              disabled={isRemoving}
-            >
+            <Button variant="outline" onClick={() => setRemoveTarget(null)} disabled={isRemoving}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleRemove}
-              disabled={isRemoving}
-            >
+            <Button variant="destructive" onClick={handleRemove} disabled={isRemoving}>
               {isRemoving ? "Removing…" : "Remove"}
             </Button>
           </DialogFooter>

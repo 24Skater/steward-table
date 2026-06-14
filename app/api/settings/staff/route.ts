@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
-import { Role, MembershipStatus } from "@prisma/client";
+import { type MembershipStatus, Role } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface PatchBody {
   membershipId: string;
@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as PatchBody | null;
+  const body = (await req.json().catch(() => null)) as PatchBody | null;
   if (!body?.membershipId) {
     return NextResponse.json({ error: "membershipId is required" }, { status: 400 });
   }
@@ -32,10 +32,10 @@ export async function PATCH(req: NextRequest) {
   const { membershipId, roles, status } = body;
 
   // Fetch the target membership to validate it belongs to this church
-  const target = await (db.membership.findFirst as Function)({
+  const target = (await (db.membership.findFirst as PrismaBypass)({
     where: { id: membershipId, churchId: membership.churchId },
     ...({ _bypassTenancyCheck: true } as object),
-  }) as { id: string; userId: string; roles: Role[]; status: string } | null;
+  })) as { id: string; userId: string; roles: Role[]; status: string } | null;
 
   if (!target) {
     return NextResponse.json({ error: "Membership not found" }, { status: 404 });
@@ -43,10 +43,7 @@ export async function PATCH(req: NextRequest) {
 
   // Cannot modify OWNER memberships
   if (target.roles.includes(Role.OWNER)) {
-    return NextResponse.json(
-      { error: "Cannot modify an OWNER membership" },
-      { status: 403 },
-    );
+    return NextResponse.json({ error: "Cannot modify an OWNER membership" }, { status: 403 });
   }
 
   // Cannot deactivate self
@@ -70,11 +67,8 @@ export async function PATCH(req: NextRequest) {
   }
 
   // Prevent assigning OWNER role via this endpoint
-  if (roles && roles.includes(Role.OWNER)) {
-    return NextResponse.json(
-      { error: "Cannot assign the OWNER role" },
-      { status: 403 },
-    );
+  if (roles?.includes(Role.OWNER)) {
+    return NextResponse.json({ error: "Cannot assign the OWNER role" }, { status: 403 });
   }
 
   // Build update data
@@ -86,7 +80,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
 
-  const updated = await (db.membership.update as Function)({
+  const updated = await (db.membership.update as PrismaBypass)({
     where: { id: membershipId },
     data: updateData,
     ...({ _bypassTenancyCheck: true } as object),

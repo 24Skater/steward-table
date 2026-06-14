@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     churchId?: string;
     name?: string;
     quantity?: number;
@@ -66,15 +66,11 @@ export async function POST(req: NextRequest) {
   } | null;
 
   if (!body?.churchId || !body?.name) {
-    return NextResponse.json(
-      { error: "Missing required fields: churchId, name" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Missing required fields: churchId, name" }, { status: 400 });
   }
 
   const membership = session.user.memberships?.find(
-    (m: SessionMembership) =>
-      m.churchId === body.churchId && m.status === "ACTIVE",
+    (m: SessionMembership) => m.churchId === body.churchId && m.status === "ACTIVE",
   );
   if (!membership) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -89,10 +85,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const quantity =
-    typeof body.quantity === "number" && body.quantity >= 0
-      ? body.quantity
-      : 0;
+  const quantity = typeof body.quantity === "number" && body.quantity >= 0 ? body.quantity : 0;
 
   // Create the Item record, then link an InventoryItem to it
   const item = await db.item.create({
@@ -108,10 +101,7 @@ export async function POST(req: NextRequest) {
       churchId: body.churchId,
       itemId: item.id,
       quantityOnHand: quantity,
-      lowStockThreshold:
-        typeof body.lowStockThreshold === "number"
-          ? body.lowStockThreshold
-          : null,
+      lowStockThreshold: typeof body.lowStockThreshold === "number" ? body.lowStockThreshold : null,
     },
     include: {
       item: { select: { name: true } },

@@ -1,13 +1,14 @@
-import React, { Suspense } from "react";
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import type { Metadata } from "next";
-import { db } from "@/lib/db";
 import { CartShell } from "@/components/storefront/cart-shell";
-import { ToastProvider } from "@/components/ui/toast";
-import { StorefrontMenu } from "@/components/storefront/storefront-menu";
 import { LangSwitcher } from "@/components/storefront/lang-switcher";
 import { StorefrontLocaleProvider } from "@/components/storefront/storefront-locale-provider";
+import { StorefrontMenu } from "@/components/storefront/storefront-menu";
+import { ToastProvider } from "@/components/ui/toast";
+import { db } from "@/lib/db";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import type React from "react";
+import { Suspense } from "react";
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
@@ -62,17 +63,19 @@ export async function generateMetadata({
   };
 }
 
-export default async function StorefrontLayout({
-  children,
-  params,
-}: StorefrontLayoutProps) {
+export default async function StorefrontLayout({ children, params }: StorefrontLayoutProps) {
   const { churchSlug } = await params;
 
   const church = await db.church.findFirst({
     where: { slug: churchSlug, status: "ACTIVE" },
     select: {
-      id: true, name: true, slug: true, currency: true, locale: true,
-      logoUrl: true, accentColor: true,
+      id: true,
+      name: true,
+      slug: true,
+      currency: true,
+      locale: true,
+      logoUrl: true,
+      accentColor: true,
       settings: { select: { replyToEmail: true } },
     },
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -92,59 +95,63 @@ export default async function StorefrontLayout({
 
   return (
     <ToastProvider>
-    <Suspense>
-    <StorefrontLocaleProvider>
-    <div
-      className="min-h-screen bg-white"
-      data-church-id={church.id}
-      style={church.accentColor ? ({ "--color-accent": church.accentColor } as React.CSSProperties) : undefined}
-    >
-      <header
-        className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-sm"
-        style={church.accentColor ? { borderBottomColor: church.accentColor } : undefined}
-      >
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link
-            href={`/${churchSlug}/menu`}
-            className="flex items-center gap-2.5 text-lg font-semibold text-slate-800 hover:text-slate-600"
+      <Suspense>
+        <StorefrontLocaleProvider>
+          <div
+            className="min-h-screen bg-white"
+            data-church-id={church.id}
+            style={
+              church.accentColor
+                ? ({ "--color-accent": church.accentColor } as React.CSSProperties)
+                : undefined
+            }
           >
-            {church.logoUrl ? (
-              <img
-                src={church.logoUrl}
-                alt={church.name}
-                style={{ height: 32, width: "auto", maxWidth: 160 }}
-              />
-            ) : (
-              <>
-                <span
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-                  style={{ backgroundColor: church.accentColor ?? "#10b981" }}
-                  aria-hidden="true"
+            <header
+              className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-sm"
+              style={church.accentColor ? { borderBottomColor: church.accentColor } : undefined}
+            >
+              <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+                <Link
+                  href={`/${churchSlug}/menu`}
+                  className="flex items-center gap-2.5 text-lg font-semibold text-slate-800 hover:text-slate-600"
                 >
-                  {church.name.charAt(0).toUpperCase()}
-                </span>
-                <span className="truncate max-w-[160px]">{church.name}</span>
-              </>
-            )}
-          </Link>
-          <div className="flex items-center gap-1">
-            <Suspense>
-              <LangSwitcher churchSlug={churchSlug} />
-            </Suspense>
-            <CartShell churchSlug={churchSlug} />
-            <StorefrontMenu
-              churchSlug={churchSlug}
-              catalogName={openCatalog?.name}
-              catalogDescription={openCatalog?.description}
-              replyToEmail={church.settings?.replyToEmail}
-            />
+                  {church.logoUrl ? (
+                    <img
+                      src={church.logoUrl}
+                      alt={church.name}
+                      style={{ height: 32, width: "auto", maxWidth: 160 }}
+                    />
+                  ) : (
+                    <>
+                      <span
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                        style={{ backgroundColor: church.accentColor ?? "#10b981" }}
+                        aria-hidden="true"
+                      >
+                        {church.name.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="truncate max-w-[160px]">{church.name}</span>
+                    </>
+                  )}
+                </Link>
+                <div className="flex items-center gap-1">
+                  <Suspense>
+                    <LangSwitcher churchSlug={churchSlug} />
+                  </Suspense>
+                  <CartShell churchSlug={churchSlug} />
+                  <StorefrontMenu
+                    churchSlug={churchSlug}
+                    catalogName={openCatalog?.name}
+                    catalogDescription={openCatalog?.description}
+                    replyToEmail={church.settings?.replyToEmail}
+                  />
+                </div>
+              </div>
+            </header>
+            <main className="mx-auto max-w-5xl px-4 py-8 pb-28">{children}</main>
           </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-8 pb-28">{children}</main>
-    </div>
-    </StorefrontLocaleProvider>
-    </Suspense>
+        </StorefrontLocaleProvider>
+      </Suspense>
     </ToastProvider>
   );
 }

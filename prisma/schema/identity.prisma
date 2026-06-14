@@ -16,16 +16,16 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  accounts          Account[]
-  sessions          Session[]
-  memberships       Membership[]
-  sentInvitations   Invitation[]   @relation("InvitationSentBy")
-  orderEvents       OrderEvent[]   @relation("OrderEventActor")
-  driverDeliveries  DeliveryInfo[] @relation("DriverAssignment")
-  auditLogs         AuditLog[]     @relation("AuditLogActor")
-  customerNotes     CustomerNote[]
-  refunds           Refund[]       @relation("RefundActor")
-  stockMovements    StockMovement[] @relation("StockMovementActor")
+  accounts         Account[]
+  sessions         Session[]
+  memberships      Membership[]
+  sentInvitations  Invitation[]    @relation("InvitationSentBy")
+  orderEvents      OrderEvent[]    @relation("OrderEventActor")
+  driverDeliveries DeliveryInfo[]  @relation("DriverAssignment")
+  auditLogs        AuditLog[]      @relation("AuditLogActor")
+  customerNotes    CustomerNote[]
+  refunds          Refund[]        @relation("RefundActor")
+  stockMovements   StockMovement[] @relation("StockMovementActor")
 
   @@index([deletedAt])
   @@map("users")

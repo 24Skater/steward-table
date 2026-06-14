@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac/can";
-import { db } from "@/lib/db";
-import { TopBar } from "@/components/layout/top-bar";
 import { CustomersPage } from "@/components/customers";
 import type { CustomerRow } from "@/components/customers";
+import { TopBar } from "@/components/layout/top-bar";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import { redirect } from "next/navigation";
 
 interface CustomersPageRouteProps {
   searchParams: Promise<{ q?: string; page?: string }>;
@@ -16,9 +16,7 @@ export default async function CustomersPageRoute({ searchParams }: CustomersPage
     redirect("/auth/sign-in");
   }
 
-  const activeMembership = session.user.memberships?.find(
-    (m) => m.status === "ACTIVE",
-  );
+  const activeMembership = session.user.memberships?.find((m) => m.status === "ACTIVE");
   if (!activeMembership) {
     redirect("/auth/sign-in");
   }
@@ -75,22 +73,24 @@ export default async function CustomersPageRoute({ searchParams }: CustomersPage
     },
   });
 
-  const customers: CustomerRow[] = raw.map(
-    (c: (typeof raw)[number]) => ({
-      id: c.id,
-      name: c.name,
-      phone: c.phone ?? null,
-      email: c.email ?? null,
-      totalOrders: c.totalOrders,
-      lifetimeValueCents: c.lifetimeValueCents,
-      lastOrderAt: c.orders[0]?.createdAt ?? null,
-    }),
-  );
+  const customers: CustomerRow[] = raw.map((c: (typeof raw)[number]) => ({
+    id: c.id,
+    name: c.name,
+    phone: c.phone ?? null,
+    email: c.email ?? null,
+    totalOrders: c.totalOrders,
+    lifetimeValueCents: c.lifetimeValueCents,
+    lastOrderAt: c.orders[0]?.createdAt ?? null,
+  }));
 
   return (
     <div className="flex flex-col h-full">
       <TopBar title="Customers" />
-      <CustomersPage customers={customers} initialSearch={searchQuery} canExport={exportPermission.allowed} />
+      <CustomersPage
+        customers={customers}
+        initialSearch={searchQuery}
+        canExport={exportPermission.allowed}
+      />
     </div>
   );
 }

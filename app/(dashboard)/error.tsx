@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { AlertCircle } from "lucide-react"
-import Link from "next/link"
+import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 interface DashboardErrorProps {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }
 
 export default function DashboardError({ error, reset }: DashboardErrorProps) {
@@ -20,8 +20,8 @@ export default function DashboardError({ error, reset }: DashboardErrorProps) {
             Something went wrong in the dashboard
           </h1>
           <p className="mb-6 text-sm text-slate-500">
-            An error occurred while loading this page. You can try again or
-            navigate to a different section.
+            An error occurred while loading this page. You can try again or navigate to a different
+            section.
           </p>
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
             <button
@@ -38,12 +38,10 @@ export default function DashboardError({ error, reset }: DashboardErrorProps) {
             </Link>
           </div>
           {error.digest && (
-            <p className="mt-6 text-xs text-slate-400">
-              Error reference: {error.digest}
-            </p>
+            <p className="mt-6 text-xs text-slate-400">Error reference: {error.digest}</p>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

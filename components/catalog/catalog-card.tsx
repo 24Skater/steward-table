@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { MoreVertical, Pencil, Trash2, ChevronRight } from "lucide-react";
-import Link from "next/link";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ChevronRight, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { EditCatalogDialog } from "./edit-catalog-dialog";
 
 export interface Catalog {
@@ -76,9 +76,13 @@ export function CatalogCard({ catalog, onUpdated, onDeleted }: CatalogCardProps)
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-slate-900 truncate">{catalog.name}</h3>
               {isArchived ? (
-                <Badge variant="secondary" className="text-xs shrink-0">Archived</Badge>
+                <Badge variant="secondary" className="text-xs shrink-0">
+                  Archived
+                </Badge>
               ) : !catalog.isActive ? (
-                <Badge variant="secondary" className="text-xs shrink-0">Inactive</Badge>
+                <Badge variant="secondary" className="text-xs shrink-0">
+                  Inactive
+                </Badge>
               ) : null}
             </div>
             {catalog.description && (
@@ -103,10 +107,7 @@ export function CatalogCard({ catalog, onUpdated, onDeleted }: CatalogCardProps)
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-red-600 focus:text-red-600"
-                onClick={handleDelete}
-              >
+              <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleDelete}>
                 <Trash2 size={14} className="mr-2" />
                 Delete
               </DropdownMenuItem>
@@ -117,11 +118,23 @@ export function CatalogCard({ catalog, onUpdated, onDeleted }: CatalogCardProps)
           {(catalog.opensAt || catalog.closesAt) && (
             <p className="text-xs text-slate-400 mb-2">
               {catalog.opensAt && (
-                <span>Opens {new Date(catalog.opensAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}</span>
+                <span>
+                  Opens{" "}
+                  {new Date(catalog.opensAt).toLocaleString([], {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}
+                </span>
               )}
               {catalog.opensAt && catalog.closesAt && <span> · </span>}
               {catalog.closesAt && (
-                <span>Closes {new Date(catalog.closesAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}</span>
+                <span>
+                  Closes{" "}
+                  {new Date(catalog.closesAt).toLocaleString([], {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}
+                </span>
               )}
             </p>
           )}

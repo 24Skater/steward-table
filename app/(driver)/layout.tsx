@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { redirect } from "next/navigation";
 
 export default async function DriverLayout({
   children,

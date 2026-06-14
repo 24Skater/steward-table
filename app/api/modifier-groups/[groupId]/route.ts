@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   request: NextRequest,
@@ -40,15 +40,17 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
+  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
   const data: Record<string, unknown> = {};
   if (typeof body.name === "string" && body.name.trim()) data.name = body.name.trim();
-  if (typeof body.defaultMinSelections === "number") data.defaultMinSelections = Math.max(0, body.defaultMinSelections);
-  if (typeof body.defaultMaxSelections === "number") data.defaultMaxSelections = Math.max(1, body.defaultMaxSelections);
+  if (typeof body.defaultMinSelections === "number")
+    data.defaultMinSelections = Math.max(0, body.defaultMinSelections);
+  if (typeof body.defaultMaxSelections === "number")
+    data.defaultMaxSelections = Math.max(1, body.defaultMaxSelections);
   if (typeof body.defaultIsRequired === "boolean") data.defaultIsRequired = body.defaultIsRequired;
 
   const updated = await db.modifierGroup.update({

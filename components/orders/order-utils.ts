@@ -1,14 +1,11 @@
-import type { OrderStatus, FulfillmentType } from "@prisma/client";
+import type { FulfillmentType, OrderStatus } from "@prisma/client";
 
 export interface NextStep {
   label: string;
   targetStatus: OrderStatus;
 }
 
-export function getNextStep(
-  status: OrderStatus,
-  fulfillment: FulfillmentType,
-): NextStep | null {
+export function getNextStep(status: OrderStatus, fulfillment: FulfillmentType): NextStep | null {
   switch (status) {
     case "SUBMITTED":
       return { label: "Confirm", targetStatus: "CONFIRMED" };

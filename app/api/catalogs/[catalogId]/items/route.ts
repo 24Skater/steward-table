@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 async function resolveCatalogChurchId(catalogId: string): Promise<string | null> {
   const catalog = await db.catalog.findUnique({
@@ -78,7 +78,7 @@ export async function POST(
 
   const { catalogId } = await params;
 
-  const body = await req.json().catch(() => null) as Record<string, unknown> | null;
+  const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || typeof body.itemId !== "string" || !body.itemId) {
     return NextResponse.json({ error: "Missing itemId" }, { status: 400 });
   }
@@ -128,7 +128,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Missing itemId" }, { status: 400 });
   }
 
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     priceOverride?: number | null;
     isAvailable?: boolean;
     maxQuantityPerOrder?: number | null;
@@ -164,7 +164,9 @@ export async function PATCH(
     data: {
       ...(body.priceOverride !== undefined && { priceOverride: body.priceOverride }),
       ...(body.isAvailable !== undefined && { isAvailable: body.isAvailable }),
-      ...(body.maxQuantityPerOrder !== undefined && { maxQuantityPerOrder: body.maxQuantityPerOrder }),
+      ...(body.maxQuantityPerOrder !== undefined && {
+        maxQuantityPerOrder: body.maxQuantityPerOrder,
+      }),
     },
     ...({ _bypassTenancyCheck: true } as object),
   });

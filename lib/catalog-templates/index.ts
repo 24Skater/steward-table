@@ -1,16 +1,11 @@
-import { pupusaSaleTemplate } from "./pupusa-sale";
 import { bakeSaleTemplate } from "./bake-sale";
 import { coffeeHourTemplate } from "./coffee-hour";
 import { fundraiserDinnerTemplate } from "./fundraiser-dinner";
+import { pupusaSaleTemplate } from "./pupusa-sale";
 
 export type { CatalogTemplate, CatalogTemplateItem, CatalogTemplateModifierGroup } from "./types";
 
-export {
-  pupusaSaleTemplate,
-  bakeSaleTemplate,
-  coffeeHourTemplate,
-  fundraiserDinnerTemplate,
-};
+export { pupusaSaleTemplate, bakeSaleTemplate, coffeeHourTemplate, fundraiserDinnerTemplate };
 
 export const CATALOG_TEMPLATES = [
   pupusaSaleTemplate,

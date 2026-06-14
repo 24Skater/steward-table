@@ -13,11 +13,7 @@ interface AssignDriverSelectProps {
   drivers: DriverOption[];
 }
 
-export function AssignDriverSelect({
-  orderId,
-  currentDriverId,
-  drivers,
-}: AssignDriverSelectProps) {
+export function AssignDriverSelect({ orderId, currentDriverId, drivers }: AssignDriverSelectProps) {
   const [saving, setSaving] = useState(false);
   const [selectedId, setSelectedId] = useState<string>(currentDriverId ?? "");
 
@@ -51,9 +47,7 @@ export function AssignDriverSelect({
           </option>
         ))}
       </select>
-      {saving && (
-        <p className="text-xs text-slate-400">Saving…</p>
-      )}
+      {saving && <p className="text-xs text-slate-400">Saving…</p>}
     </div>
   );
 }

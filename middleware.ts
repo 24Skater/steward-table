@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 // Production domain: {slug}.table.steward.app
 // Development: localhost:3000/{slug} or subdomain via /etc/hosts
-const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const _APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 function extractChurchSlug(req: NextRequest): string | null {
   const host = req.headers.get("host") ?? "";
@@ -39,21 +39,23 @@ export async function middleware(req: NextRequest) {
   const churchSlug = extractChurchSlug(req);
 
   // Rewrite storefront routes for subdomain access
-  if (churchSlug && !pathname.startsWith(`/(storefront)`)) {
+  if (churchSlug && !pathname.startsWith("/(storefront)")) {
     const url = req.nextUrl.clone();
     url.pathname = `/${churchSlug}${pathname}`;
     return NextResponse.rewrite(url);
   }
 
   // Protect dashboard routes — require authentication
-  if (pathname.startsWith("/orders") ||
-      pathname.startsWith("/kitchen") ||
-      pathname.startsWith("/catalog") ||
-      pathname.startsWith("/customers") ||
-      pathname.startsWith("/inventory") ||
-      pathname.startsWith("/drivers") ||
-      pathname.startsWith("/settings") ||
-      pathname.startsWith("/reports")) {
+  if (
+    pathname.startsWith("/orders") ||
+    pathname.startsWith("/kitchen") ||
+    pathname.startsWith("/catalog") ||
+    pathname.startsWith("/customers") ||
+    pathname.startsWith("/inventory") ||
+    pathname.startsWith("/drivers") ||
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/reports")
+  ) {
     const session = await auth();
 
     if (!session?.user?.id) {

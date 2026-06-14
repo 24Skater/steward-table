@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Check } from "lucide-react";
+import { useState } from "react";
 
 const TIMEZONES = [
   { value: "America/New_York", label: "Eastern Time (ET)" },
@@ -104,9 +104,7 @@ export function GeneralSettings({ churchName, contactEmail, timezone }: GeneralS
         </select>
       </div>
 
-      {errorMessage && (
-        <p className="text-sm text-red-600">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
       <Button type="submit" disabled={saveState === "saving" || !name.trim()}>
         {saveState === "saving" && "Saving..."}

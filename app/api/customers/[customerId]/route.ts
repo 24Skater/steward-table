@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac/can";
 import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   req: NextRequest,
@@ -31,7 +31,7 @@ export async function PATCH(
   const { customerId } = await params;
 
   // Verify the customer belongs to this church
-  const existing = await (db.customer.findFirst as Function)({
+  const existing = await (db.customer.findFirst as PrismaBypass)({
     where: { id: customerId, churchId, deletedAt: null },
     _bypassTenancyCheck: true,
   });
@@ -96,10 +96,7 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (err: unknown) {
-    if (
-      err instanceof Error &&
-      err.message.toLowerCase().includes("unique constraint")
-    ) {
+    if (err instanceof Error && err.message.toLowerCase().includes("unique constraint")) {
       return NextResponse.json(
         { error: "A customer with that email or phone already exists" },
         { status: 409 },

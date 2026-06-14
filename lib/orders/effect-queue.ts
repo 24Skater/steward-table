@@ -1,8 +1,8 @@
+import { db } from "@/lib/db";
 import { handleInventoryEffect } from "@/lib/inventory/handler";
 import { sendOrderNotification, sendStaffNewOrderEmail } from "@/lib/notifications/email";
 import { handleSmsEffect } from "@/lib/notifications/sms";
 import { handleStripeRefundEffect } from "@/lib/payments/stripe-refund";
-import { db } from "@/lib/db";
 import type { OrderStatus } from "@prisma/client";
 import type { SideEffect, SideEffectQueue } from "./transitions";
 
@@ -70,7 +70,7 @@ const STATUS_NOTIFICATION_BODY: Partial<Record<string, string>> = {
 };
 
 async function handleCustomerStatusNotification(orderId: string): Promise<void> {
-  const order = await (db.order.findUnique as Function)({
+  const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: {
       id: true,
@@ -80,7 +80,7 @@ async function handleCustomerStatusNotification(orderId: string): Promise<void> 
       customer: { select: { userId: true } },
     },
     _bypassTenancyCheck: true,
-  }) as {
+  })) as {
     id: string;
     number: number;
     status: string;

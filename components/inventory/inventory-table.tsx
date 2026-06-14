@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useRef, useState } from "react";
 
 export interface InventoryRow {
   id: string;
@@ -26,10 +26,7 @@ type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 
 function getStockStatus(row: InventoryRow): StockStatus {
   if (row.quantityOnHand <= 0) return "out_of_stock";
-  if (
-    row.lowStockThreshold !== null &&
-    row.quantityOnHand <= row.lowStockThreshold
-  ) {
+  if (row.lowStockThreshold !== null && row.quantityOnHand <= row.lowStockThreshold) {
     return "low_stock";
   }
   return "in_stock";
@@ -92,8 +89,8 @@ function InlineQuantityCell({ itemId, value, onCommit }: InlineQuantityProps) {
   }
 
   async function commit() {
-    const parsed = parseInt(inputValue, 10);
-    if (!isNaN(parsed) && parsed !== value) {
+    const parsed = Number.parseInt(inputValue, 10);
+    if (!Number.isNaN(parsed) && parsed !== value) {
       await onCommit(itemId, parsed);
     }
     setEditing(false);
@@ -118,7 +115,6 @@ function InlineQuantityCell({ itemId, value, onCommit }: InlineQuantityProps) {
         onBlur={() => void commit()}
         onKeyDown={handleKeyDown}
         className="w-20 rounded border border-slate-300 px-2 py-0.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 tabular-nums"
-        autoFocus
       />
     );
   }
@@ -145,12 +141,7 @@ interface InventoryTableProps {
   onDelete: (item: InventoryRow) => void;
 }
 
-export function InventoryTable({
-  items,
-  onQuantityChange,
-  onEdit,
-  onDelete,
-}: InventoryTableProps) {
+export function InventoryTable({ items, onQuantityChange, onEdit, onDelete }: InventoryTableProps) {
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-12 text-center">
@@ -167,19 +158,11 @@ export function InventoryTable({
         <TableHeader>
           <TableRow className="bg-slate-50 hover:bg-slate-50">
             <TableHead className="text-slate-600 font-semibold">Item</TableHead>
-            <TableHead className="text-slate-600 font-semibold">
-              Quantity on Hand
-            </TableHead>
-            <TableHead className="text-slate-600 font-semibold">
-              Low Stock Threshold
-            </TableHead>
+            <TableHead className="text-slate-600 font-semibold">Quantity on Hand</TableHead>
+            <TableHead className="text-slate-600 font-semibold">Low Stock Threshold</TableHead>
             <TableHead className="text-slate-600 font-semibold">Status</TableHead>
-            <TableHead className="text-slate-600 font-semibold">
-              Last Updated
-            </TableHead>
-            <TableHead className="text-slate-600 font-semibold text-right">
-              Actions
-            </TableHead>
+            <TableHead className="text-slate-600 font-semibold">Last Updated</TableHead>
+            <TableHead className="text-slate-600 font-semibold text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -190,9 +173,7 @@ export function InventoryTable({
                 key={item.id}
                 className={`${rowBg(status)} hover:brightness-95 transition-colors`}
               >
-                <TableCell className="font-medium text-slate-800">
-                  {item.itemName}
-                </TableCell>
+                <TableCell className="font-medium text-slate-800">{item.itemName}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <InlineQuantityCell

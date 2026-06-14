@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac/can";
-import { db } from "@/lib/db";
-import { TopBar } from "@/components/layout/top-bar";
 import { CustomerDetailPage } from "@/components/customers/customer-detail-page";
 import type { CustomerDetailData } from "@/components/customers/customer-detail-page";
+import { TopBar } from "@/components/layout/top-bar";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import { redirect } from "next/navigation";
 
 export default async function CustomerDetailRoute({
   params,
@@ -16,9 +16,7 @@ export default async function CustomerDetailRoute({
     redirect("/auth/sign-in");
   }
 
-  const activeMembership = session.user.memberships?.find(
-    (m) => m.status === "ACTIVE",
-  );
+  const activeMembership = session.user.memberships?.find((m) => m.status === "ACTIVE");
   if (!activeMembership) {
     redirect("/auth/sign-in");
   }
@@ -36,7 +34,7 @@ export default async function CustomerDetailRoute({
 
   const { customerId } = await params;
 
-  const raw = await (db.customer.findFirst as Function)({
+  const raw = (await (db.customer.findFirst as PrismaBypass)({
     where: { id: customerId, churchId: churchId },
     include: {
       orders: {
@@ -47,7 +45,7 @@ export default async function CustomerDetailRoute({
         },
       },
     },
-  }) as {
+  })) as {
     id: string;
     name: string;
     email: string | null;
@@ -71,8 +69,7 @@ export default async function CustomerDetailRoute({
   }
 
   const totalSpentCents = raw.orders.reduce((sum, o) => sum + o.total, 0);
-  const avgOrderCents =
-    raw.orders.length > 0 ? Math.round(totalSpentCents / raw.orders.length) : 0;
+  const avgOrderCents = raw.orders.length > 0 ? Math.round(totalSpentCents / raw.orders.length) : 0;
 
   const customer: CustomerDetailData = {
     id: raw.id,

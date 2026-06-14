@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 async function resolveCatalogChurchId(catalogId: string): Promise<string | null> {
   const catalog = await db.catalog.findUnique({
@@ -24,7 +24,7 @@ export async function POST(
 
   const { catalogId } = await params;
 
-  const body = await req.json().catch(() => null) as { itemIds?: string[] } | null;
+  const body = (await req.json().catch(() => null)) as { itemIds?: string[] } | null;
   if (!body?.itemIds || !Array.isArray(body.itemIds)) {
     return NextResponse.json({ error: "Missing itemIds array" }, { status: 400 });
   }

@@ -39,8 +39,8 @@ export async function GET(req: NextRequest) {
   // 4. Parse query params
   const { searchParams } = req.nextUrl;
   const q = searchParams.get("q")?.trim() ?? "";
-  const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
-  const rawLimit = parseInt(searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10);
+  const rawPage = Number.parseInt(searchParams.get("page") ?? "1", 10);
+  const rawLimit = Number.parseInt(searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10);
   const page = rawPage > 0 ? rawPage : 1;
   const limit = rawLimit > 0 && rawLimit <= MAX_LIMIT ? rawLimit : DEFAULT_LIMIT;
 

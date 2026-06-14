@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { ModifierDialog } from "@/components/storefront/modifier-dialog";
-import { useCart } from "@/hooks/use-cart";
-import { useToast } from "@/components/ui/toast";
-import type { CartModifier } from "@/hooks/use-cart";
 import { useStorefrontStrings } from "@/components/storefront/storefront-locale-provider";
+import { useToast } from "@/components/ui/toast";
+import { useCart } from "@/hooks/use-cart";
+import type { CartModifier } from "@/hooks/use-cart";
+import { useState } from "react";
 
 interface ModifierOption {
   id: string;
@@ -98,7 +97,9 @@ export function ItemCard({
         role={isAvailable ? "button" : undefined}
         tabIndex={isAvailable ? 0 : undefined}
         onClick={handleAddClick}
-        onKeyDown={(e) => { if (isAvailable && (e.key === "Enter" || e.key === " ")) handleAddClick(); }}
+        onKeyDown={(e) => {
+          if (isAvailable && (e.key === "Enter" || e.key === " ")) handleAddClick();
+        }}
         className={`group relative flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden ${isAvailable ? "cursor-pointer transition-shadow hover:shadow-md" : "cursor-default opacity-70"}`}
       >
         {/* Sold-out overlay */}

@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1),
@@ -24,11 +24,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const user = await (db.user.findUnique as Function)({
+  const user = (await (db.user.findUnique as PrismaBypass)({
     where: { id: session.user.id },
     select: { id: true, passwordHash: true },
     _bypassTenancyCheck: true,
-  }) as { id: string; passwordHash: string | null } | null;
+  })) as { id: string; passwordHash: string | null } | null;
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   const newHash = await bcrypt.hash(parsed.data.newPassword, 12);
 
-  await (db.user.update as Function)({
+  await (db.user.update as PrismaBypass)({
     where: { id: session.user.id },
     data: { passwordHash: newHash },
     _bypassTenancyCheck: true,

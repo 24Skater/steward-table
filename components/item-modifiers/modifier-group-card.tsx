@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Trash2, Plus, Check, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Check, Plus, Trash2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface ModifierOption {
   id: string;
@@ -62,12 +62,11 @@ export function ModifierGroupCard({ binding, itemId }: ModifierGroupCardProps) {
   async function handleDeleteGroup() {
     setIsDeleting(true);
     try {
-      const res = await fetch(
-        `/api/items/${itemId}/modifier-groups/${binding.id}`,
-        { method: "DELETE" },
-      );
+      const res = await fetch(`/api/items/${itemId}/modifier-groups/${binding.id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "Failed to remove modifier group");
       }
       router.refresh();
@@ -86,8 +85,8 @@ export function ModifierGroupCard({ binding, itemId }: ModifierGroupCardProps) {
     setAddOptionError(null);
 
     try {
-      const rawPrice = parseFloat(newOptionPrice);
-      const priceDelta = isNaN(rawPrice) ? 0 : Math.round(rawPrice * 100);
+      const rawPrice = Number.parseFloat(newOptionPrice);
+      const priceDelta = Number.isNaN(rawPrice) ? 0 : Math.round(rawPrice * 100);
 
       const res = await fetch(`/api/modifier-groups/${modifierGroup.id}/options`, {
         method: "POST",
@@ -96,7 +95,7 @@ export function ModifierGroupCard({ binding, itemId }: ModifierGroupCardProps) {
       });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "Failed to add option");
       }
 
@@ -114,12 +113,11 @@ export function ModifierGroupCard({ binding, itemId }: ModifierGroupCardProps) {
   async function handleDeleteOption(optionId: string) {
     setDeletingOptionId(optionId);
     try {
-      const res = await fetch(
-        `/api/modifier-groups/${modifierGroup.id}/options/${optionId}`,
-        { method: "DELETE" },
-      );
+      const res = await fetch(`/api/modifier-groups/${modifierGroup.id}/options/${optionId}`, {
+        method: "DELETE",
+      });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "Failed to delete option");
       }
       router.refresh();
@@ -142,9 +140,7 @@ export function ModifierGroupCard({ binding, itemId }: ModifierGroupCardProps) {
       {/* Card header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-medium text-slate-900 text-sm truncate">
-            {modifierGroup.name}
-          </span>
+          <span className="font-medium text-slate-900 text-sm truncate">{modifierGroup.name}</span>
           <Badge variant={isRequired ? "default" : "secondary"} className="text-xs shrink-0">
             {isRequired ? "Required" : "Optional"}
           </Badge>
@@ -170,10 +166,7 @@ export function ModifierGroupCard({ binding, itemId }: ModifierGroupCardProps) {
           <p className="text-xs text-slate-400 py-1">No options yet.</p>
         )}
         {modifierGroup.options.map((opt) => (
-          <div
-            key={opt.id}
-            className="flex items-center justify-between py-1 group"
-          >
+          <div key={opt.id} className="flex items-center justify-between py-1 group">
             <span className="text-sm text-slate-700">{opt.name}</span>
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500 tabular-nums">
@@ -248,9 +241,7 @@ export function ModifierGroupCard({ binding, itemId }: ModifierGroupCardProps) {
                 <X className="h-3.5 w-3.5" />
               </Button>
             </div>
-            {addOptionError && (
-              <p className="text-xs text-red-600">{addOptionError}</p>
-            )}
+            {addOptionError && <p className="text-xs text-red-600">{addOptionError}</p>}
           </div>
         )}
       </div>

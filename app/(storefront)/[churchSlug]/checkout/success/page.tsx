@@ -27,12 +27,7 @@ export default async function CheckoutSuccessPage({
             stroke="currentColor"
             aria-hidden="true"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
         <h1 className="text-2xl font-semibold text-slate-900">Order placed!</h1>

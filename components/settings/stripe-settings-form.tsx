@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, EyeOff, CheckCircle, Circle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Check, CheckCircle, Circle, Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 
 interface StripeSettingsFormProps {
   hasPublishableKey: boolean;
@@ -30,9 +30,7 @@ function StatusBadge({ connected }: { connected: boolean }) {
   return (
     <span
       className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-        connected
-          ? "bg-green-100 text-green-700"
-          : "bg-slate-100 text-slate-500"
+        connected ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
       }`}
     >
       {connected ? (
@@ -107,9 +105,7 @@ export function StripeSettingsForm({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(
-          (data as { error?: string }).error ?? "Failed to save Stripe settings",
-        );
+        throw new Error((data as { error?: string }).error ?? "Failed to save Stripe settings");
       }
 
       setHasPublishableKey(true);
@@ -138,8 +134,8 @@ export function StripeSettingsForm({
       </div>
 
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
-        Secret key and webhook secret are stored encrypted with AES-256-GCM. Once saved, you
-        cannot retrieve them — only replace them.
+        Secret key and webhook secret are stored encrypted with AES-256-GCM. Once saved, you cannot
+        retrieve them — only replace them.
       </div>
 
       {/* Publishable key */}
@@ -213,8 +209,7 @@ export function StripeSettingsForm({
         </div>
         <p className="text-xs text-slate-500">
           Starts with <code className="font-mono bg-slate-100 px-1 rounded">sk_live_</code> or{" "}
-          <code className="font-mono bg-slate-100 px-1 rounded">sk_test_</code>. Never share
-          this.
+          <code className="font-mono bg-slate-100 px-1 rounded">sk_test_</code>. Never share this.
         </p>
       </div>
 
@@ -261,10 +256,7 @@ export function StripeSettingsForm({
         </p>
       )}
 
-      <Button
-        type="submit"
-        disabled={saveState === "saving"}
-      >
+      <Button type="submit" disabled={saveState === "saving"}>
         {saveState === "saving" && "Saving..."}
         {saveState === "saved" && (
           <span className="flex items-center gap-1.5">

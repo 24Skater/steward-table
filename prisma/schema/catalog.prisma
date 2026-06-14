@@ -8,17 +8,20 @@ model Catalog {
   status       CatalogStatus @default(DRAFT)
   opensAt      DateTime?
   closesAt     DateTime?
+  kitchenId    String?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  church Church        @relation(fields: [churchId], references: [id], onDelete: Cascade)
-  items  CatalogItem[]
-  orders Order[]
+  church  Church        @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  kitchen Kitchen?      @relation(fields: [kitchenId], references: [id])
+  items   CatalogItem[]
+  orders  Order[]
 
   @@unique([churchId, slug])
   @@index([churchId, status])
+  @@index([churchId, kitchenId])
   @@index([deletedAt])
   @@map("catalogs")
 }

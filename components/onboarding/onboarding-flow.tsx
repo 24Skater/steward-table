@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useId } from "react";
+import { useId, useState } from "react";
 
 type Step = "welcome" | "details" | "done";
 
@@ -130,9 +130,7 @@ export function OnboardingFlow() {
             <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center mb-4">
               <span className="text-white text-sm font-semibold">ST</span>
             </div>
-            <h1 className="text-xl font-semibold text-slate-900 mb-2">
-              Welcome to Steward Table
-            </h1>
+            <h1 className="text-xl font-semibold text-slate-900 mb-2">Welcome to Steward Table</h1>
             <p className="text-sm text-slate-500">
               Let&apos;s set up your church so your team can start managing orders.
             </p>
@@ -172,9 +170,7 @@ export function OnboardingFlow() {
                 placeholder="Grace Community Church"
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
               />
-              {errors.name && (
-                <p className="mt-1.5 text-xs text-red-600">{errors.name}</p>
-              )}
+              {errors.name && <p className="mt-1.5 text-xs text-red-600">{errors.name}</p>}
             </div>
 
             <div>
@@ -190,13 +186,9 @@ export function OnboardingFlow() {
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
               />
               {form.slug && !errors.slug && (
-                <p className="mt-1.5 text-xs text-slate-400">
-                  {form.slug}.table.steward.app
-                </p>
+                <p className="mt-1.5 text-xs text-slate-400">{form.slug}.table.steward.app</p>
               )}
-              {errors.slug && (
-                <p className="mt-1.5 text-xs text-red-600">{errors.slug}</p>
-              )}
+              {errors.slug && <p className="mt-1.5 text-xs text-red-600">{errors.slug}</p>}
             </div>
 
             <div>

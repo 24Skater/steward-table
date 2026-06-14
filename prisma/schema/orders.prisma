@@ -38,7 +38,7 @@ model Order {
 }
 
 model OrderItem {
-  id               String @id @default(cuid())
+  id               String  @id @default(cuid())
   orderId          String
   itemId           String?
   itemName         String
@@ -46,7 +46,7 @@ model OrderItem {
   quantity         Int
   modifierSnapshot Json
   subtotal         Int
-  tax              Int      @default(0)
+  tax              Int     @default(0)
   total            Int
 
   createdAt DateTime @default(now())

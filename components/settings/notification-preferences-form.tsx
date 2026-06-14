@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Check } from "lucide-react";
+import { useState } from "react";
 
 interface NotificationValues {
   emailConfirmationEnabled: boolean;
@@ -68,8 +68,7 @@ export function NotificationPreferencesForm({
         <div>
           <h2 className="text-sm font-semibold text-slate-900">Email notifications</h2>
           <p className="mt-0.5 text-xs text-slate-500">
-            Transactional emails sent to customers and staff via your configured sending
-            domain.
+            Transactional emails sent to customers and staff via your configured sending domain.
           </p>
         </div>
 
@@ -150,9 +149,7 @@ export function NotificationPreferencesForm({
         />
       </div>
 
-      {errorMessage && (
-        <p className="text-sm text-red-600">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
       <Button type="submit" disabled={saveState === "saving"}>
         {saveState === "saving" && "Saving..."}

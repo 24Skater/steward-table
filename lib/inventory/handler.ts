@@ -1,5 +1,5 @@
-import type { SideEffect } from "@/lib/orders/transitions";
 import { db } from "@/lib/db";
+import type { SideEffect } from "@/lib/orders/transitions";
 
 /**
  * Handle inventory-related side effects from order state transitions.

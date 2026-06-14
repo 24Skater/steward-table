@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { TopBar } from "@/components/layout/top-bar";
 import { InventoryPage } from "@/components/inventory";
 import type { InventoryRow } from "@/components/inventory";
+import { TopBar } from "@/components/layout/top-bar";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { redirect } from "next/navigation";
 
 export default async function InventoryPageRoute() {
   const session = await auth();
@@ -11,9 +11,7 @@ export default async function InventoryPageRoute() {
     redirect("/auth/sign-in");
   }
 
-  const activeMembership = session.user.memberships?.find(
-    (m) => m.status === "ACTIVE",
-  );
+  const activeMembership = session.user.memberships?.find((m) => m.status === "ACTIVE");
   if (!activeMembership) {
     redirect("/auth/sign-in");
   }

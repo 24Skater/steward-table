@@ -1,5 +1,5 @@
-import Twilio from "twilio";
 import { db } from "@/lib/db";
+import Twilio from "twilio";
 
 // Lazy client — only instantiated when all three env vars are present
 function getTwilioClient(): Twilio.Twilio | null {
@@ -15,11 +15,7 @@ export interface SmsResult {
   error?: string;
 }
 
-export async function sendSms(
-  to: string,
-  body: string,
-  churchId: string,
-): Promise<SmsResult> {
+export async function sendSms(to: string, body: string, churchId: string): Promise<SmsResult> {
   const client = getTwilioClient();
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
 
@@ -49,8 +45,7 @@ export async function sendSms(
 
     return { success: true, messageSid: message.sid };
   } catch (err: unknown) {
-    const errorMessage =
-      err instanceof Error ? err.message : "Unknown error";
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
 
     await db.smsLog.create({
       data: {
@@ -68,17 +63,11 @@ export async function sendSms(
 
 // ── Template helpers ──────────────────────────────────────────────────────────
 
-export function smsOrderConfirmation(
-  orderNumber: number,
-  churchName: string,
-): string {
+export function smsOrderConfirmation(orderNumber: number, churchName: string): string {
   return `Your order #${orderNumber} has been received at ${churchName}. We'll notify you when it's ready!`;
 }
 
-export function smsOrderReady(
-  orderNumber: number,
-  fulfillment: "PICKUP" | "DELIVERY",
-): string {
+export function smsOrderReady(orderNumber: number, fulfillment: "PICKUP" | "DELIVERY"): string {
   if (fulfillment === "DELIVERY") {
     return `Your order #${orderNumber} is on its way!`;
   }

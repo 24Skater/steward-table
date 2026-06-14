@@ -1,6 +1,6 @@
 model Church {
-  id              String       @id @default(cuid())
-  slug            String       @unique
+  id              String  @id @default(cuid())
+  slug            String  @unique
   name            String
   legalName       String?
   ein             String?
@@ -19,15 +19,16 @@ model Church {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  memberships          Membership[]
-  invitations          Invitation[]
-  settings             ChurchSettings?
-  apiKeys              ApiKey[]
-  stripeAccount        StripeAccount?
-  reservedSubdomains   SubdomainReservation[]
-  orderCounter         OrderCounter?
+  memberships        Membership[]
+  invitations        Invitation[]
+  settings           ChurchSettings?
+  apiKeys            ApiKey[]
+  stripeAccount      StripeAccount?
+  reservedSubdomains SubdomainReservation[]
+  orderCounter       OrderCounter?
 
   catalogs       Catalog[]
+  kitchens       Kitchen[]
   items          Item[]
   modifierGroups ModifierGroup[]
   customers      Customer[]

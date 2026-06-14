@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
 import { TopBar } from "@/components/layout/top-bar";
 import { TipSettingsForm } from "@/components/settings/tip-settings-form";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import { redirect } from "next/navigation";
 
 export default async function TipSettingsPage() {
   const session = await auth();
@@ -22,7 +22,7 @@ export default async function TipSettingsPage() {
   });
   if (!result.allowed) redirect("/");
 
-  const settings = await (db.churchSettings.findUnique as Function)({
+  const settings = await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: { brandTokens: true },
     _bypassTenancyCheck: true,
@@ -56,10 +56,7 @@ export default async function TipSettingsPage() {
                 These options appear on the storefront checkout page.
               </p>
             </div>
-            <TipSettingsForm
-              initialEnabled={tipEnabled}
-              initialPercentages={tipPercentages}
-            />
+            <TipSettingsForm initialEnabled={tipEnabled} initialPercentages={tipPercentages} />
           </div>
         </div>
       </div>

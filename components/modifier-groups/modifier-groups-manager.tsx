@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 interface ModifierOption {
   id: string;
@@ -80,18 +80,18 @@ function CreateGroupDialog({ churchId, open, onOpenChange, onCreated }: CreateGr
         body: JSON.stringify({
           churchId,
           name: name.trim(),
-          defaultMinSelections: parseInt(min, 10) || 0,
-          defaultMaxSelections: parseInt(max, 10) || 1,
+          defaultMinSelections: Number.parseInt(min, 10) || 0,
+          defaultMaxSelections: Number.parseInt(max, 10) || 1,
           defaultIsRequired: required,
         }),
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Failed to create group");
       }
 
-      const data = await res.json() as ModifierGroupRow;
+      const data = (await res.json()) as ModifierGroupRow;
       onCreated({ ...data, options: [], _count: { itemBindings: 0 } });
       setName("");
       setMin("0");
@@ -197,17 +197,17 @@ function AddOptionDialog({ groupId, open, onOpenChange, onAdded }: AddOptionDial
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: optionName.trim(),
-          priceDelta: Math.round(parseFloat(priceStr || "0") * 100),
+          priceDelta: Math.round(Number.parseFloat(priceStr || "0") * 100),
           isDefault,
         }),
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Failed to add option");
       }
 
-      const data = await res.json() as ModifierOption;
+      const data = (await res.json()) as ModifierOption;
       onAdded(groupId, data);
       setOptionName("");
       setPriceStr("0");
@@ -343,7 +343,10 @@ function GroupRow({ group, onDeleted, onOptionAdded }: GroupRowProps) {
           ) : (
             <ul className="space-y-1">
               {group.options.map((opt) => (
-                <li key={opt.id} className="flex items-center justify-between text-sm text-slate-700">
+                <li
+                  key={opt.id}
+                  className="flex items-center justify-between text-sm text-slate-700"
+                >
                   <span>
                     {opt.name}
                     {opt.isDefault && (
@@ -382,7 +385,10 @@ function GroupRow({ group, onDeleted, onOptionAdded }: GroupRowProps) {
 
 // ── Main Component ───────────────────────────────────────────────────────────
 
-export function ModifierGroupsManager({ groups: initialGroups, churchId }: ModifierGroupsManagerProps) {
+export function ModifierGroupsManager({
+  groups: initialGroups,
+  churchId,
+}: ModifierGroupsManagerProps) {
   const [groups, setGroups] = useState<ModifierGroupRow[]>(initialGroups);
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -424,12 +430,7 @@ export function ModifierGroupsManager({ groups: initialGroups, churchId }: Modif
           <p className="text-slate-400 text-xs mt-1">
             Create a group (e.g. "Filling Choice") then attach it to items.
           </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-4"
-            onClick={() => setCreateOpen(true)}
-          >
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => setCreateOpen(true)}>
             <Plus size={14} className="mr-1" />
             Create first group
           </Button>

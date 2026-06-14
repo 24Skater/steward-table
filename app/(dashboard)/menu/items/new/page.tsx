@@ -1,8 +1,8 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac/can";
 import { NewItemPage } from "@/components/menu/new-item-page";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { can } from "@/lib/rbac/can";
+import { redirect } from "next/navigation";
 
 export default async function CreateItemPage() {
   const session = await auth();

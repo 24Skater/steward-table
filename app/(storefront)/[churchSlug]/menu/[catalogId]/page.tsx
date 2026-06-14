@@ -1,8 +1,8 @@
-import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
-import { translate } from "@/lib/i18n/translate";
 import { MenuPage } from "@/components/storefront/menu-page";
 import type { MenuItemData } from "@/components/storefront/menu-page";
+import { db } from "@/lib/db";
+import { translate } from "@/lib/i18n/translate";
+import { notFound } from "next/navigation";
 
 interface CatalogPageProps {
   params: Promise<{ churchSlug: string; catalogId: string }>;
@@ -12,9 +12,8 @@ interface CatalogPageProps {
 export default async function CatalogPage({ params, searchParams }: CatalogPageProps) {
   const { churchSlug, catalogId } = await params;
   const resolvedSearch = await searchParams;
-  const langParam = typeof resolvedSearch.lang === "string"
-    ? resolvedSearch.lang.toUpperCase()
-    : null;
+  const langParam =
+    typeof resolvedSearch.lang === "string" ? resolvedSearch.lang.toUpperCase() : null;
 
   const church = await db.church.findFirst({
     where: { slug: churchSlug, status: "ACTIVE" },
@@ -90,8 +89,7 @@ export default async function CatalogPage({ params, searchParams }: CatalogPageP
   }
 
   const churchDefault: "EN" | "ES" = (church.locale as string) === "ES" ? "ES" : "EN";
-  const locale: "EN" | "ES" =
-    langParam === "EN" || langParam === "ES" ? langParam : churchDefault;
+  const locale: "EN" | "ES" = langParam === "EN" || langParam === "ES" ? langParam : churchDefault;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const items: MenuItemData[] = (catalog.items as any[]).map((ci: any) => ({

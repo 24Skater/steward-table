@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Check } from "lucide-react";
+import { useState } from "react";
 
 const TIMEZONES = [
   { value: "America/New_York", label: "Eastern Time (ET)" },
@@ -85,7 +85,7 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Failed to save settings");
       }
 
@@ -153,9 +153,7 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
           />
           <span className="text-sm text-slate-500 font-mono">{accentColor}</span>
         </div>
-        <p className="text-xs text-slate-500">
-          Used as the brand color on the storefront.
-        </p>
+        <p className="text-xs text-slate-500">Used as the brand color on the storefront.</p>
       </div>
 
       {/* Slug */}
@@ -225,9 +223,7 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
           onChange={(e) => setReplyToEmail(e.target.value)}
           placeholder="office@mychurch.org"
         />
-        <p className="text-xs text-slate-500">
-          Used as the reply-to address for outgoing emails.
-        </p>
+        <p className="text-xs text-slate-500">Used as the reply-to address for outgoing emails.</p>
       </div>
 
       {/* Display Name */}
@@ -239,9 +235,7 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="First Baptist"
         />
-        <p className="text-xs text-slate-500">
-          Short name shown in email footers and receipts.
-        </p>
+        <p className="text-xs text-slate-500">Short name shown in email footers and receipts.</p>
       </div>
 
       <hr className="border-slate-200" />
@@ -272,16 +266,10 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
             Enable SMS order updates for customers who opt in.
           </p>
         </div>
-        <Switch
-          id="sms-enabled"
-          checked={smsEnabled}
-          onCheckedChange={setSmsEnabled}
-        />
+        <Switch id="sms-enabled" checked={smsEnabled} onCheckedChange={setSmsEnabled} />
       </div>
 
-      {errorMessage && (
-        <p className="text-sm text-red-600">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
       <Button
         type="submit"
