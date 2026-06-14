@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
 import type { SessionMembership } from "@/lib/auth/types";
 import { CATALOG_TEMPLATE_MAP } from "@/lib/catalog-templates";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     catalogName?: string;
     templateKey?: string;
     churchId?: string;
@@ -95,9 +95,7 @@ export async function POST(req: NextRequest) {
           translations: {
             es: {
               name: templateItem.nameEs,
-              ...(templateItem.descriptionEs
-                ? { description: templateItem.descriptionEs }
-                : {}),
+              ...(templateItem.descriptionEs ? { description: templateItem.descriptionEs } : {}),
             },
           },
           description: templateItem.description ?? null,

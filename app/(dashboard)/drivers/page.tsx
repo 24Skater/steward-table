@@ -1,12 +1,12 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
-import { TopBar } from "@/components/layout/top-bar";
 import { DriversPage } from "@/components/drivers";
 import type { DeliveryOrderCardData, DriverOption } from "@/components/drivers";
+import { TopBar } from "@/components/layout/top-bar";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
 import type { OrderStatus } from "@prisma/client";
+import { redirect } from "next/navigation";
 
 // Active statuses for delivery orders shown on this page
 const ACTIVE_DELIVERY_STATUSES: OrderStatus[] = [
@@ -48,7 +48,7 @@ export default async function DriversPageRoute() {
 
   const [rawOrders, rawDrivers] = await Promise.all([
     // Fetch active DELIVERY orders
-    (db.order.findMany as Function)({
+    (db.order.findMany as PrismaBypass)({
       where: {
         churchId,
         fulfillment: "DELIVERY",
@@ -95,7 +95,7 @@ export default async function DriversPageRoute() {
 
     // Fetch all active DRIVER members of this church
     canAssign
-      ? (db.membership.findMany as Function)({
+      ? (db.membership.findMany as PrismaBypass)({
           where: {
             churchId,
             status: "ACTIVE",

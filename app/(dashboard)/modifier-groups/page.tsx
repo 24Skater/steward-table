@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
 import { TopBar } from "@/components/layout/top-bar";
 import { ModifierGroupsManager } from "@/components/modifier-groups/modifier-groups-manager";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import { redirect } from "next/navigation";
 
 export default async function ModifierGroupsPage() {
   const session = await auth();
@@ -52,10 +52,7 @@ export default async function ModifierGroupsPage() {
     <div className="flex flex-col h-full">
       <TopBar title="Modifier Groups" />
       <div className="flex-1 overflow-y-auto p-6">
-        <ModifierGroupsManager
-          groups={groups}
-          churchId={membership.churchId}
-        />
+        <ModifierGroupsManager groups={groups} churchId={membership.churchId} />
       </div>
     </div>
   );

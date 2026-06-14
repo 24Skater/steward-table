@@ -1,6 +1,6 @@
 interface OrderProgressProps {
-  status: string
-  fulfillment: string
+  status: string;
+  fulfillment: string;
 }
 
 const PICKUP_STEPS = [
@@ -10,7 +10,7 @@ const PICKUP_STEPS = [
   { key: "READY", label: "Ready" },
   { key: "AWAITING_PICKUP", label: "Awaiting Pickup" },
   { key: "PICKED_UP", label: "Picked Up" },
-]
+];
 
 const DELIVERY_STEPS = [
   { key: "SUBMITTED", label: "Received" },
@@ -19,14 +19,14 @@ const DELIVERY_STEPS = [
   { key: "READY", label: "Ready" },
   { key: "OUT_FOR_DELIVERY", label: "Out for Delivery" },
   { key: "DELIVERED", label: "Delivered" },
-]
+];
 
 export function OrderProgress({ status, fulfillment }: OrderProgressProps) {
-  const steps = fulfillment === "DELIVERY" ? DELIVERY_STEPS : PICKUP_STEPS
+  const steps = fulfillment === "DELIVERY" ? DELIVERY_STEPS : PICKUP_STEPS;
 
-  const currentIndex = steps.findIndex((s) => s.key === status)
+  const currentIndex = steps.findIndex((s) => s.key === status);
   // If status not in steps (e.g. CANCELED, SERVED, COMPLETED), don't show progress
-  if (currentIndex === -1) return null
+  if (currentIndex === -1) return null;
 
   return (
     <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -35,10 +35,10 @@ export function OrderProgress({ status, fulfillment }: OrderProgressProps) {
       </h2>
       <ol className="flex items-center">
         {steps.map((step, i) => {
-          const isCompleted = i < currentIndex
-          const isCurrent = i === currentIndex
-          const isFuture = i > currentIndex
-          const isLast = i === steps.length - 1
+          const isCompleted = i < currentIndex;
+          const isCurrent = i === currentIndex;
+          const isFuture = i > currentIndex;
+          const isLast = i === steps.length - 1;
 
           return (
             <li key={step.key} className="flex flex-1 items-center">
@@ -92,9 +92,9 @@ export function OrderProgress({ status, fulfillment }: OrderProgressProps) {
                 />
               )}
             </li>
-          )
+          );
         })}
       </ol>
     </div>
-  )
+  );
 }

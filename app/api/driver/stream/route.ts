@@ -1,8 +1,8 @@
-import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import type { OrderStatus, FulfillmentType } from "@prisma/client";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import type { FulfillmentType, OrderStatus } from "@prisma/client";
+import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 
@@ -14,8 +14,8 @@ function sseMessage(event: string, data: unknown): string {
 }
 
 async function fetchDriverPayload(churchId: string, userId: string) {
-  const [rawAssigned, rawAvailable] = await Promise.all([
-    (db.deliveryInfo.findMany as Function)({
+  const [rawAssigned, rawAvailable] = (await Promise.all([
+    (db.deliveryInfo.findMany as PrismaBypass)({
       where: {
         driverId: userId,
         order: {
@@ -28,7 +28,7 @@ async function fetchDriverPayload(churchId: string, userId: string) {
       },
       _bypassTenancyCheck: true,
     }),
-    (db.order.findMany as Function)({
+    (db.order.findMany as PrismaBypass)({
       where: {
         churchId,
         fulfillment: "DELIVERY" as FulfillmentType,
@@ -39,7 +39,7 @@ async function fetchDriverPayload(churchId: string, userId: string) {
       orderBy: [{ scheduledFor: "asc" }, { createdAt: "asc" }],
       _bypassTenancyCheck: true,
     }),
-  ]) as [
+  ])) as [
     Array<{ order: { id: string; number: number; status: OrderStatus } }>,
     Array<{ id: string; number: number }>,
   ];
@@ -109,7 +109,11 @@ export async function GET(req: NextRequest) {
       req.signal.addEventListener("abort", () => {
         clearInterval(pollInterval);
         clearInterval(heartbeatInterval);
-        try { controller.close(); } catch { /* already closed */ }
+        try {
+          controller.close();
+        } catch {
+          /* already closed */
+        }
       });
     },
   });

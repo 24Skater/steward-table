@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useState } from "react";
 import type { InventoryRow } from "./inventory-table";
 
 interface CreateInventoryDialogProps {
@@ -62,19 +62,17 @@ export function CreateInventoryDialog({
       return;
     }
 
-    const quantity = parseInt(form.quantity, 10);
-    if (isNaN(quantity) || quantity < 0) {
+    const quantity = Number.parseInt(form.quantity, 10);
+    if (Number.isNaN(quantity) || quantity < 0) {
       setError("Quantity must be a non-negative number.");
       return;
     }
 
     const lowStockThresholdRaw = form.lowStockThreshold.trim();
     const lowStockThreshold =
-      lowStockThresholdRaw === ""
-        ? null
-        : parseInt(lowStockThresholdRaw, 10);
+      lowStockThresholdRaw === "" ? null : Number.parseInt(lowStockThresholdRaw, 10);
 
-    if (lowStockThreshold !== null && isNaN(lowStockThreshold)) {
+    if (lowStockThreshold !== null && Number.isNaN(lowStockThreshold)) {
       setError("Low stock threshold must be a number.");
       return;
     }
@@ -93,12 +91,12 @@ export function CreateInventoryDialog({
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         setError(data.error ?? "Failed to create item.");
         return;
       }
 
-      const created = await res.json() as InventoryRow;
+      const created = (await res.json()) as InventoryRow;
       onCreated(created);
       handleClose();
     } catch {
@@ -144,8 +142,7 @@ export function CreateInventoryDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="inv-threshold">
-              Low Stock Threshold{" "}
-              <span className="text-slate-400 font-normal">(optional)</span>
+              Low Stock Threshold <span className="text-slate-400 font-normal">(optional)</span>
             </Label>
             <Input
               id="inv-threshold"
@@ -161,19 +158,10 @@ export function CreateInventoryDialog({
             </p>
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>}
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={submitting}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
               Cancel
             </Button>
             <Button type="submit" disabled={submitting}>

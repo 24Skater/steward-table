@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Plus, Search, AlertTriangle, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { AlertTriangle, Plus, Search, X } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -46,9 +46,7 @@ interface ItemsLibraryProps {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function formatPrice(cents: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    cents / 100,
-  );
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 }
 
 function hasEsTranslation(item: LibraryItem): boolean {
@@ -71,9 +69,15 @@ function SetPriceDialog({ count, onConfirm, onClose }: SetPriceDialogProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const num = parseFloat(value);
-    if (isNaN(num)) { setError("Enter a valid number"); return; }
-    if (mode === "fixed" && num < 0) { setError("Price must be ≥ 0"); return; }
+    const num = Number.parseFloat(value);
+    if (Number.isNaN(num)) {
+      setError("Enter a valid number");
+      return;
+    }
+    if (mode === "fixed" && num < 0) {
+      setError("Price must be ≥ 0");
+      return;
+    }
     setBusy(true);
     try {
       await onConfirm(mode, num);
@@ -87,7 +91,9 @@ function SetPriceDialog({ count, onConfirm, onClose }: SetPriceDialogProps) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Set price for {count} item{count !== 1 ? "s" : ""}</DialogTitle>
+          <DialogTitle>
+            Set price for {count} item{count !== 1 ? "s" : ""}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div className="flex gap-2">
@@ -97,7 +103,9 @@ function SetPriceDialog({ count, onConfirm, onClose }: SetPriceDialogProps) {
                 type="button"
                 onClick={() => setMode(m)}
                 className={`flex-1 py-1.5 rounded-md text-sm font-medium border transition-colors ${
-                  mode === m ? "bg-slate-900 text-white border-slate-900" : "border-slate-200 text-slate-600"
+                  mode === m
+                    ? "bg-slate-900 text-white border-slate-900"
+                    : "border-slate-200 text-slate-600"
                 }`}
               >
                 {m === "fixed" ? "Fixed price" : "% adjustment"}
@@ -112,15 +120,22 @@ function SetPriceDialog({ count, onConfirm, onClose }: SetPriceDialogProps) {
               type="number"
               step={mode === "fixed" ? "0.01" : "0.1"}
               value={value}
-              onChange={(e) => { setValue(e.target.value); setError(null); }}
+              onChange={(e) => {
+                setValue(e.target.value);
+                setError(null);
+              }}
               placeholder={mode === "fixed" ? "3.00" : "10"}
               autoFocus
             />
             {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Apply"}</Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={busy}>
+              {busy ? "Saving…" : "Apply"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -155,11 +170,15 @@ function SetTaxCategoryDialog({ count, onConfirm, onClose }: SetTaxCategoryDialo
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Set tax category for {count} item{count !== 1 ? "s" : ""}</DialogTitle>
+          <DialogTitle>
+            Set tax category for {count} item{count !== 1 ? "s" : ""}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div>
-            <label className="text-sm text-slate-600 mb-1 block">Tax category (leave blank to clear)</label>
+            <label className="text-sm text-slate-600 mb-1 block">
+              Tax category (leave blank to clear)
+            </label>
             <Input
               value={value}
               onChange={(e) => setValue(e.target.value)}
@@ -168,8 +187,12 @@ function SetTaxCategoryDialog({ count, onConfirm, onClose }: SetTaxCategoryDialo
             />
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Apply"}</Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={busy}>
+              {busy ? "Saving…" : "Apply"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -187,7 +210,13 @@ interface BulkActionBarProps {
   onBulkRemove: (removedIds: string[]) => void;
 }
 
-function BulkActionBar({ selected, items, onClearSelection, onBulkUpdate, onBulkRemove }: BulkActionBarProps) {
+function BulkActionBar({
+  selected,
+  items,
+  onClearSelection,
+  onBulkUpdate,
+  onBulkRemove,
+}: BulkActionBarProps) {
   const [dialog, setDialog] = useState<"price" | "tax" | null>(null);
   const [busy, setBusy] = useState(false);
   const count = selected.size;
@@ -208,19 +237,30 @@ function BulkActionBar({ selected, items, onClearSelection, onBulkUpdate, onBulk
       await callBulk({ action: "set_status", value });
       onBulkUpdate(selectedIds, { status: value });
       onClearSelection();
-    } catch { /* show nothing — user can retry */ }
-    finally { setBusy(false); }
+    } catch {
+      /* show nothing — user can retry */
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleArchive() {
-    if (!confirm(`Archive ${count} item${count !== 1 ? "s" : ""}? They will be hidden from all views.`)) return;
+    if (
+      !confirm(
+        `Archive ${count} item${count !== 1 ? "s" : ""}? They will be hidden from all views.`,
+      )
+    )
+      return;
     setBusy(true);
     try {
       await callBulk({ action: "archive" });
       onBulkRemove(selectedIds);
       onClearSelection();
-    } catch { /* */ }
-    finally { setBusy(false); }
+    } catch {
+      /* */
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleSetPrice(mode: "fixed" | "percent", value: number) {
@@ -246,9 +286,7 @@ function BulkActionBar({ selected, items, onClearSelection, onBulkUpdate, onBulk
   return (
     <>
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 shadow-2xl shadow-slate-900/30 border border-slate-700">
-        <span className="text-sm text-slate-300 font-medium mr-2 shrink-0">
-          {count} selected
-        </span>
+        <span className="text-sm text-slate-300 font-medium mr-2 shrink-0">{count} selected</span>
         <button
           type="button"
           disabled={busy}
@@ -303,11 +341,7 @@ function BulkActionBar({ selected, items, onClearSelection, onBulkUpdate, onBulk
       </div>
 
       {dialog === "price" && (
-        <SetPriceDialog
-          count={count}
-          onConfirm={handleSetPrice}
-          onClose={() => setDialog(null)}
-        />
+        <SetPriceDialog count={count} onConfirm={handleSetPrice} onClose={() => setDialog(null)} />
       )}
       {dialog === "tax" && (
         <SetTaxCategoryDialog
@@ -355,11 +389,7 @@ function ItemRow({ item, selected, onSelect, onToggleStatus, inFlight }: ItemRow
         <div className="h-10 w-10 rounded-md overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
           {item.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={item.imageUrl}
-              alt={item.name}
-              className="h-full w-full object-cover"
-            />
+            <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
           ) : (
             <span className="text-lg select-none">🍽</span>
           )}
@@ -399,7 +429,9 @@ function ItemRow({ item, selected, onSelect, onToggleStatus, inFlight }: ItemRow
 
       {/* Modifier groups */}
       <td className="py-3 px-3 text-sm text-slate-500 text-center">
-        {item._count.modifierGroups > 0 ? item._count.modifierGroups : (
+        {item._count.modifierGroups > 0 ? (
+          item._count.modifierGroups
+        ) : (
           <span className="text-slate-300">—</span>
         )}
       </td>
@@ -416,10 +448,7 @@ function ItemRow({ item, selected, onSelect, onToggleStatus, inFlight }: ItemRow
       {/* Status */}
       <td className="py-3 px-3">
         <div className="flex items-center gap-2">
-          <Badge
-            variant={item.status === "ACTIVE" ? "default" : "outline"}
-            className="text-xs"
-          >
+          <Badge variant={item.status === "ACTIVE" ? "default" : "outline"} className="text-xs">
             {item.status === "ACTIVE" ? "Active" : "Inactive"}
           </Badge>
           <button
@@ -476,7 +505,8 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
     setSelected((prev) => {
       const next = new Set(prev);
       for (const id of filteredIds) {
-        if (checked) next.add(id); else next.delete(id);
+        if (checked) next.add(id);
+        else next.delete(id);
       }
       return next;
     });
@@ -485,7 +515,8 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
   function handleSelect(id: string, checked: boolean) {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (checked) next.add(id); else next.delete(id);
+      if (checked) next.add(id);
+      else next.delete(id);
       return next;
     });
   }
@@ -499,18 +530,14 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
         body: JSON.stringify({ status: next }),
       });
       if (!res.ok) return;
-      setItems((prev) =>
-        prev.map((it) => (it.id === itemId ? { ...it, status: next } : it)),
-      );
+      setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, status: next } : it)));
     } finally {
       setInFlight(null);
     }
   }
 
   function handleBulkUpdate(updatedIds: string[], patch: Partial<LibraryItem>) {
-    setItems((prev) =>
-      prev.map((it) => (updatedIds.includes(it.id) ? { ...it, ...patch } : it)),
-    );
+    setItems((prev) => prev.map((it) => (updatedIds.includes(it.id) ? { ...it, ...patch } : it)));
   }
 
   function handleBulkRemove(removedIds: string[]) {
@@ -540,7 +567,10 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
         <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
           <AlertTriangle size={16} className="text-amber-600 shrink-0" />
           <p className="text-sm text-amber-800">
-            <strong>{missingEsCount} item{missingEsCount !== 1 ? "s" : ""}</strong> missing Spanish translations.{" "}
+            <strong>
+              {missingEsCount} item{missingEsCount !== 1 ? "s" : ""}
+            </strong>{" "}
+            missing Spanish translations.{" "}
             <button
               type="button"
               className="underline underline-offset-2 hover:text-amber-900"
@@ -617,7 +647,9 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
                   <Button size="sm">+ New Item</Button>
                 </Link>
                 <Link href="/catalog">
-                  <Button variant="outline" size="sm">Use a template</Button>
+                  <Button variant="outline" size="sm">
+                    Use a template
+                  </Button>
                 </Link>
               </div>
             </>
@@ -627,7 +659,11 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
               <button
                 type="button"
                 className="underline underline-offset-2 text-slate-500"
-                onClick={() => { setSearch(""); setStatusFilter("ALL"); setMissingEsOnly(false); }}
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("ALL");
+                  setMissingEsOnly(false);
+                }}
               >
                 Clear filters
               </button>
@@ -649,12 +685,24 @@ export function ItemsLibrary({ items: initialItems }: ItemsLibraryProps) {
                   />
                 </th>
                 <th className="py-2.5 pr-3" />
-                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Name</th>
-                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Price</th>
-                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Tax</th>
-                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide text-center">Modifiers</th>
-                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Used in</th>
-                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Status</th>
+                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                  Name
+                </th>
+                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                  Price
+                </th>
+                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                  Tax
+                </th>
+                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide text-center">
+                  Modifiers
+                </th>
+                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                  Used in
+                </th>
+                <th className="py-2.5 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                  Status
+                </th>
                 <th className="py-2.5 pl-3 pr-4" />
               </tr>
             </thead>

@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import type { PaymentMethod, OrderStatus, FulfillmentType } from "@prisma/client";
+import type { FulfillmentType, OrderStatus, PaymentMethod } from "@prisma/client";
+import { redirect } from "next/navigation";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -58,9 +58,7 @@ export default async function PrintReceiptPage({
   const session = await auth();
   if (!session?.user?.id) redirect("/auth/sign-in");
 
-  const activeMembership = session.user.memberships?.find(
-    (m) => m.status === "ACTIVE",
-  );
+  const activeMembership = session.user.memberships?.find((m) => m.status === "ACTIVE");
   if (!activeMembership) redirect("/auth/sign-in");
 
   const { churchId } = activeMembership;
@@ -114,9 +112,9 @@ export default async function PrintReceiptPage({
     );
   }
 
-  const capturedPayment = order.payments.find(
-    (p) => p.status === "CAPTURED" || p.status === "AUTHORIZED",
-  ) ?? order.payments[0];
+  const capturedPayment =
+    order.payments.find((p) => p.status === "CAPTURED" || p.status === "AUTHORIZED") ??
+    order.payments[0];
 
   return (
     <>
@@ -297,6 +295,7 @@ export default async function PrintReceiptPage({
 
       {/* Auto-print on load */}
       <script
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: static, developer-authored inline script (no user input)
         dangerouslySetInnerHTML={{
           __html: "window.onload = function() { window.print(); };",
         }}
@@ -313,9 +312,7 @@ export default async function PrintReceiptPage({
           <div className="order-number">Order #{order.number}</div>
 
           {/* Date / time */}
-          <div className="order-date">
-            {formatDateTime(new Date(order.createdAt))}
-          </div>
+          <div className="order-date">{formatDateTime(new Date(order.createdAt))}</div>
 
           {/* Status */}
           <div className="status-row">
@@ -399,8 +396,8 @@ export default async function PrintReceiptPage({
                   {order.church.ein && ` EIN: ${order.church.ein}.`}
                 </p>
                 <p style={{ fontSize: "11px", marginTop: "0.25rem" }}>
-                  No goods or services were provided in exchange for this contribution,
-                  making the full amount tax-deductible to the extent allowed by law.
+                  No goods or services were provided in exchange for this contribution, making the
+                  full amount tax-deductible to the extent allowed by law.
                 </p>
               </>
             )}

@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
+import { TopBar } from "@/components/layout/top-bar";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import { TopBar } from "@/components/layout/top-bar";
-import type { SessionMembership } from "@/lib/auth/types";
 import type { Role } from "@prisma/client";
+import { redirect } from "next/navigation";
 
 interface WebhookEventRow {
   id: string;
@@ -42,7 +42,7 @@ export default async function WebhooksPage() {
     );
   }
 
-  const events = await (db.webhookEvent.findMany as Function)({
+  const events = (await (db.webhookEvent.findMany as PrismaBypass)({
     where: { churchId: membership.churchId },
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -56,7 +56,7 @@ export default async function WebhooksPage() {
       createdAt: true,
     },
     ...({ _bypassTenancyCheck: true } as object),
-  }) as WebhookEventRow[];
+  })) as WebhookEventRow[];
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.steward.app";
   const webhookEndpoint = `${appUrl}/api/payments/stripe/webhook`;

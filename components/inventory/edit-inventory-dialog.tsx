@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useState } from "react";
 import type { InventoryRow } from "./inventory-table";
 
 interface EditInventoryDialogProps {
@@ -19,17 +19,11 @@ interface EditInventoryDialogProps {
   onUpdated: (item: InventoryRow) => void;
 }
 
-export function EditInventoryDialog({
-  item,
-  onClose,
-  onUpdated,
-}: EditInventoryDialogProps) {
+export function EditInventoryDialog({ item, onClose, onUpdated }: EditInventoryDialogProps) {
   const [lowStockThreshold, setLowStockThreshold] = useState(
     item?.lowStockThreshold?.toString() ?? "",
   );
-  const [trackingEnabled, setTrackingEnabled] = useState(
-    item?.trackingEnabled ?? true,
-  );
+  const [trackingEnabled, setTrackingEnabled] = useState(item?.trackingEnabled ?? true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,9 +38,8 @@ export function EditInventoryDialog({
     setError(null);
 
     const thresholdRaw = lowStockThreshold.trim();
-    const parsedThreshold =
-      thresholdRaw === "" ? null : parseInt(thresholdRaw, 10);
-    if (parsedThreshold !== null && isNaN(parsedThreshold)) {
+    const parsedThreshold = thresholdRaw === "" ? null : Number.parseInt(thresholdRaw, 10);
+    if (parsedThreshold !== null && Number.isNaN(parsedThreshold)) {
       setError("Low stock threshold must be a whole number.");
       return;
     }
@@ -90,15 +83,12 @@ export function EditInventoryDialog({
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
           <div className="space-y-1.5">
             <Label className="text-slate-500 text-sm">Item</Label>
-            <p className="text-sm font-medium text-slate-800">
-              {item?.itemName}
-            </p>
+            <p className="text-sm font-medium text-slate-800">{item?.itemName}</p>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="edit-threshold">
-              Low Stock Threshold{" "}
-              <span className="text-slate-400 font-normal">(optional)</span>
+              Low Stock Threshold <span className="text-slate-400 font-normal">(optional)</span>
             </Label>
             <Input
               id="edit-threshold"
@@ -140,19 +130,10 @@ export function EditInventoryDialog({
             </Label>
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>}
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={submitting}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
               Cancel
             </Button>
             <Button type="submit" disabled={submitting}>

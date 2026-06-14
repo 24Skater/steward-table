@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface RouteContext {
   params: Promise<{ invitationId: string }>;
@@ -32,7 +32,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
 
   const { invitationId } = await context.params;
 
-  const invitation = await (db.invitation.findFirst as Function)({
+  const invitation = await (db.invitation.findFirst as PrismaBypass)({
     where: {
       id: invitationId,
       churchId: membership.churchId,
@@ -45,13 +45,10 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
   }
 
   if (invitation.status !== "PENDING") {
-    return NextResponse.json(
-      { error: "Only PENDING invitations can be revoked" },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: "Only PENDING invitations can be revoked" }, { status: 422 });
   }
 
-  await (db.invitation.update as Function)({
+  await (db.invitation.update as PrismaBypass)({
     where: { id: invitationId },
     data: { status: "REVOKED" },
     _bypassTenancyCheck: true,

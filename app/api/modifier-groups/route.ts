@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -58,8 +58,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
-  if (!body || typeof body.churchId !== "string" || typeof body.name !== "string" || !body.name.trim()) {
+  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  if (
+    !body ||
+    typeof body.churchId !== "string" ||
+    typeof body.name !== "string" ||
+    !body.name.trim()
+  ) {
     return NextResponse.json({ error: "churchId and name required" }, { status: 400 });
   }
 
@@ -81,8 +86,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const minSelections = typeof body.defaultMinSelections === "number" ? body.defaultMinSelections : 0;
-  const maxSelections = typeof body.defaultMaxSelections === "number" ? body.defaultMaxSelections : 1;
+  const minSelections =
+    typeof body.defaultMinSelections === "number" ? body.defaultMinSelections : 0;
+  const maxSelections =
+    typeof body.defaultMaxSelections === "number" ? body.defaultMaxSelections : 1;
   const isRequired = typeof body.defaultIsRequired === "boolean" ? body.defaultIsRequired : false;
 
   const group = await db.modifierGroup.create({

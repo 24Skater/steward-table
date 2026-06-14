@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,6 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface AddModifierGroupDialogProps {
   open: boolean;
@@ -84,15 +84,15 @@ export function AddModifierGroupDialog({
       });
 
       if (!groupRes.ok) {
-        const body = await groupRes.json().catch(() => ({})) as { error?: string };
+        const body = (await groupRes.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "Failed to create modifier group");
       }
 
-      const group = await groupRes.json() as { id: string };
+      const group = (await groupRes.json()) as { id: string };
 
       if (firstOptionName.trim()) {
-        const rawPrice = parseFloat(firstOptionPrice);
-        const priceDelta = isNaN(rawPrice) ? 0 : Math.round(rawPrice * 100);
+        const rawPrice = Number.parseFloat(firstOptionPrice);
+        const priceDelta = Number.isNaN(rawPrice) ? 0 : Math.round(rawPrice * 100);
 
         const optionRes = await fetch(`/api/modifier-groups/${group.id}/options`, {
           method: "POST",
@@ -101,7 +101,7 @@ export function AddModifierGroupDialog({
         });
 
         if (!optionRes.ok) {
-          const body = await optionRes.json().catch(() => ({})) as { error?: string };
+          const body = (await optionRes.json().catch(() => ({}))) as { error?: string };
           throw new Error(body.error ?? "Failed to create option");
         }
       }
@@ -142,9 +142,7 @@ export function AddModifierGroupDialog({
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="required-toggle">Required</Label>
-                <p className="text-xs text-slate-500">
-                  Customer must make a selection
-                </p>
+                <p className="text-xs text-slate-500">Customer must make a selection</p>
               </div>
               <Switch
                 id="required-toggle"
@@ -210,9 +208,7 @@ export function AddModifierGroupDialog({
               </div>
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
-            )}
+            {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
 
           <DialogFooter>

@@ -25,7 +25,7 @@ export function AcceptInviteCard({
     setError(null);
     try {
       const res = await fetch(`/api/invite/${token}/accept`, { method: "POST" });
-      const body = await res.json().catch(() => ({})) as { error?: string };
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(body.error ?? "Failed to accept invitation");
       window.location.href = "/orders";
     } catch (err) {

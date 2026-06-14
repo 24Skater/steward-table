@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface CatalogTranslations {
   es?: { name?: string; description?: string };
@@ -42,7 +42,7 @@ type LangTab = "EN" | "ES";
 function toDatetimeLocal(val: Date | string | null | undefined): string {
   if (!val) return "";
   const d = typeof val === "string" ? new Date(val) : val;
-  if (isNaN(d.getTime())) return "";
+  if (Number.isNaN(d.getTime())) return "";
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
@@ -98,7 +98,7 @@ export function EditCatalogDialog({
         throw new Error((body as { error?: string }).error ?? "Failed to update catalog");
       }
 
-      const updated = await res.json() as {
+      const updated = (await res.json()) as {
         id: string;
         name: string;
         description: string | null;

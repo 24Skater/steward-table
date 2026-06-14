@@ -1,6 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { transition, isValidTransition, reachableFrom, InvalidTransitionError } from "@/lib/orders/transitions";
-import type { OrderStatus } from "@prisma/client";
+import {
+  InvalidTransitionError,
+  isValidTransition,
+  reachableFrom,
+  transition,
+} from "@/lib/orders/transitions";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the database
 vi.mock("@/lib/db", () => ({
@@ -146,7 +150,11 @@ describe("order state machine", () => {
       } as never);
 
       const enqueued: string[] = [];
-      const queue = { enqueue: vi.fn(async (e: { kind: string }) => { enqueued.push(e.kind); }) };
+      const queue = {
+        enqueue: vi.fn(async (e: { kind: string }) => {
+          enqueued.push(e.kind);
+        }),
+      };
 
       const result = await transition("order-1", "SUBMITTED", { queue });
       expect(result.from).toBe("DRAFT");
@@ -165,7 +173,11 @@ describe("order state machine", () => {
       } as never);
 
       const enqueued: string[] = [];
-      const queue = { enqueue: vi.fn(async (e: { kind: string }) => { enqueued.push(e.kind); }) };
+      const queue = {
+        enqueue: vi.fn(async (e: { kind: string }) => {
+          enqueued.push(e.kind);
+        }),
+      };
 
       await transition("order-1", "REFUNDED", { queue });
       expect(enqueued).toContain("stripe.refund");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -9,9 +9,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { RoleBadge } from "./role-badge";
 import type { Role } from "@prisma/client";
+import { useState } from "react";
+import { RoleBadge } from "./role-badge";
 
 export interface InvitationRow {
   id: string;
@@ -61,7 +61,7 @@ export function InvitationsTable({ invitations, onRefresh }: InvitationsTablePro
         method: "DELETE",
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({ error: "Unexpected error" })) as {
+        const data = (await res.json().catch(() => ({ error: "Unexpected error" }))) as {
           error?: string;
         };
         setError(data.error ?? "Failed to revoke invitation");

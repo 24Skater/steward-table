@@ -1,12 +1,12 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { db } from "@/lib/db";
-import { CheckCircle2 } from "lucide-react";
-import { OrderStatusRefresher } from "@/components/storefront/order-status-refresher";
-import { OrderProgress } from "@/components/storefront/order-progress";
 import { CancelOrderButton } from "@/components/storefront/cancel-order-button";
 import { MagicLinkPrompt } from "@/components/storefront/magic-link-prompt";
+import { OrderProgress } from "@/components/storefront/order-progress";
+import { OrderStatusRefresher } from "@/components/storefront/order-status-refresher";
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
 interface OrderStatusPageProps {
   params: Promise<{ churchSlug: string; orderId: string }>;
@@ -48,14 +48,13 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
     notFound();
   }
 
-  const churchSettings = await (db.churchSettings.findUnique as Function)({
+  const churchSettings = (await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: church.id },
     select: { customerSelfCancelWindowMinutes: true },
     _bypassTenancyCheck: true,
-  }) as { customerSelfCancelWindowMinutes: number } | null;
+  })) as { customerSelfCancelWindowMinutes: number } | null;
 
-  const selfCancelWindowMs =
-    (churchSettings?.customerSelfCancelWindowMinutes ?? 5) * 60 * 1000;
+  const selfCancelWindowMs = (churchSettings?.customerSelfCancelWindowMinutes ?? 5) * 60 * 1000;
 
   const order = await db.order.findFirst({
     where: { id: orderId, churchId: church.id },
@@ -86,10 +85,7 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
 
   const statusLabel = STATUS_LABELS[order.status] ?? order.status;
 
-  const showMagicLinkPrompt =
-    !session?.user &&
-    !!order.customer?.phone &&
-    !order.customer?.userId;
+  const showMagicLinkPrompt = !session?.user && !!order.customer?.phone && !order.customer?.userId;
 
   const maskedPhone = order.customer?.phone
     ? order.customer.phone.replace(/(\+?\d{1,3})\d+(\d{2})$/, "$1•••••$2")
@@ -115,33 +111,42 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
       <OrderProgress status={order.status} fulfillment={order.fulfillment} />
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">
-          Items
-        </h2>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">Items</h2>
         <ul className="divide-y divide-slate-100">
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {(order.items as any[]).map((item: { itemName: string; quantity: number; unitPrice: number; total: number; modifierSnapshot: unknown }, i: number) => {
-            const mods = Array.isArray(item.modifierSnapshot)
-              ? (item.modifierSnapshot as Array<{ optionName: string }>)
-              : [];
-            return (
-              <li key={i} className="flex items-start justify-between py-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-800">
-                    {item.quantity}x {item.itemName}
-                  </p>
-                  {mods.length > 0 && (
-                    <p className="text-xs text-slate-400">
-                      {mods.map((m) => m.optionName).join(", ")}
+          {(order.items as any[]).map(
+            (
+              item: {
+                itemName: string;
+                quantity: number;
+                unitPrice: number;
+                total: number;
+                modifierSnapshot: unknown;
+              },
+              i: number,
+            ) => {
+              const mods = Array.isArray(item.modifierSnapshot)
+                ? (item.modifierSnapshot as Array<{ optionName: string }>)
+                : [];
+              return (
+                <li key={i} className="flex items-start justify-between py-3">
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">
+                      {item.quantity}x {item.itemName}
                     </p>
-                  )}
-                </div>
-                <span className="text-sm font-medium text-slate-700">
-                  {formatCents(item.total)}
-                </span>
-              </li>
-            );
-          })}
+                    {mods.length > 0 && (
+                      <p className="text-xs text-slate-400">
+                        {mods.map((m) => m.optionName).join(", ")}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-slate-700">
+                    {formatCents(item.total)}
+                  </span>
+                </li>
+              );
+            },
+          )}
         </ul>
 
         <div className="mt-3 border-t border-slate-100 pt-3">
@@ -162,11 +167,7 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
       {showCancelButton && <CancelOrderButton orderId={order.id} />}
 
       {showMagicLinkPrompt && (
-        <MagicLinkPrompt
-          churchSlug={churchSlug}
-          orderId={order.id}
-          maskedPhone={maskedPhone}
-        />
+        <MagicLinkPrompt churchSlug={churchSlug} orderId={order.id} maskedPhone={maskedPhone} />
       )}
 
       <div className="mt-6 flex flex-col items-center gap-2 text-center">

@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
+import { encrypt } from "@/lib/crypto/aes";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import { encrypt } from "@/lib/crypto/aes";
-import type { SessionMembership } from "@/lib/auth/types";
 import type { Role } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface StripeKeysBody {
   publishableKey: string;
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as StripeKeysBody | null;
+  const body = (await req.json().catch(() => null)) as StripeKeysBody | null;
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
@@ -80,10 +80,7 @@ export async function POST(req: NextRequest) {
     );
   }
   if (!isValidWebhookSecret(ws)) {
-    return NextResponse.json(
-      { error: "Webhook secret must start with whsec_" },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: "Webhook secret must start with whsec_" }, { status: 422 });
   }
 
   const isLive = sk.startsWith("sk_live_");
@@ -91,7 +88,7 @@ export async function POST(req: NextRequest) {
   const encryptedWebhookSecret = encrypt(ws);
 
   await Promise.all([
-    (db.apiKey.upsert as Function)({
+    (db.apiKey.upsert as PrismaBypass)({
       where: {
         churchId_provider_isLive: {
           churchId: membership.churchId,
@@ -115,7 +112,7 @@ export async function POST(req: NextRequest) {
       },
       ...({ _bypassTenancyCheck: true } as object),
     }),
-    (db.apiKey.upsert as Function)({
+    (db.apiKey.upsert as PrismaBypass)({
       where: {
         churchId_provider_isLive: {
           churchId: membership.churchId,

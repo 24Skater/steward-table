@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Check } from "lucide-react";
+import { useState } from "react";
 
 interface CashZelleSettingsFormProps {
   initialAcceptCash: boolean;
@@ -65,9 +65,7 @@ export function CashZelleSettingsForm({
         />
       </div>
 
-      {errorMessage && (
-        <p className="text-sm text-red-600">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
       <Button type="submit" disabled={saveState === "saving"}>
         {saveState === "saving" && "Saving…"}

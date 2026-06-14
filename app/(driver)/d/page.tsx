@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import type { SessionMembership } from "@/lib/auth/types";
-import type { OrderStatus, FulfillmentType } from "@prisma/client";
 import { DriverHome } from "@/components/drivers/driver-home";
+import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import type { FulfillmentType, OrderStatus } from "@prisma/client";
+import { redirect } from "next/navigation";
 
 export interface AssignedDelivery {
   id: string;
@@ -46,9 +46,9 @@ export default async function DriverPage() {
   const churchId = membership.churchId;
   const userId = session.user.id;
 
-  const [rawAssigned, rawAvailable] = await Promise.all([
+  const [rawAssigned, rawAvailable] = (await Promise.all([
     // Deliveries assigned to this driver
-    (db.deliveryInfo.findMany as Function)({
+    (db.deliveryInfo.findMany as PrismaBypass)({
       where: {
         driverId: userId,
         order: {
@@ -80,7 +80,7 @@ export default async function DriverPage() {
     }),
 
     // Unassigned delivery orders that are READY
-    (db.order.findMany as Function)({
+    (db.order.findMany as PrismaBypass)({
       where: {
         churchId,
         fulfillment: "DELIVERY" as FulfillmentType,
@@ -97,7 +97,7 @@ export default async function DriverPage() {
       orderBy: [{ scheduledFor: "asc" }, { createdAt: "asc" }],
       _bypassTenancyCheck: true,
     }),
-  ]) as [
+  ])) as [
     Array<{
       recipientName: string;
       line1: string;

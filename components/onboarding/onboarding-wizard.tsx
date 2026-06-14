@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useId } from "react";
+import { useId, useState } from "react";
 
 type Step = 1 | 2 | 3;
 
@@ -89,7 +89,10 @@ export function OnboardingWizard({ initialDisplayName = "" }: OnboardingWizardPr
 
     if (!churchForm.slug) {
       next.slug = "URL slug is required.";
-    } else if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(churchForm.slug) || churchForm.slug.length < 3) {
+    } else if (
+      !/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(churchForm.slug) ||
+      churchForm.slug.length < 3
+    ) {
       next.slug = "Must be at least 3 characters: lowercase letters, numbers, and hyphens only.";
     }
 
@@ -193,12 +196,8 @@ export function OnboardingWizard({ initialDisplayName = "" }: OnboardingWizardPr
             <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center mb-4">
               <span className="text-white text-sm font-semibold">ST</span>
             </div>
-            <h1 className="text-xl font-semibold text-slate-900 mb-1">
-              Set up your church
-            </h1>
-            <p className="text-sm text-slate-500">
-              Step 1 of 2 — Church details
-            </p>
+            <h1 className="text-xl font-semibold text-slate-900 mb-1">Set up your church</h1>
+            <p className="text-sm text-slate-500">Step 1 of 2 — Church details</p>
           </div>
 
           <div className="space-y-5">
@@ -232,13 +231,9 @@ export function OnboardingWizard({ initialDisplayName = "" }: OnboardingWizardPr
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
               />
               {churchForm.slug && !errors.slug && (
-                <p className="mt-1.5 text-xs text-slate-400">
-                  {churchForm.slug}.table.steward.app
-                </p>
+                <p className="mt-1.5 text-xs text-slate-400">{churchForm.slug}.table.steward.app</p>
               )}
-              {errors.slug && (
-                <p className="mt-1.5 text-xs text-red-600">{errors.slug}</p>
-              )}
+              {errors.slug && <p className="mt-1.5 text-xs text-red-600">{errors.slug}</p>}
             </div>
 
             <div>
@@ -251,9 +246,7 @@ export function OnboardingWizard({ initialDisplayName = "" }: OnboardingWizardPr
               <select
                 id={timezoneId}
                 value={churchForm.timezone}
-                onChange={(e) =>
-                  setChurchForm((prev) => ({ ...prev, timezone: e.target.value }))
-                }
+                onChange={(e) => setChurchForm((prev) => ({ ...prev, timezone: e.target.value }))}
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent bg-white"
               >
                 {US_TIMEZONES.map((tz) => (
@@ -317,20 +310,14 @@ export function OnboardingWizard({ initialDisplayName = "" }: OnboardingWizardPr
             </div>
 
             <div>
-              <label
-                htmlFor={phoneId}
-                className="block text-sm font-medium text-slate-700 mb-1.5"
-              >
-                Phone number{" "}
-                <span className="text-slate-400 font-normal">(optional)</span>
+              <label htmlFor={phoneId} className="block text-sm font-medium text-slate-700 mb-1.5">
+                Phone number <span className="text-slate-400 font-normal">(optional)</span>
               </label>
               <input
                 id={phoneId}
                 type="tel"
                 value={profileForm.phone}
-                onChange={(e) =>
-                  setProfileForm((prev) => ({ ...prev, phone: e.target.value }))
-                }
+                onChange={(e) => setProfileForm((prev) => ({ ...prev, phone: e.target.value }))}
                 placeholder="+1 (555) 000-0000"
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
               />

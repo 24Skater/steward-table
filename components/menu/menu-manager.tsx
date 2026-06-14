@@ -1,20 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Plus, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ChevronRight, Plus } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -85,9 +85,7 @@ function itemStatusLabel(status: string): string {
 }
 
 function formatPrice(cents: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    cents / 100,
-  );
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 }
 
 // ── Add Item Dialog ────────────────────────────────────────────────────────
@@ -109,8 +107,8 @@ function AddItemDialog({ catalogId, open, onOpenChange, onAdded }: AddItemDialog
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmedName = itemName.trim();
-    const priceFloat = parseFloat(priceStr);
-    if (!trimmedName || isNaN(priceFloat) || priceFloat < 0) return;
+    const priceFloat = Number.parseFloat(priceStr);
+    if (!trimmedName || Number.isNaN(priceFloat) || priceFloat < 0) return;
 
     setSaving(true);
     setError(null);
@@ -128,11 +126,11 @@ function AddItemDialog({ catalogId, open, onOpenChange, onAdded }: AddItemDialog
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Failed to add item");
       }
 
-      const data = await res.json() as { catalogItem: CatalogItemRow };
+      const data = (await res.json()) as { catalogItem: CatalogItemRow };
       onAdded(catalogId, data.catalogItem);
       setItemName("");
       setPriceStr("");
@@ -221,7 +219,7 @@ function ItemCard({ catalogItemId: _catalogItemId, item, onStatusChanged }: Item
         body: JSON.stringify({ available: nextStatus === "ACTIVE" }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Failed to update status");
       }
       onStatusChanged(_catalogItemId, nextStatus);
@@ -236,11 +234,7 @@ function ItemCard({ catalogItemId: _catalogItemId, item, onStatusChanged }: Item
     <div className="rounded-lg border border-slate-200 bg-white overflow-hidden flex flex-col">
       {item.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={item.imageUrl}
-          alt={item.name}
-          className="h-32 w-full object-cover"
-        />
+        <img src={item.imageUrl} alt={item.name} className="h-32 w-full object-cover" />
       ) : (
         <div className="h-32 w-full bg-slate-100 flex items-center justify-center">
           <span className="text-3xl select-none">🍽</span>

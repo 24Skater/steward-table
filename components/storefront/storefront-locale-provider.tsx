@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useContext } from "react";
-import { useSearchParams } from "next/navigation";
 import { STOREFRONT_STRINGS } from "@/lib/i18n/locales";
 import type { Locale } from "@/lib/i18n/locales";
+import { useSearchParams } from "next/navigation";
+import { createContext, useContext } from "react";
 
 type AnyLocaleStrings = (typeof STOREFRONT_STRINGS)[Locale];
 

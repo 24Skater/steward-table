@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   _req: NextRequest,
@@ -7,7 +7,7 @@ export async function GET(
 ) {
   const { churchSlug } = await params;
 
-  const church = await (db.church.findFirst as Function)({
+  const church = await (db.church.findFirst as PrismaBypass)({
     where: { slug: churchSlug, status: "ACTIVE" },
     select: { id: true, settings: { select: { brandTokens: true } } },
     _bypassTenancyCheck: true,

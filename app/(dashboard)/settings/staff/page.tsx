@@ -1,11 +1,11 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
 import { TopBar } from "@/components/layout/top-bar";
 import { StaffManager } from "@/components/settings/staff-manager";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
 import type { Role } from "@prisma/client";
+import { redirect } from "next/navigation";
 
 interface StaffMembership {
   id: string;
@@ -54,12 +54,12 @@ export default async function StaffPage() {
     );
   }
 
-  const memberships = await (db.membership.findMany as Function)({
+  const memberships = (await (db.membership.findMany as PrismaBypass)({
     where: { churchId: membership.churchId },
     include: { user: { select: { id: true, name: true, email: true, image: true } } },
     orderBy: { createdAt: "asc" },
     ...({ _bypassTenancyCheck: true } as object),
-  }) as StaffMembership[];
+  })) as StaffMembership[];
 
   return (
     <div className="flex flex-col h-full">

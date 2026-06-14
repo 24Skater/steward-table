@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { type NextRequest, NextResponse } from "next/server";
 
 interface TimeSlot {
   value: string;
@@ -30,11 +30,11 @@ function parseISODate(dateStr: string): Date | null {
   // Expect YYYY-MM-DD
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
   if (!match) return null;
-  const year = parseInt(match[1]!, 10);
-  const month = parseInt(match[2]!, 10) - 1;
-  const day = parseInt(match[3]!, 10);
+  const year = Number.parseInt(match[1]!, 10);
+  const month = Number.parseInt(match[2]!, 10) - 1;
+  const day = Number.parseInt(match[3]!, 10);
   const d = new Date(year, month, day, 0, 0, 0, 0);
-  if (isNaN(d.getTime())) return null;
+  if (Number.isNaN(d.getTime())) return null;
   return d;
 }
 
@@ -51,7 +51,7 @@ export async function GET(
 ) {
   const { churchSlug } = await params;
 
-  const church = await (db.church.findFirst as Function)({
+  const church = await (db.church.findFirst as PrismaBypass)({
     where: { slug: churchSlug, status: "ACTIVE" },
     select: { id: true, settings: { select: { brandTokens: true } } },
     _bypassTenancyCheck: true,
@@ -134,19 +134,25 @@ export async function GET(
     typeof brandTokens.maxOrdersPerSlot === "number" ? brandTokens.maxOrdersPerSlot : 0;
 
   // Count existing orders per slot if capacity enforcement is on
-  let slotCounts: Record<string, number> = {};
+  const slotCounts: Record<string, number> = {};
   if (maxOrdersPerSlot > 0) {
     const dayStart = new Date(
       targetDate.getFullYear(),
       targetDate.getMonth(),
       targetDate.getDate(),
-      0, 0, 0, 0,
+      0,
+      0,
+      0,
+      0,
     );
     const dayEnd = new Date(
       targetDate.getFullYear(),
       targetDate.getMonth(),
       targetDate.getDate(),
-      23, 59, 59, 999,
+      23,
+      59,
+      59,
+      999,
     );
     const ordersOnDay = await db.order.findMany({
       where: {

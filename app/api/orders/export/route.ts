@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
 import type { OrderStatus, Prisma } from "@prisma/client";
 import type { NextRequest } from "next/server";
 
@@ -74,7 +74,18 @@ export async function GET(req: NextRequest) {
 
   // Header row — columns match the export spec
   rows.push(
-    ["Order #", "Status", "Customer Name", "Customer Email", "Customer Phone", "Fulfillment", "Items", "Total ($)", "Created At", "Scheduled For"]
+    [
+      "Order #",
+      "Status",
+      "Customer Name",
+      "Customer Email",
+      "Customer Phone",
+      "Fulfillment",
+      "Items",
+      "Total ($)",
+      "Created At",
+      "Scheduled For",
+    ]
       .map(csvEscape)
       .join(","),
   );

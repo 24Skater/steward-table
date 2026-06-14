@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
-import { useCart } from "@/hooks/use-cart";
 import { useStorefrontStrings } from "@/components/storefront/storefront-locale-provider";
+import { useCart } from "@/hooks/use-cart";
+import { ShoppingCart } from "lucide-react";
+import Link from "next/link";
 
 interface CartButtonProps {
   churchSlug: string;

@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
 import type { Role } from "@prisma/client";
-import { randomBytes } from "crypto";
+import { type NextRequest, NextResponse } from "next/server";
 
 const INVITABLE_ROLES: Role[] = ["ADMIN", "STAFF", "COOK", "DRIVER", "VIEWER"];
 const INVITATION_TTL_DAYS = 7;
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: result.reason ?? "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as { email?: string; role?: Role } | null;
+  const body = (await req.json().catch(() => null)) as { email?: string; role?: Role } | null;
   if (!body?.email || typeof body.email !== "string") {
     return NextResponse.json({ error: "email is required" }, { status: 400 });
   }
@@ -49,14 +49,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Check if there's already an active membership for this email
-  const existingUser = await (db.user.findUnique as Function)({
+  const existingUser = await (db.user.findUnique as PrismaBypass)({
     where: { email: emailLower },
     select: { id: true },
     _bypassTenancyCheck: true,
   });
 
   if (existingUser) {
-    const existingMembership = await (db.membership.findFirst as Function)({
+    const existingMembership = await (db.membership.findFirst as PrismaBypass)({
       where: {
         userId: existingUser.id,
         churchId: membership.churchId,
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Check for a pending invitation for this email
-  const pendingInvitation = await (db.invitation.findFirst as Function)({
+  const pendingInvitation = await (db.invitation.findFirst as PrismaBypass)({
     where: {
       churchId: membership.churchId,
       email: emailLower,
@@ -90,11 +90,9 @@ export async function POST(req: NextRequest) {
   }
 
   const token = randomBytes(32).toString("hex");
-  const expiresAt = new Date(
-    Date.now() + INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000,
-  );
+  const expiresAt = new Date(Date.now() + INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000);
 
-  const invitation = await (db.invitation.create as Function)({
+  const invitation = await (db.invitation.create as PrismaBypass)({
     data: {
       churchId: membership.churchId,
       email: emailLower,

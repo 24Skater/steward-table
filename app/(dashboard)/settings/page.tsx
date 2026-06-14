@@ -1,13 +1,13 @@
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import type { Route } from "next";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
 import { TopBar } from "@/components/layout/top-bar";
 import { SettingsPage } from "@/components/settings";
 import { StorefrontShareCard } from "@/components/settings/storefront-share-card";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import type { Route } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 function parseFulfillmentPrefs(brandTokens: unknown) {
   if (!brandTokens || typeof brandTokens !== "object") {
@@ -30,16 +30,12 @@ function parseFulfillmentPrefs(brandTokens: unknown) {
     dineInEnabled: typeof raw.dineInEnabled === "boolean" ? raw.dineInEnabled : false,
     deliveryRadiusMiles:
       typeof raw.deliveryRadiusMiles === "number" ? raw.deliveryRadiusMiles : null,
-    pickupInstructions:
-      typeof raw.pickupInstructions === "string" ? raw.pickupInstructions : null,
+    pickupInstructions: typeof raw.pickupInstructions === "string" ? raw.pickupInstructions : null,
     pickupWindowStartHour:
       typeof raw.pickupWindowStartHour === "number" ? raw.pickupWindowStartHour : 10,
-    pickupWindowEndHour:
-      typeof raw.pickupWindowEndHour === "number" ? raw.pickupWindowEndHour : 20,
-    slotIntervalMinutes:
-      typeof raw.slotIntervalMinutes === "number" ? raw.slotIntervalMinutes : 30,
-    maxOrdersPerSlot:
-      typeof raw.maxOrdersPerSlot === "number" ? raw.maxOrdersPerSlot : 0,
+    pickupWindowEndHour: typeof raw.pickupWindowEndHour === "number" ? raw.pickupWindowEndHour : 20,
+    slotIntervalMinutes: typeof raw.slotIntervalMinutes === "number" ? raw.slotIntervalMinutes : 30,
+    maxOrdersPerSlot: typeof raw.maxOrdersPerSlot === "number" ? raw.maxOrdersPerSlot : 0,
   };
 }
 
@@ -60,7 +56,7 @@ export default async function SettingsRoute() {
   if (!result.allowed) redirect("/");
 
   const [church, stripeKey, webhookKey] = await Promise.all([
-    (db.church.findUnique as Function)({
+    (db.church.findUnique as PrismaBypass)({
       where: { id: membership.churchId },
       select: {
         id: true,
@@ -77,12 +73,12 @@ export default async function SettingsRoute() {
       },
       _bypassTenancyCheck: true,
     }),
-    (db.apiKey.findFirst as Function)({
+    (db.apiKey.findFirst as PrismaBypass)({
       where: { churchId: membership.churchId, provider: "stripe", isLive: true },
       select: { id: true },
       _bypassTenancyCheck: true,
     }),
-    (db.apiKey.findFirst as Function)({
+    (db.apiKey.findFirst as PrismaBypass)({
       where: { churchId: membership.churchId, provider: "stripe_webhook", isLive: true },
       select: { id: true },
       _bypassTenancyCheck: true,
@@ -91,8 +87,7 @@ export default async function SettingsRoute() {
 
   if (!church) redirect("/auth/sign-in");
 
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ?? `https://${church.slug}.stewardtable.com`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? `https://${church.slug}.stewardtable.com`;
   const webhookUrl = `${appUrl}/api/webhooks/stripe`;
 
   const isLocalDev = appUrl.includes("localhost");

@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { createDefaultKitchen } from "../lib/kitchens/defaults";
 
 const prisma = new PrismaClient();
 
@@ -43,6 +44,13 @@ async function main() {
     },
   });
   console.log(`  Church: ${church.name} (${church.id})`);
+
+  const existingKitchen = await prisma.kitchen.findFirst({
+    where: { churchId: church.id, isDefault: true },
+  });
+  if (!existingKitchen) {
+    await createDefaultKitchen(prisma, church.id);
+  }
 
   // ─────────────────────────────────────────────
   // 3. Membership
@@ -448,6 +456,13 @@ async function seedSecondChurch() {
       timezone: "America/Los_Angeles",
     },
   });
+
+  const existingKitchenRiverside = await prisma.kitchen.findFirst({
+    where: { churchId: church.id, isDefault: true },
+  });
+  if (!existingKitchenRiverside) {
+    await createDefaultKitchen(prisma, church.id);
+  }
 
   await prisma.membership.upsert({
     where: { userId_churchId: { userId: user.id, churchId: church.id } },

@@ -1,13 +1,13 @@
 "use client";
 
+import type { DateRange } from "@/app/(dashboard)/orders/page";
 import type { OrderStatus } from "@prisma/client";
 import { Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import type { DateRange } from "@/app/(dashboard)/orders/page";
 import { NewOrderDialog } from "./new-order-dialog";
 import { OrderRow } from "./order-row";
-import type { OrderRowData, DriverOption } from "./order-row";
+import type { DriverOption, OrderRowData } from "./order-row";
 import { OrderStatusBadge } from "./order-status-badge";
 import { FULFILLMENT_LABELS, formatOrderTime, getNextStep } from "./order-utils";
 
@@ -37,7 +37,9 @@ interface OrdersSsePayload {
 
 function useOrdersSse() {
   const router = useRouter();
-  const [liveStatusCounts, setLiveStatusCounts] = useState<Partial<Record<OrderStatus, number>>>({});
+  const [liveStatusCounts, setLiveStatusCounts] = useState<Partial<Record<OrderStatus, number>>>(
+    {},
+  );
   const [isLive, setIsLive] = useState(false);
   const prevTotalRef = useRef<number>(0);
   const [flashTab, setFlashTab] = useState<FilterTab | null>(null);
@@ -136,9 +138,7 @@ function filterOrders(orders: OrderRowData[], tab: FilterTab): OrderRowData[] {
     case "canceled":
       return orders.filter((o) => (CANCELED_STATUSES as string[]).includes(o.status));
     case "scheduled": {
-      const future = orders.filter(
-        (o) => o.scheduledFor !== null && o.scheduledFor > now,
-      );
+      const future = orders.filter((o) => o.scheduledFor !== null && o.scheduledFor > now);
       return [...future].sort((a, b) => {
         const aTime = (a.scheduledFor as Date).getTime();
         const bTime = (b.scheduledFor as Date).getTime();

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { type CanContext, can } from "@/lib/rbac/can";
 import type { Role } from "@prisma/client";
-import { can, type CanContext } from "@/lib/rbac/can";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the database to avoid needing a real DB in unit tests
 vi.mock("@/lib/db", () => ({
@@ -14,10 +14,7 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
-function makeCtx(
-  roles: Role[],
-  overrides: Partial<CanContext> = {},
-): CanContext {
+function makeCtx(roles: Role[], overrides: Partial<CanContext> = {}): CanContext {
   return {
     userId: "user-1",
     churchId: "church-1",
@@ -137,7 +134,10 @@ describe("can() — RBAC permission gate", () => {
         id: "mem-1",
         roles: ["STAFF"],
       } as never);
-      const result = await can("member.update", makeCtx(["ADMIN"], { targetMembershipId: "mem-1" }));
+      const result = await can(
+        "member.update",
+        makeCtx(["ADMIN"], { targetMembershipId: "mem-1" }),
+      );
       expect(result.allowed).toBe(true);
     });
     it("denies ADMIN when target is OWNER", async () => {
@@ -146,7 +146,10 @@ describe("can() — RBAC permission gate", () => {
         id: "mem-2",
         roles: ["OWNER"],
       } as never);
-      const result = await can("member.update", makeCtx(["ADMIN"], { targetMembershipId: "mem-2" }));
+      const result = await can(
+        "member.update",
+        makeCtx(["ADMIN"], { targetMembershipId: "mem-2" }),
+      );
       expect(result.allowed).toBe(false);
     });
     it("allows ADMIN when no targetMembershipId provided", async () => {
@@ -177,7 +180,10 @@ describe("can() — RBAC permission gate", () => {
         id: "mem-1",
         roles: ["ADMIN"],
       } as never);
-      const result = await can("member.remove", makeCtx(["ADMIN"], { targetMembershipId: "mem-1" }));
+      const result = await can(
+        "member.remove",
+        makeCtx(["ADMIN"], { targetMembershipId: "mem-1" }),
+      );
       expect(result.allowed).toBe(true);
     });
     it("denies ADMIN when target is OWNER", async () => {
@@ -186,7 +192,10 @@ describe("can() — RBAC permission gate", () => {
         id: "mem-2",
         roles: ["OWNER"],
       } as never);
-      const result = await can("member.remove", makeCtx(["ADMIN"], { targetMembershipId: "mem-2" }));
+      const result = await can(
+        "member.remove",
+        makeCtx(["ADMIN"], { targetMembershipId: "mem-2" }),
+      );
       expect(result.allowed).toBe(false);
     });
     it("denies STAFF", async () => {
@@ -809,7 +818,10 @@ describe("can() — RBAC permission gate", () => {
     it("audit log includes action, actorId, churchId, and reason", async () => {
       const { db } = await import("@/lib/db");
       vi.mocked(db.auditLog.create).mockClear();
-      await can("church.billing", makeCtx(["ADMIN"], { ip: "1.2.3.4", userAgent: "TestAgent/1.0" }));
+      await can(
+        "church.billing",
+        makeCtx(["ADMIN"], { ip: "1.2.3.4", userAgent: "TestAgent/1.0" }),
+      );
       expect(db.auditLog.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -837,7 +849,7 @@ describe("can() — RBAC permission gate", () => {
       const result = await can("church.delete", makeCtx(["ADMIN"]));
       expect(result.allowed).toBe(false);
       expect(typeof result.reason).toBe("string");
-      expect(result.reason!.length).toBeGreaterThan(0);
+      expect(result.reason?.length).toBeGreaterThan(0);
     });
     it("allowed result has allowed=true and no reason", async () => {
       const result = await can("church.delete", makeCtx(["OWNER"]));

@@ -1,14 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
   _req: NextRequest,
-  {
-    params,
-  }: { params: Promise<{ itemId: string; groupId: string; optionId: string }> },
+  { params }: { params: Promise<{ itemId: string; groupId: string; optionId: string }> },
 ) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -34,7 +32,7 @@ export async function DELETE(
   const { itemId, groupId, optionId } = await params;
 
   // Verify the binding exists and belongs to this church, and the option is part of that group
-  const binding = await (db.itemModifierGroup.findFirst as Function)({
+  const binding = await (db.itemModifierGroup.findFirst as PrismaBypass)({
     where: { id: groupId, itemId, deletedAt: null },
     include: {
       item: { select: { churchId: true } },
@@ -51,7 +49,7 @@ export async function DELETE(
 
   const underlyingGroupId = (binding as { group: { id: string } }).group.id;
 
-  const option = await (db.modifierOption.findFirst as Function)({
+  const option = await (db.modifierOption.findFirst as PrismaBypass)({
     where: { id: optionId, groupId: underlyingGroupId, deletedAt: null },
     select: { id: true },
   });

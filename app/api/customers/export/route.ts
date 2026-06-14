@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
-import { can } from "@/lib/rbac/can";
 import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
 import type { NextRequest } from "next/server";
 
 function escapeCsv(value: string | number | null | undefined): string {
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
 
   // Audit log this export
   try {
-    await (db.auditLog.create as Function)({
+    await (db.auditLog.create as PrismaBypass)({
       data: {
         churchId,
         actorId: session.user.id,
@@ -99,9 +99,7 @@ export async function GET(req: NextRequest) {
   ].join(",");
 
   const rows = customers.map((c) => {
-    const lastOrderAt = c.orders[0]?.createdAt
-      ? new Date(c.orders[0].createdAt).toISOString()
-      : "";
+    const lastOrderAt = c.orders[0]?.createdAt ? new Date(c.orders[0].createdAt).toISOString() : "";
     return [
       escapeCsv(c.id),
       escapeCsv(c.name),

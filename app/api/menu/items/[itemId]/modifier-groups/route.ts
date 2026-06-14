@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const postSchema = z.object({
   name: z.string().min(1).max(200),
@@ -12,10 +12,7 @@ const postSchema = z.object({
   maxSelections: z.number().int().min(1).optional().default(1),
 });
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ itemId: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ itemId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -82,7 +79,7 @@ export async function POST(
   });
 
   // Get the current max sort order for this item's modifier groups
-  const lastBinding = await (db.itemModifierGroup.findFirst as Function)({
+  const lastBinding = await (db.itemModifierGroup.findFirst as PrismaBypass)({
     where: { itemId, deletedAt: null },
     orderBy: { sortOrder: "desc" },
     select: { sortOrder: true },
@@ -90,7 +87,7 @@ export async function POST(
 
   const nextSortOrder = lastBinding ? (lastBinding.sortOrder as number) + 1 : 0;
 
-  const binding = await (db.itemModifierGroup.create as Function)({
+  const binding = await (db.itemModifierGroup.create as PrismaBypass)({
     data: {
       itemId,
       groupId: group.id,

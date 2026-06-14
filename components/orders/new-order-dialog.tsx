@@ -1,13 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useEffect, useRef, useState } from "react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -631,9 +626,7 @@ export function NewOrderDialog({ open, onClose, churchId }: NewOrderDialogProps)
     setCart((prev) => {
       const existing = prev.find((c) => c.itemId === ci.itemId);
       if (existing) {
-        return prev.map((c) =>
-          c.itemId === ci.itemId ? { ...c, quantity: c.quantity + 1 } : c,
-        );
+        return prev.map((c) => (c.itemId === ci.itemId ? { ...c, quantity: c.quantity + 1 } : c));
       }
       return [
         ...prev,
@@ -649,9 +642,7 @@ export function NewOrderDialog({ open, onClose, churchId }: NewOrderDialogProps)
   }
 
   function changeQty(itemId: string, qty: number) {
-    setCart((prev) =>
-      prev.map((c) => (c.itemId === itemId ? { ...c, quantity: qty } : c)),
-    );
+    setCart((prev) => prev.map((c) => (c.itemId === itemId ? { ...c, quantity: qty } : c)));
   }
 
   function removeItem(itemId: string) {

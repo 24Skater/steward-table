@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   _req: NextRequest,
@@ -35,7 +35,7 @@ export async function GET(
   }
 
   // Verify customer belongs to this church (tenancy safety check)
-  const customer = await (db.customer.findFirst as Function)({
+  const customer = await (db.customer.findFirst as PrismaBypass)({
     where: { id: customerId, churchId, deletedAt: null },
     _bypassTenancyCheck: true,
   });

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { useState } from "react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -243,7 +243,6 @@ export function CustomerDetailPage({ customer: initialCustomer }: CustomerDetail
   return (
     <div className="flex-1 overflow-y-auto bg-slate-50">
       <div className="max-w-4xl mx-auto px-6 py-6 flex flex-col gap-6">
-
         {/* Customer header card */}
         <div className="rounded-lg border border-slate-200 bg-white p-6">
           {editOpen ? (
@@ -322,13 +321,9 @@ export function CustomerDetailPage({ customer: initialCustomer }: CustomerDetail
             </p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 flex flex-col gap-1">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-              Avg. Order
-            </p>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Avg. Order</p>
             <p className="text-2xl font-semibold text-slate-800 tabular-nums">
-              {customer.stats.totalOrders > 0
-                ? formatCents(customer.stats.avgOrderCents)
-                : "—"}
+              {customer.stats.totalOrders > 0 ? formatCents(customer.stats.avgOrderCents) : "—"}
             </p>
           </div>
         </div>
@@ -439,7 +434,9 @@ export function CustomerDetailPage({ customer: initialCustomer }: CustomerDetail
                       <div className="flex items-center gap-3 text-xs text-slate-400">
                         <span>{formatDate(order.createdAt)}</span>
                         <span>&middot;</span>
-                        <span>{order.itemCount} item{order.itemCount !== 1 ? "s" : ""}</span>
+                        <span>
+                          {order.itemCount} item{order.itemCount !== 1 ? "s" : ""}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-slate-700">
@@ -459,7 +456,6 @@ export function CustomerDetailPage({ customer: initialCustomer }: CustomerDetail
             </>
           )}
         </div>
-
       </div>
     </div>
   );

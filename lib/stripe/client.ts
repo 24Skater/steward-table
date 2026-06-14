@@ -1,9 +1,9 @@
-import Stripe from "stripe";
-import { db } from "@/lib/db";
 import { decrypt } from "@/lib/crypto/aes";
+import { db } from "@/lib/db";
+import Stripe from "stripe";
 
 export async function getStripeForChurch(churchId: string): Promise<Stripe | null> {
-  const apiKey = await (db.apiKey.findFirst as Function)({
+  const apiKey = await (db.apiKey.findFirst as PrismaBypass)({
     where: { churchId, provider: "stripe", deletedAt: null },
     select: { encrypted: true, isLive: true },
     _bypassTenancyCheck: true,
@@ -23,7 +23,7 @@ export async function getStripeForChurch(churchId: string): Promise<Stripe | nul
 }
 
 export async function getStripeWebhookSecret(churchId: string): Promise<string | null> {
-  const apiKey = await (db.apiKey.findFirst as Function)({
+  const apiKey = await (db.apiKey.findFirst as PrismaBypass)({
     where: { churchId, provider: "stripe_webhook", deletedAt: null },
     select: { encrypted: true },
     _bypassTenancyCheck: true,

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function NewItemPage() {
   const router = useRouter();
@@ -20,8 +20,8 @@ export function NewItemPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmedName = name.trim();
-    const priceFloat = parseFloat(priceStr);
-    if (!trimmedName || isNaN(priceFloat) || priceFloat < 0) return;
+    const priceFloat = Number.parseFloat(priceStr);
+    if (!trimmedName || Number.isNaN(priceFloat) || priceFloat < 0) return;
 
     setSaving(true);
     setError(null);
@@ -38,11 +38,11 @@ export function NewItemPage() {
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Failed to create item");
       }
 
-      const data = await res.json() as { item: { id: string } };
+      const data = (await res.json()) as { item: { id: string } };
       router.push(`/menu/items/${data.item.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -107,7 +107,9 @@ export function NewItemPage() {
               {saving ? "Creating…" : "Create item"}
             </Button>
             <Link href="/menu">
-              <Button type="button" variant="outline">Cancel</Button>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
             </Link>
           </div>
 

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     name?: string;
     description?: string | null;
     churchId?: string;
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   }
 
   const membership = session.user.memberships?.find(
-    (m: SessionMembership) => m.churchId === body.churchId && m.status === "ACTIVE"
+    (m: SessionMembership) => m.churchId === body.churchId && m.status === "ACTIVE",
   );
   if (!membership) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

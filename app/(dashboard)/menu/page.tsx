@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { can } from "@/lib/rbac/can";
 import { TopBar } from "@/components/layout/top-bar";
 import { ItemsLibrary } from "@/components/menu/items-library";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { can } from "@/lib/rbac/can";
+import { redirect } from "next/navigation";
 
 export default async function MenuPage() {
   const session = await auth();
@@ -22,7 +22,7 @@ export default async function MenuPage() {
   });
   if (!canResult.allowed) redirect("/");
 
-  const items = await (db.item.findMany as Function)({
+  const items = await (db.item.findMany as PrismaBypass)({
     where: { churchId: membership.churchId, deletedAt: null },
     select: {
       id: true,

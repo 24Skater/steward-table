@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { TopBar } from "@/components/layout/top-bar";
 import { ProfileForm } from "@/components/settings/profile-form";
+import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
+import { db } from "@/lib/db";
+import { redirect } from "next/navigation";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -15,7 +15,7 @@ export default async function ProfilePage() {
   if (!activeMembership) redirect("/onboarding");
 
   const [user, membership] = await Promise.all([
-    (db.user.findUnique as Function)({
+    (db.user.findUnique as PrismaBypass)({
       where: { id: session.user.id },
       select: {
         id: true,
@@ -35,7 +35,7 @@ export default async function ProfilePage() {
       passwordHash: string | null;
     } | null>,
 
-    (db.membership.findFirst as Function)({
+    (db.membership.findFirst as PrismaBypass)({
       where: {
         userId: session.user.id,
         churchId: activeMembership.churchId,

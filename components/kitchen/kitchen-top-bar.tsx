@@ -1,6 +1,6 @@
 "use client";
 
-import { Wifi, WifiOff, Printer } from "lucide-react";
+import { Printer, Wifi, WifiOff } from "lucide-react";
 
 interface KitchenTopBarProps {
   orderCount: number;
@@ -9,6 +9,7 @@ interface KitchenTopBarProps {
   inKitchenCount: number;
   onMarkAllReady: () => void;
   markingAllReady: boolean;
+  kitchenName: string;
 }
 
 export function KitchenTopBar({
@@ -18,6 +19,7 @@ export function KitchenTopBar({
   inKitchenCount,
   onMarkAllReady,
   markingAllReady,
+  kitchenName,
 }: KitchenTopBarProps) {
   const timeStr = currentTime.toLocaleTimeString([], {
     hour: "2-digit",
@@ -28,7 +30,7 @@ export function KitchenTopBar({
     <header className="flex items-center justify-between px-4 h-12 bg-slate-900 border-b border-slate-800 shrink-0">
       {/* Left: brand + connection indicator */}
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-slate-400 text-sm font-medium whitespace-nowrap">Steward Table</span>
+        <span className="text-white font-semibold text-lg">{kitchenName}</span>
         {connected ? (
           <Wifi size={14} className="text-emerald-500 shrink-0" aria-label="Connected" />
         ) : (

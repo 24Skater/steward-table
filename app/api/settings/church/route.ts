@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   const session = await auth();
@@ -17,7 +17,7 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const church = await (db.church.findUnique as Function)({
+  const church = await (db.church.findUnique as PrismaBypass)({
     where: { id: membership.churchId },
     select: {
       id: true,
@@ -68,7 +68,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     name?: string;
     contactEmail?: string | null;
     timezone?: string;
@@ -79,7 +79,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const [updatedChurch] = await Promise.all([
-    (db.church.update as Function)({
+    (db.church.update as PrismaBypass)({
       where: { id: membership.churchId },
       data: {
         ...(body.name && { name: body.name }),
@@ -89,7 +89,7 @@ export async function PATCH(req: NextRequest) {
       _bypassTenancyCheck: true,
     }),
     body.contactEmail !== undefined
-      ? (db.churchSettings.upsert as Function)({
+      ? (db.churchSettings.upsert as PrismaBypass)({
           where: { churchId: membership.churchId },
           create: {
             churchId: membership.churchId,

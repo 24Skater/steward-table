@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   _req: NextRequest,
@@ -7,7 +7,7 @@ export async function GET(
 ) {
   const { churchSlug } = await params;
 
-  const church = await (db.church.findFirst as Function)({
+  const church = await (db.church.findFirst as PrismaBypass)({
     where: { slug: churchSlug, status: "ACTIVE" },
     select: {
       id: true,
@@ -21,14 +21,18 @@ export async function GET(
     return NextResponse.json({ error: "Church not found" }, { status: 404 });
   }
 
-  const apiKey = await (db.apiKey.findFirst as Function)({
+  const apiKey = await (db.apiKey.findFirst as PrismaBypass)({
     where: { churchId: church.id, provider: "stripe", deletedAt: null },
     select: { id: true, encrypted: true },
     _bypassTenancyCheck: true,
   });
 
   const stripeEnabled = !!(apiKey?.encrypted && (apiKey.encrypted as Buffer).length > 0);
-  const settings = church.settings as { acceptCash?: boolean; acceptZelle?: boolean; brandTokens?: unknown } | null;
+  const settings = church.settings as {
+    acceptCash?: boolean;
+    acceptZelle?: boolean;
+    brandTokens?: unknown;
+  } | null;
 
   const tokens =
     settings?.brandTokens && typeof settings.brandTokens === "object"

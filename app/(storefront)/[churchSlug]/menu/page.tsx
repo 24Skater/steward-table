@@ -1,6 +1,6 @@
-import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { db } from "@/lib/db";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 
 interface MenuListPageProps {
   params: Promise<{ churchSlug: string }>;
@@ -17,7 +17,8 @@ export default async function MenuListPage({ params }: MenuListPageProps) {
   const church = await db.church.findFirst({
     where: { slug: churchSlug, status: "ACTIVE" },
     select: {
-      id: true, name: true,
+      id: true,
+      name: true,
       settings: { select: { replyToEmail: true } },
     },
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -56,7 +57,9 @@ export default async function MenuListPage({ params }: MenuListPageProps) {
 
         {upcomingCatalogs.length > 0 && (
           <div className="mt-8 space-y-2 text-left">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Coming up</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Coming up
+            </p>
             {upcomingCatalogs.map((c, i) => (
               <div key={i} className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                 <p className="font-medium text-slate-800">{c.name}</p>

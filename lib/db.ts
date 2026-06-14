@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const TENANTED_MODELS = new Set([
   "catalog",
+  "kitchen",
   "item",
   "catalogitem",
   "modifiergroup",
@@ -27,6 +28,7 @@ const SOFT_DELETE_MODELS = new Set([
   "church",
   "churchsettings",
   "catalog",
+  "kitchen",
   "item",
   "itemphoto",
   "catalogitem",
@@ -61,12 +63,14 @@ function createPrismaClient() {
 
           if (anyArgs?._bypassTenancyCheck === true) {
             bypassTenancy = true;
+            // biome-ignore lint/performance/noDelete: must remove the key so Prisma never receives the unknown arg
             delete anyArgs._bypassTenancyCheck;
           }
 
           // ── Soft-delete filter ───────────────────────────────────────
           if (SOFT_DELETE_MODELS.has(modelLower) && READ_OPS.has(operation)) {
             if (anyArgs?.where?.withDeleted) {
+              // biome-ignore lint/performance/noDelete: must remove the key so Prisma never receives the unknown arg
               delete anyArgs.where.withDeleted;
             } else {
               anyArgs.where ??= {};
@@ -83,8 +87,7 @@ function createPrismaClient() {
                 anyArgs?.where?.churchId !== undefined || anyArgs?.where?.church !== undefined;
               if (!hasChurchId) {
                 throw new Error(
-                  `[Tenancy] Unscoped read on ${model} — add churchId to where, ` +
-                    `or pass _bypassTenancyCheck: true for system-level ops.`,
+                  `[Tenancy] Unscoped read on ${model} — add churchId to where, or pass _bypassTenancyCheck: true for system-level ops.`,
                 );
               }
             }
@@ -97,8 +100,7 @@ function createPrismaClient() {
                 data?.church === undefined
               ) {
                 throw new Error(
-                  `[Tenancy] Missing churchId on ${operation} for ${model}. ` +
-                    `Every tenanted model must be created with an explicit churchId.`,
+                  `[Tenancy] Missing churchId on ${operation} for ${model}. Every tenanted model must be created with an explicit churchId.`,
                 );
               }
             }
@@ -118,8 +120,7 @@ const globalForPrisma = globalThis as unknown as { __prisma: ExtendedPrismaClien
 
 // Cast to PrismaClient so model accessors and query arg types are visible to TypeScript.
 // The runtime value is the extended client (with tenancy/soft-delete middleware applied).
-export const db =
-  (globalForPrisma.__prisma ??
+export const db = (globalForPrisma.__prisma ??
   (() => {
     const client = createPrismaClient();
     if (process.env.NODE_ENV !== "production") {

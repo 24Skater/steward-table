@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Check, X } from "lucide-react";
+import { useState } from "react";
 
 const PRESET_OPTIONS = [5, 10, 15, 18, 20, 25];
 
@@ -30,7 +30,7 @@ export function TipSettingsForm({ initialEnabled, initialPercentages }: TipSetti
   }
 
   function addCustom() {
-    const val = parseInt(customInput.trim(), 10);
+    const val = Number.parseInt(customInput.trim(), 10);
     if (!val || val < 1 || val > 100) return;
     if (!percentages.includes(val)) {
       setPercentages((prev) => [...prev, val].sort((a, b) => a - b));
@@ -57,7 +57,7 @@ export function TipSettingsForm({ initialEnabled, initialPercentages }: TipSetti
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Failed to save tip settings");
       }
 
@@ -76,15 +76,9 @@ export function TipSettingsForm({ initialEnabled, initialPercentages }: TipSetti
           <Label htmlFor="tip-enabled" className="text-sm font-medium text-slate-900">
             Enable Tips
           </Label>
-          <p className="text-xs text-slate-500">
-            Show a tip selection step on the checkout page.
-          </p>
+          <p className="text-xs text-slate-500">Show a tip selection step on the checkout page.</p>
         </div>
-        <Switch
-          id="tip-enabled"
-          checked={tipEnabled}
-          onCheckedChange={setTipEnabled}
-        />
+        <Switch id="tip-enabled" checked={tipEnabled} onCheckedChange={setTipEnabled} />
       </div>
 
       {tipEnabled && (
@@ -116,21 +110,23 @@ export function TipSettingsForm({ initialEnabled, initialPercentages }: TipSetti
             <div>
               <p className="text-xs text-slate-500 mb-1.5">Custom percentages:</p>
               <div className="flex flex-wrap gap-2">
-                {percentages.filter((p) => !PRESET_OPTIONS.includes(p)).map((pct) => (
-                  <span
-                    key={pct}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-slate-100 text-slate-700"
-                  >
-                    {pct}%
-                    <button
-                      type="button"
-                      onClick={() => removePercentage(pct)}
-                      className="text-slate-400 hover:text-slate-600"
+                {percentages
+                  .filter((p) => !PRESET_OPTIONS.includes(p))
+                  .map((pct) => (
+                    <span
+                      key={pct}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-slate-100 text-slate-700"
                     >
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))}
+                      {pct}%
+                      <button
+                        type="button"
+                        onClick={() => removePercentage(pct)}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
               </div>
             </div>
           )}
@@ -145,7 +141,12 @@ export function TipSettingsForm({ initialEnabled, initialPercentages }: TipSetti
                 max={100}
                 value={customInput}
                 onChange={(e) => setCustomInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustom(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCustom();
+                  }
+                }}
                 placeholder="e.g. 12"
                 className="max-w-24"
               />
@@ -156,16 +157,12 @@ export function TipSettingsForm({ initialEnabled, initialPercentages }: TipSetti
           </div>
 
           {percentages.length === 0 && (
-            <p className="text-sm text-amber-600">
-              Select at least one tip percentage to save.
-            </p>
+            <p className="text-sm text-amber-600">Select at least one tip percentage to save.</p>
           )}
         </div>
       )}
 
-      {errorMessage && (
-        <p className="text-sm text-red-600">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
       <Button
         type="submit"

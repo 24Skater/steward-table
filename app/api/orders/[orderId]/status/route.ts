@@ -7,7 +7,7 @@ import type { OrderStatus } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
 
 async function handleStatusChange(
-  req: NextRequest,
+  _req: NextRequest,
   orderId: string,
   targetStatus: string,
 ): Promise<NextResponse> {
@@ -16,7 +16,7 @@ async function handleStatusChange(
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
-  const order = (await (db.order.findUnique as Function)({
+  const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: { id: true, churchId: true, status: true, createdAt: true },
     _bypassTenancyCheck: true,
@@ -70,10 +70,7 @@ async function handleStatusChange(
   }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ orderId: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = await params;
   const formData = await req.formData().catch(() => null);
   const targetStatus = formData?.get("status");

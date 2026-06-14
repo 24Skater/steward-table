@@ -1,13 +1,10 @@
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
 import { type NextRequest, NextResponse } from "next/server";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ orderId: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ orderId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -27,7 +24,7 @@ export async function POST(
   const driverId = rawDriverId as string | null | undefined;
 
   // Fetch order to get churchId
-  const order = (await (db.order.findUnique as Function)({
+  const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: { id: true, churchId: true },
     _bypassTenancyCheck: true,
@@ -55,7 +52,7 @@ export async function POST(
 
   // If assigning a driver, verify that user is a DRIVER-role member of this church
   if (driverId) {
-    const driverMembership = (await (db.membership.findFirst as Function)({
+    const driverMembership = (await (db.membership.findFirst as PrismaBypass)({
       where: {
         churchId: order.churchId,
         status: "ACTIVE",
@@ -74,7 +71,7 @@ export async function POST(
     }
   }
 
-  await (db.deliveryInfo.update as Function)({
+  await (db.deliveryInfo.update as PrismaBypass)({
     where: { orderId },
     data: { driverId: driverId ?? null },
   });

@@ -1,13 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ groupId: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ groupId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -15,7 +12,7 @@ export async function POST(
 
   const { groupId } = await params;
 
-  const body = await req.json().catch(() => null) as Record<string, unknown> | null;
+  const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || typeof body.name !== "string" || !body.name.trim()) {
     return NextResponse.json({ error: "Missing name" }, { status: 400 });
   }
@@ -45,8 +42,7 @@ export async function POST(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const priceDelta =
-    typeof body.priceDelta === "number" ? Math.round(body.priceDelta) : 0;
+  const priceDelta = typeof body.priceDelta === "number" ? Math.round(body.priceDelta) : 0;
 
   const option = await db.modifierOption.create({
     data: {

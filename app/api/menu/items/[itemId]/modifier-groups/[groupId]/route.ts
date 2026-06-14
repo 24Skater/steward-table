@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
   _req: NextRequest,
@@ -32,19 +32,22 @@ export async function DELETE(
   const { itemId, groupId } = await params;
 
   // Verify the binding exists and belongs to an item owned by this church
-  const binding = await (db.itemModifierGroup.findFirst as Function)({
+  const binding = await (db.itemModifierGroup.findFirst as PrismaBypass)({
     where: { id: groupId, itemId, deletedAt: null },
     include: {
       item: { select: { churchId: true } },
     },
   });
 
-  if (!binding || (binding as { item: { churchId: string } }).item.churchId !== membership.churchId) {
+  if (
+    !binding ||
+    (binding as { item: { churchId: string } }).item.churchId !== membership.churchId
+  ) {
     return NextResponse.json({ error: "Modifier group not found" }, { status: 404 });
   }
 
   // Soft-delete the binding (ItemModifierGroup has deletedAt)
-  await (db.itemModifierGroup.update as Function)({
+  await (db.itemModifierGroup.update as PrismaBypass)({
     where: { id: groupId },
     data: { deletedAt: new Date() },
   });

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { InventoryTable } from "./inventory-table";
+import { useRef, useState } from "react";
 import { CreateInventoryDialog } from "./create-inventory-dialog";
 import { EditInventoryDialog } from "./edit-inventory-dialog";
+import { InventoryTable } from "./inventory-table";
 import type { InventoryRow } from "./inventory-table";
 
 interface InventoryPageProps {
@@ -24,10 +24,7 @@ export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
   const [stocktakeError, setStocktakeError] = useState<string | null>(null);
   const firstInputRef = useRef<HTMLInputElement | null>(null);
 
-  async function handleQuantityChange(
-    inventoryItemId: string,
-    newQty: number,
-  ): Promise<void> {
+  async function handleQuantityChange(inventoryItemId: string, newQty: number): Promise<void> {
     const previous = items;
     setItems((prev) =>
       prev.map((item) =>
@@ -138,9 +135,7 @@ export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
       item.quantityOnHand > 0,
   ).length;
 
-  const outOfStockCount = items.filter(
-    (item) => item.quantityOnHand <= 0,
-  ).length;
+  const outOfStockCount = items.filter((item) => item.quantityOnHand <= 0).length;
 
   return (
     <div className="flex flex-col h-full">
@@ -207,7 +202,10 @@ export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
           <span>{deleteError ?? stocktakeError}</span>
           <button
             type="button"
-            onClick={() => { setDeleteError(null); setStocktakeError(null); }}
+            onClick={() => {
+              setDeleteError(null);
+              setStocktakeError(null);
+            }}
             className="ml-3 text-red-500 hover:text-red-700 font-medium"
           >
             Dismiss
@@ -223,8 +221,12 @@ export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Item</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wide w-32">Count</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                      Item
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wide w-32">
+                      Count
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -241,7 +243,7 @@ export function InventoryPage({ churchId, initialItems }: InventoryPageProps) {
                           onChange={(e) =>
                             setStocktakeCounts((prev) => ({
                               ...prev,
-                              [item.id]: Math.max(0, parseInt(e.target.value, 10) || 0),
+                              [item.id]: Math.max(0, Number.parseInt(e.target.value, 10) || 0),
                             }))
                           }
                           className="w-24 rounded-md border border-slate-200 px-2 py-1 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"

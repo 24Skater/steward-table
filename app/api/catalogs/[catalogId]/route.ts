@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
 
 async function getAuthSession() {
   const session = await auth();
@@ -20,7 +20,7 @@ export async function PATCH(
   }
 
   const { catalogId } = await params;
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     name?: string;
     description?: string | null;
     translations?: Record<string, unknown> | null;
@@ -39,7 +39,7 @@ export async function PATCH(
   }
 
   const membership = session.user.memberships?.find(
-    (m: SessionMembership) => m.churchId === catalog.churchId && m.status === "ACTIVE"
+    (m: SessionMembership) => m.churchId === catalog.churchId && m.status === "ACTIVE",
   );
   if (!membership) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -97,7 +97,7 @@ export async function DELETE(
   }
 
   const membership = session.user.memberships?.find(
-    (m: SessionMembership) => m.churchId === catalog.churchId && m.status === "ACTIVE"
+    (m: SessionMembership) => m.churchId === catalog.churchId && m.status === "ACTIVE",
   );
   if (!membership) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

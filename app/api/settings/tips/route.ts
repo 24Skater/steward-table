@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { auth } from "@/lib/auth";
+import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
-import type { SessionMembership } from "@/lib/auth/types";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const patchSchema = z.object({
   tipEnabled: z.boolean(),
@@ -47,7 +47,7 @@ export async function PATCH(req: NextRequest) {
 
   const { tipEnabled, tipPercentages } = parsed.data;
 
-  const existing = await (db.churchSettings.findUnique as Function)({
+  const existing = await (db.churchSettings.findUnique as PrismaBypass)({
     where: { churchId: membership.churchId },
     select: { brandTokens: true },
     _bypassTenancyCheck: true,
@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest) {
 
   const updatedTokens = { ...existingTokens, tipEnabled, tipPercentages };
 
-  await (db.churchSettings.upsert as Function)({
+  await (db.churchSettings.upsert as PrismaBypass)({
     where: { churchId: membership.churchId },
     create: { churchId: membership.churchId, brandTokens: updatedTokens },
     update: { brandTokens: updatedTokens },

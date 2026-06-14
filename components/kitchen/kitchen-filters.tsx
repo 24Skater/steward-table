@@ -118,7 +118,11 @@ export function KitchenFilters({
       <div className="w-px h-5 bg-slate-700 hidden sm:block" aria-hidden />
 
       {/* Fulfillment toggles */}
-      <div className="flex items-center gap-1.5" role="group" aria-label="Filter by fulfillment type">
+      <div
+        className="flex items-center gap-1.5"
+        role="group"
+        aria-label="Filter by fulfillment type"
+      >
         {(
           [
             ["ALL", "All"],
