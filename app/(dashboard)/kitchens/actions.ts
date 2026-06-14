@@ -101,3 +101,33 @@ export async function archiveKitchen(kitchenId: string): Promise<void> {
   });
   revalidatePath("/kitchens");
 }
+
+export async function setKitchenCatalogs(
+  kitchenId: string,
+  catalogIds: string[],
+): Promise<void> {
+  const churchId = await requireCatalogEdit();
+
+  const kitchen = await db.kitchen.findFirst({
+    where: { id: kitchenId, churchId },
+    select: { id: true },
+  });
+  if (!kitchen) throw new Error("Kitchen not found");
+
+  await db.$transaction(async (tx) => {
+    // Detach catalogs currently on this kitchen that are no longer selected.
+    await (tx.catalog.updateMany as Function)({
+      where: { churchId, kitchenId: kitchen.id, id: { notIn: catalogIds } },
+      data: { kitchenId: null },
+    });
+    // Attach the selected catalogs to this kitchen.
+    if (catalogIds.length > 0) {
+      await (tx.catalog.updateMany as Function)({
+        where: { churchId, id: { in: catalogIds } },
+        data: { kitchenId: kitchen.id },
+      });
+    }
+  });
+  revalidatePath("/kitchens");
+  revalidatePath(`/kitchens/${kitchenId}`);
+}
