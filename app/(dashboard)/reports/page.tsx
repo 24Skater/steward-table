@@ -7,12 +7,7 @@ import type { ReportsData } from "@/components/reports";
 import { getKitchenRevenue } from "@/lib/kitchens/reporting";
 import type { OrderStatus } from "@prisma/client";
 
-const COMPLETED_STATUSES: OrderStatus[] = [
-  "PICKED_UP",
-  "DELIVERED",
-  "SERVED",
-  "COMPLETED",
-];
+const COMPLETED_STATUSES: OrderStatus[] = ["PICKED_UP", "DELIVERED", "SERVED", "COMPLETED"];
 
 export default async function ReportsPageRoute() {
   const session = await auth();
@@ -20,9 +15,7 @@ export default async function ReportsPageRoute() {
     redirect("/auth/sign-in");
   }
 
-  const activeMembership = session.user.memberships?.find(
-    (m) => m.status === "ACTIVE",
-  );
+  const activeMembership = session.user.memberships?.find((m) => m.status === "ACTIVE");
   if (!activeMembership) {
     redirect("/auth/sign-in");
   }
@@ -31,78 +24,63 @@ export default async function ReportsPageRoute() {
 
   // Date boundaries
   const now = new Date();
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  );
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfWeek = new Date(startOfToday);
   startOfWeek.setDate(startOfToday.getDate() - startOfToday.getDay());
 
-  const [
-    totalOrders,
-    completedOrders,
-    revenueResult,
-    statusBreakdown,
-    topItemsRaw,
-  ] = await Promise.all([
-    db.order.count({
-      where: { churchId, createdAt: { gte: startOfToday } },
-    }),
+  const [totalOrders, completedOrders, revenueResult, statusBreakdown, topItemsRaw] =
+    await Promise.all([
+      db.order.count({
+        where: { churchId, createdAt: { gte: startOfToday } },
+      }),
 
-    db.order.count({
-      where: {
-        churchId,
-        createdAt: { gte: startOfToday },
-        status: { in: COMPLETED_STATUSES },
-      },
-    }),
-
-    db.order.aggregate({
-      where: {
-        churchId,
-        createdAt: { gte: startOfToday },
-        status: { in: COMPLETED_STATUSES },
-      },
-      _sum: { total: true },
-    }),
-
-    db.order.groupBy({
-      by: ["status"],
-      where: { churchId, createdAt: { gte: startOfToday } },
-      _count: { _all: true },
-      orderBy: { _count: { status: "desc" } },
-    }),
-
-    db.orderItem.groupBy({
-      by: ["itemName"],
-      where: {
-        order: {
+      db.order.count({
+        where: {
           churchId,
-          createdAt: { gte: startOfWeek },
+          createdAt: { gte: startOfToday },
+          status: { in: COMPLETED_STATUSES },
         },
-      },
-      _sum: { quantity: true },
-      orderBy: { _sum: { quantity: "desc" } },
-      take: 5,
-    }),
-  ]);
+      }),
+
+      db.order.aggregate({
+        where: {
+          churchId,
+          createdAt: { gte: startOfToday },
+          status: { in: COMPLETED_STATUSES },
+        },
+        _sum: { total: true },
+      }),
+
+      db.order.groupBy({
+        by: ["status"],
+        where: { churchId, createdAt: { gte: startOfToday } },
+        _count: { _all: true },
+        orderBy: { _count: { status: "desc" } },
+      }),
+
+      db.orderItem.groupBy({
+        by: ["itemName"],
+        where: {
+          order: {
+            churchId,
+            createdAt: { gte: startOfWeek },
+          },
+        },
+        _sum: { quantity: true },
+        orderBy: { _sum: { quantity: "desc" } },
+        take: 5,
+      }),
+    ]);
 
   const revenue = revenueResult._sum.total ?? 0;
 
-  const byKitchen = await getKitchenRevenue(
-    db,
-    churchId,
-    startOfToday,
-    COMPLETED_STATUSES,
-  );
+  const byKitchen = await getKitchenRevenue(db, churchId, startOfToday, COMPLETED_STATUSES);
 
   const initialData: ReportsData = {
     totalOrders,
     completedOrders,
     revenue,
-    averageOrderValue:
-      totalOrders > 0 ? Math.round(revenue / totalOrders) : 0,
+    averageOrderValue: totalOrders > 0 ? Math.round(revenue / totalOrders) : 0,
     statusBreakdown: statusBreakdown.map((row) => ({
       status: row.status,
       count: row._count._all,

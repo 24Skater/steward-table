@@ -102,10 +102,7 @@ export async function archiveKitchen(kitchenId: string): Promise<void> {
   revalidatePath("/kitchens");
 }
 
-export async function setKitchenCatalogs(
-  kitchenId: string,
-  catalogIds: string[],
-): Promise<void> {
+export async function setKitchenCatalogs(kitchenId: string, catalogIds: string[]): Promise<void> {
   const churchId = await requireCatalogEdit();
 
   const kitchen = await db.kitchen.findFirst({

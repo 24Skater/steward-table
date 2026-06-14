@@ -51,7 +51,8 @@ export function CatalogAssignment({ kitchenId, isDefault, catalogs }: CatalogAss
     <main className="p-6 space-y-4">
       <p className="text-sm text-slate-600">
         Select the catalogs whose orders should appear on this kitchen&apos;s screen.
-        {isDefault && " As the default kitchen, it also receives any catalog with no kitchen assigned."}
+        {isDefault &&
+          " As the default kitchen, it also receives any catalog with no kitchen assigned."}
       </p>
 
       <ul className="divide-y rounded-md border">

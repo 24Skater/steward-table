@@ -92,9 +92,7 @@ function StatusBreakdown({ breakdown }: { breakdown: StatusBreakdownItem[] }) {
   const total = breakdown.reduce((sum, item) => sum + item.count, 0);
 
   if (total === 0) {
-    return (
-      <p className="text-sm text-slate-400">No orders in this period.</p>
-    );
+    return <p className="text-sm text-slate-400">No orders in this period.</p>;
   }
 
   return (
@@ -139,9 +137,7 @@ function StatusBreakdown({ breakdown }: { breakdown: StatusBreakdownItem[] }) {
 
 function TopItemsTable({ items }: { items: TopItem[] }) {
   if (items.length === 0) {
-    return (
-      <p className="text-sm text-slate-400">No item data for this period.</p>
-    );
+    return <p className="text-sm text-slate-400">No item data for this period.</p>;
   }
 
   const maxCount = items[0]?.count ?? 1;
@@ -157,18 +153,13 @@ function TopItemsTable({ items }: { items: TopItem[] }) {
             </span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-slate-700 truncate">
-                  {item.itemName}
-                </span>
+                <span className="text-sm font-medium text-slate-700 truncate">{item.itemName}</span>
                 <span className="ml-2 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 tabular-nums">
                   {item.count}
                 </span>
               </div>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full bg-blue-500 rounded-full"
-                  style={{ width: `${pct}%` }}
-                />
+                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${pct}%` }} />
               </div>
             </div>
           </li>
@@ -220,9 +211,7 @@ export function ReportsPage({ initialData, churchId }: ReportsPageProps) {
     async (selectedRange: ReportsRange) => {
       setLoading(true);
       try {
-        const res = await fetch(
-          `/api/reports?range=${selectedRange}&churchId=${churchId}`,
-        );
+        const res = await fetch(`/api/reports?range=${selectedRange}&churchId=${churchId}`);
         if (res.ok) {
           const json: ReportsData = await res.json();
           setData(json);
@@ -248,9 +237,7 @@ export function ReportsPage({ initialData, churchId }: ReportsPageProps) {
   }
 
   const avgOrderValue =
-    data.totalOrders > 0
-      ? formatCurrency(Math.round(data.revenue / data.totalOrders))
-      : "$0.00";
+    data.totalOrders > 0 ? formatCurrency(Math.round(data.revenue / data.totalOrders)) : "$0.00";
 
   const completionRate =
     data.totalOrders > 0
@@ -258,7 +245,9 @@ export function ReportsPage({ initialData, churchId }: ReportsPageProps) {
       : undefined;
 
   return (
-    <div className={`flex-1 overflow-y-auto bg-slate-50 p-6 ${loading ? "opacity-60 pointer-events-none" : ""}`}>
+    <div
+      className={`flex-1 overflow-y-auto bg-slate-50 p-6 ${loading ? "opacity-60 pointer-events-none" : ""}`}
+    >
       {/* Range selector + export */}
       <div className="mb-6 flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-1 rounded-lg bg-white border border-slate-200 p-1">
@@ -303,35 +292,25 @@ export function ReportsPage({ initialData, churchId }: ReportsPageProps) {
           value={formatCurrency(data.revenue)}
           subtext="From completed orders"
         />
-        <MetricCard
-          label="Avg Order Value"
-          value={avgOrderValue}
-          subtext="All orders"
-        />
+        <MetricCard label="Avg Order Value" value={avgOrderValue} subtext="All orders" />
       </div>
 
       {/* Bottom section — status breakdown + top items */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-lg border border-slate-200 bg-white p-5">
-          <h3 className="mb-4 text-sm font-semibold text-slate-700">
-            Order Status Breakdown
-          </h3>
+          <h3 className="mb-4 text-sm font-semibold text-slate-700">Order Status Breakdown</h3>
           <StatusBreakdown breakdown={data.statusBreakdown} />
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-5">
-          <h3 className="mb-4 text-sm font-semibold text-slate-700">
-            Top Items This Week
-          </h3>
+          <h3 className="mb-4 text-sm font-semibold text-slate-700">Top Items This Week</h3>
           <TopItemsTable items={data.topItems} />
         </div>
       </div>
 
       {/* Per-kitchen revenue */}
       <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5">
-        <h3 className="mb-4 text-sm font-semibold text-slate-700">
-          Revenue by Kitchen
-        </h3>
+        <h3 className="mb-4 text-sm font-semibold text-slate-700">Revenue by Kitchen</h3>
         <KitchenRevenueTable rows={data.byKitchen ?? []} />
       </div>
     </div>

@@ -35,11 +35,7 @@ export default async function KitchenEditPage({
   return (
     <div className="flex flex-col h-full">
       <TopBar title={`Kitchen · ${kitchen.name}`} />
-      <CatalogAssignment
-        kitchenId={kitchen.id}
-        isDefault={kitchen.isDefault}
-        catalogs={options}
-      />
+      <CatalogAssignment kitchenId={kitchen.id} isDefault={kitchen.isDefault} catalogs={options} />
     </div>
   );
 }
