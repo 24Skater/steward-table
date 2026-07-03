@@ -51,9 +51,7 @@ export async function createVolunteerLink(
 }
 
 /** Validates a raw token. Returns link context, or null if invalid/expired/revoked/closed. */
-export async function validateVolunteerToken(
-  token: string,
-): Promise<VolunteerLinkContext | null> {
+export async function validateVolunteerToken(token: string): Promise<VolunteerLinkContext | null> {
   if (!/^[a-f0-9]{64}$/.test(token)) return null;
 
   const link = (await (db.volunteerLink.findUnique as PrismaBypass)({
@@ -77,16 +75,22 @@ export async function validateVolunteerToken(
   return { catalogId: link.catalogId, churchId: link.churchId, linkId: link.id };
 }
 
-/** Revokes a link. Idempotent. */
+/** Revokes a link, scoped to the given church. Idempotent. */
 export async function revokeVolunteerLink(linkId: string, churchId: string): Promise<void> {
+  const link = (await db.volunteerLink.findFirst({
+    where: { id: linkId, churchId },
+    select: { id: true },
+  })) as { id: string } | null;
+
+  if (!link) return;
+
   try {
-    await (db.volunteerLink.update as PrismaBypass)({
+    await db.volunteerLink.update({
       where: { id: linkId },
       data: { revokedAt: new Date() },
-      _bypassTenancyCheck: true,
     });
-  } catch {
-    // Idempotent — ignore errors if the link is already revoked or missing
+  } catch (err) {
+    // Idempotent — swallow only "record not found" (deleted between lookup and update)
+    if ((err as { code?: string }).code !== "P2025") throw err;
   }
-  void churchId; // scoping enforced by caller's catalog lookup
 }

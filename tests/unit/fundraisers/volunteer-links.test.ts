@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   volunteerLink: {
     create: vi.fn(),
+    findFirst: vi.fn(),
     findUnique: vi.fn(),
     update: vi.fn(),
   },
@@ -18,6 +19,7 @@ vi.mock("@/lib/db", () => ({
 import {
   createVolunteerLink,
   hashToken,
+  revokeVolunteerLink,
   validateVolunteerToken,
 } from "@/lib/fundraisers/volunteer-links";
 
@@ -85,6 +87,21 @@ describe("volunteer links", () => {
       expect(mocks.volunteerLink.findUnique).not.toHaveBeenCalled();
     });
 
+    it("returns null for a 63-char hex token without querying", async () => {
+      expect(await validateVolunteerToken("a".repeat(63))).toBeNull();
+      expect(mocks.volunteerLink.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("returns null for a 65-char hex token without querying", async () => {
+      expect(await validateVolunteerToken("a".repeat(65))).toBeNull();
+      expect(mocks.volunteerLink.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("returns null for an uppercase hex token without querying", async () => {
+      expect(await validateVolunteerToken("A".repeat(64))).toBeNull();
+      expect(mocks.volunteerLink.findUnique).not.toHaveBeenCalled();
+    });
+
     it("returns null for an expired token", async () => {
       mocks.volunteerLink.findUnique.mockResolvedValue({
         ...validRow,
@@ -104,6 +121,44 @@ describe("volunteer links", () => {
         catalog: { ...validRow.catalog, status: "CLOSED" },
       });
       expect(await validateVolunteerToken("a".repeat(64))).toBeNull();
+    });
+  });
+
+  describe("revokeVolunteerLink", () => {
+    it("revokes a link belonging to the church", async () => {
+      mocks.volunteerLink.findFirst.mockResolvedValue({ id: "link-1" });
+      mocks.volunteerLink.update.mockResolvedValue({ id: "link-1" });
+
+      await revokeVolunteerLink("link-1", "church-1");
+
+      expect(mocks.volunteerLink.findFirst.mock.calls[0]![0].where).toEqual({
+        id: "link-1",
+        churchId: "church-1",
+      });
+      const updateArg = mocks.volunteerLink.update.mock.calls[0]![0];
+      expect(updateArg.where).toEqual({ id: "link-1" });
+      expect(updateArg.data.revokedAt).toBeInstanceOf(Date);
+    });
+
+    it("does not update when the link is not in this church", async () => {
+      mocks.volunteerLink.findFirst.mockResolvedValue(null);
+
+      await expect(revokeVolunteerLink("link-1", "other-church")).resolves.toBeUndefined();
+      expect(mocks.volunteerLink.update).not.toHaveBeenCalled();
+    });
+
+    it("is idempotent when the record vanishes before the update (P2025)", async () => {
+      mocks.volunteerLink.findFirst.mockResolvedValue({ id: "link-1" });
+      mocks.volunteerLink.update.mockRejectedValue({ code: "P2025" });
+
+      await expect(revokeVolunteerLink("link-1", "church-1")).resolves.toBeUndefined();
+    });
+
+    it("rethrows infrastructure errors from the update", async () => {
+      mocks.volunteerLink.findFirst.mockResolvedValue({ id: "link-1" });
+      mocks.volunteerLink.update.mockRejectedValue(new Error("connection lost"));
+
+      await expect(revokeVolunteerLink("link-1", "church-1")).rejects.toThrow("connection lost");
     });
   });
 });
