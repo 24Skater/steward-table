@@ -14,6 +14,9 @@ model Order {
   total        Int
   notes        String?
   scheduledFor DateTime?
+  takenById       String?
+  takenByName     String?
+  clientRequestId String?
 
   receiptLanguageVersion Int
   receiptFooterSnapshot  String?
@@ -31,6 +34,7 @@ model Order {
   deliveryInfo DeliveryInfo?
 
   @@unique([churchId, number])
+  @@unique([churchId, clientRequestId])
   @@index([churchId, status, scheduledFor])
   @@index([churchId, createdAt])
   @@index([customerId])
