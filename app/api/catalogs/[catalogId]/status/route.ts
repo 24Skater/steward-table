@@ -55,7 +55,7 @@ export async function PATCH(
     roles: membership.roles,
   };
   let permitted = (await can(action, baseCtx)).allowed;
-  if (!permitted) {
+  if (!permitted && (status === "OPEN" || status === "CLOSED")) {
     permitted = (
       await can("fundraiser.publish", {
         ...baseCtx,
