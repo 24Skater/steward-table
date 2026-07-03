@@ -55,6 +55,7 @@ export async function PATCH(
     roles: membership.roles,
   };
   let permitted = (await can(action, baseCtx)).allowed;
+  // Fundraiser creators (STAFF) may open/close their own fundraiser; DRAFT/ARCHIVED transitions stay admin-only.
   if (!permitted && (status === "OPEN" || status === "CLOSED")) {
     permitted = (
       await can("fundraiser.publish", {
