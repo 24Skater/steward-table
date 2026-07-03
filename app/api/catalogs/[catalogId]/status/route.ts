@@ -33,7 +33,7 @@ export async function PATCH(
 
   const catalog = await db.catalog.findUnique({
     where: { id: catalogId },
-    select: { churchId: true },
+    select: { churchId: true, createdById: true },
     ...({ _bypassTenancyCheck: true } as object),
   });
 
@@ -49,12 +49,21 @@ export async function PATCH(
   }
 
   const action = status === "OPEN" ? "catalog.publish" : "catalog.edit";
-  const result = await can(action, {
+  const baseCtx = {
     userId: session.user.id,
     churchId: catalog.churchId,
     roles: membership.roles,
-  });
-  if (!result.allowed) {
+  };
+  let permitted = (await can(action, baseCtx)).allowed;
+  if (!permitted) {
+    permitted = (
+      await can("fundraiser.publish", {
+        ...baseCtx,
+        catalogCreatedById: catalog.createdById ?? undefined,
+      })
+    ).allowed;
+  }
+  if (!permitted) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
