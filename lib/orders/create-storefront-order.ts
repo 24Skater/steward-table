@@ -54,9 +54,7 @@ export type CreateOrderResult =
   | { ok: true; orderId: string; orderNumber: number; deduplicated: boolean }
   | { ok: false; status: number; error: string };
 
-export async function createStorefrontOrder(
-  params: CreateOrderParams,
-): Promise<CreateOrderResult> {
+export async function createStorefrontOrder(params: CreateOrderParams): Promise<CreateOrderResult> {
   // 1. Idempotency pre-check
   if (params.clientRequestId) {
     const existing = await db.order.findFirst({
@@ -84,7 +82,7 @@ export async function createStorefrontOrder(
   }
 
   if (catalog.status !== "OPEN") {
-    return { ok: false, status: 409, error: "This fundraiser has closed" };
+    return { ok: false, status: 409, error: "This catalog is no longer accepting orders" };
   }
 
   // 3. Min-items check for DELIVERY
@@ -100,75 +98,7 @@ export async function createStorefrontOrder(
   }
 
   // 4. Customer find-or-create (verbatim from storefront route)
-  const phoneNormalized = params.phone?.replace(/\D/g, "") || null;
-  const emailNormalized = params.email?.trim().toLowerCase() || null;
-
-  let customerId: string;
-
-  if (phoneNormalized) {
-    const existing = await db.customer.findFirst({
-      where: { churchId: params.churchId, phoneNormalized },
-      select: { id: true },
-    });
-
-    if (existing) {
-      customerId = existing.id;
-      const updates: Record<string, unknown> = {};
-      if (params.smsOptIn) updates.smsOptIn = true;
-      if (emailNormalized) {
-        updates.email = params.email?.trim();
-        updates.emailNormalized = emailNormalized;
-      }
-      if (Object.keys(updates).length > 0) {
-        await db.customer.update({ where: { id: existing.id }, data: updates });
-      }
-    } else {
-      const created = await db.customer.create({
-        data: {
-          churchId: params.churchId,
-          name: params.customerName.trim(),
-          phone: params.phone ?? null,
-          phoneNormalized,
-          email: params.email?.trim() ?? null,
-          emailNormalized,
-          smsOptIn: params.smsOptIn ?? false,
-        },
-        select: { id: true },
-      });
-      customerId = created.id;
-    }
-  } else if (emailNormalized) {
-    // No phone but email — try dedup by email
-    const existing = await db.customer.findFirst({
-      where: { churchId: params.churchId, emailNormalized },
-      select: { id: true },
-    });
-
-    if (existing) {
-      customerId = existing.id;
-    } else {
-      const created = await db.customer.create({
-        data: {
-          churchId: params.churchId,
-          name: params.customerName.trim(),
-          email: params.email?.trim(),
-          emailNormalized,
-        },
-        select: { id: true },
-      });
-      customerId = created.id;
-    }
-  } else {
-    // No phone, no email — create anonymous guest customer
-    const created = await db.customer.create({
-      data: {
-        churchId: params.churchId,
-        name: params.customerName.trim(),
-      },
-      select: { id: true },
-    });
-    customerId = created.id;
-  }
+  const customerId = await findOrCreateCustomer(params.churchId, params);
 
   // 5. Get next order number atomically via upsert on OrderCounter
   const counter = await db.orderCounter.upsert({
@@ -216,8 +146,7 @@ export async function createStorefrontOrder(
         receiptLanguageVersion: 1,
         items: {
           create: params.items.map((item) => {
-            const unitPrice =
-              item.basePrice + item.modifiers.reduce((s, m) => s + m.priceDelta, 0);
+            const unitPrice = item.basePrice + item.modifiers.reduce((s, m) => s + m.priceDelta, 0);
             const itemSubtotal = unitPrice * item.quantity;
             return {
               itemId: item.itemId,
@@ -244,8 +173,14 @@ export async function createStorefrontOrder(
       select: { id: true, number: true },
     });
   } catch (err) {
-    // 8. Unique-violation race on clientRequestId — re-fetch the winner
-    if (params.clientRequestId) {
+    // 8. Unique-violation race on clientRequestId — re-fetch the winner.
+    // Only handle P2002 (unique constraint violation); any other error must propagate.
+    // Check both the Prisma error code and the message-based idiom used elsewhere in
+    // this repo (app/(dashboard)/kitchens/actions.ts) since $extends can rewrap errors.
+    const isUniqueViolation =
+      (err as { code?: string })?.code === "P2002" ||
+      (err instanceof Error && err.message.includes("P2002"));
+    if (params.clientRequestId && isUniqueViolation) {
       const dedup = await db.order.findFirst({
         where: { churchId: params.churchId, clientRequestId: params.clientRequestId },
         select: { id: true, number: true },
@@ -282,4 +217,84 @@ export async function createStorefrontOrder(
 
   // 11. Return success
   return { ok: true, orderId: order.id, orderNumber: order.number, deduplicated: false };
+}
+
+/**
+ * Guest customer find-or-create with dedup:
+ * phone-normalized first (with smsOptIn/email backfill), then email, then anonymous.
+ * Ported verbatim from the original storefront orders route.
+ */
+async function findOrCreateCustomer(
+  churchId: string,
+  params: Pick<CreateOrderParams, "customerName" | "phone" | "email" | "smsOptIn">,
+): Promise<string> {
+  const phoneNormalized = params.phone?.replace(/\D/g, "") || null;
+  const emailNormalized = params.email?.trim().toLowerCase() || null;
+
+  if (phoneNormalized) {
+    const existing = await db.customer.findFirst({
+      where: { churchId, phoneNormalized },
+      select: { id: true },
+    });
+
+    if (existing) {
+      const updates: Record<string, unknown> = {};
+      if (params.smsOptIn) updates.smsOptIn = true;
+      if (emailNormalized) {
+        updates.email = params.email?.trim();
+        updates.emailNormalized = emailNormalized;
+      }
+      if (Object.keys(updates).length > 0) {
+        await db.customer.update({ where: { id: existing.id }, data: updates });
+      }
+      return existing.id;
+    }
+
+    const created = await db.customer.create({
+      data: {
+        churchId,
+        name: params.customerName.trim(),
+        phone: params.phone ?? null,
+        phoneNormalized,
+        email: params.email?.trim() ?? null,
+        emailNormalized,
+        smsOptIn: params.smsOptIn ?? false,
+      },
+      select: { id: true },
+    });
+    return created.id;
+  }
+
+  if (emailNormalized) {
+    // No phone but email — try dedup by email
+    const existing = await db.customer.findFirst({
+      where: { churchId, emailNormalized },
+      select: { id: true },
+    });
+
+    if (existing) {
+      return existing.id;
+    }
+
+    const created = await db.customer.create({
+      data: {
+        churchId,
+        name: params.customerName.trim(),
+        email: params.email?.trim(),
+        emailNormalized,
+      },
+      select: { id: true },
+    });
+    return created.id;
+  }
+
+  // No phone, no email — create anonymous guest customer
+  const created = await db.customer.create({
+    data: {
+      churchId,
+      name: params.customerName.trim(),
+    },
+    select: { id: true },
+  });
+  return created.id;
 }
