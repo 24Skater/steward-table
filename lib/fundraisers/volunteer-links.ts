@@ -75,10 +75,14 @@ export async function validateVolunteerToken(token: string): Promise<VolunteerLi
   return { catalogId: link.catalogId, churchId: link.churchId, linkId: link.id };
 }
 
-/** Revokes a link, scoped to the given church. Idempotent. */
-export async function revokeVolunteerLink(linkId: string, churchId: string): Promise<void> {
+/** Revokes a link, scoped to the given church and catalog. Idempotent. */
+export async function revokeVolunteerLink(
+  linkId: string,
+  churchId: string,
+  catalogId: string,
+): Promise<void> {
   const link = (await db.volunteerLink.findFirst({
-    where: { id: linkId, churchId },
+    where: { id: linkId, churchId, catalogId },
     select: { id: true },
   })) as { id: string } | null;
 

@@ -40,6 +40,6 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  await revokeVolunteerLink(linkId, membership.churchId);
+  await revokeVolunteerLink(linkId, membership.churchId, catalogId);
   return NextResponse.json({ revoked: true });
 }

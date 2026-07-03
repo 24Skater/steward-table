@@ -125,15 +125,16 @@ describe("volunteer links", () => {
   });
 
   describe("revokeVolunteerLink", () => {
-    it("revokes a link belonging to the church", async () => {
+    it("revokes a link belonging to the church and catalog", async () => {
       mocks.volunteerLink.findFirst.mockResolvedValue({ id: "link-1" });
       mocks.volunteerLink.update.mockResolvedValue({ id: "link-1" });
 
-      await revokeVolunteerLink("link-1", "church-1");
+      await revokeVolunteerLink("link-1", "church-1", "cat-1");
 
       expect(mocks.volunteerLink.findFirst.mock.calls[0]![0].where).toEqual({
         id: "link-1",
         churchId: "church-1",
+        catalogId: "cat-1",
       });
       const updateArg = mocks.volunteerLink.update.mock.calls[0]![0];
       expect(updateArg.where).toEqual({ id: "link-1" });
@@ -143,7 +144,18 @@ describe("volunteer links", () => {
     it("does not update when the link is not in this church", async () => {
       mocks.volunteerLink.findFirst.mockResolvedValue(null);
 
-      await expect(revokeVolunteerLink("link-1", "other-church")).resolves.toBeUndefined();
+      await expect(
+        revokeVolunteerLink("link-1", "other-church", "cat-1"),
+      ).resolves.toBeUndefined();
+      expect(mocks.volunteerLink.update).not.toHaveBeenCalled();
+    });
+
+    it("does not update when the link belongs to a different catalog in the same church", async () => {
+      mocks.volunteerLink.findFirst.mockResolvedValue(null);
+
+      await expect(
+        revokeVolunteerLink("link-1", "church-1", "other-catalog"),
+      ).resolves.toBeUndefined();
       expect(mocks.volunteerLink.update).not.toHaveBeenCalled();
     });
 
@@ -151,14 +163,16 @@ describe("volunteer links", () => {
       mocks.volunteerLink.findFirst.mockResolvedValue({ id: "link-1" });
       mocks.volunteerLink.update.mockRejectedValue({ code: "P2025" });
 
-      await expect(revokeVolunteerLink("link-1", "church-1")).resolves.toBeUndefined();
+      await expect(revokeVolunteerLink("link-1", "church-1", "cat-1")).resolves.toBeUndefined();
     });
 
     it("rethrows infrastructure errors from the update", async () => {
       mocks.volunteerLink.findFirst.mockResolvedValue({ id: "link-1" });
       mocks.volunteerLink.update.mockRejectedValue(new Error("connection lost"));
 
-      await expect(revokeVolunteerLink("link-1", "church-1")).rejects.toThrow("connection lost");
+      await expect(revokeVolunteerLink("link-1", "church-1", "cat-1")).rejects.toThrow(
+        "connection lost",
+      );
     });
   });
 });
