@@ -1,14 +1,14 @@
 model Catalog {
-  id           String        @id @default(cuid())
-  churchId     String
-  name         String
-  slug         String
-  description  String?
-  translations Json?
-  status       CatalogStatus @default(DRAFT)
-  opensAt      DateTime?
-  closesAt     DateTime?
-  kitchenId    String?
+  id                  String        @id @default(cuid())
+  churchId            String
+  name                String
+  slug                String
+  description         String?
+  translations        Json?
+  status              CatalogStatus @default(DRAFT)
+  opensAt             DateTime?
+  closesAt            DateTime?
+  kitchenId           String?
   ministryId          String?
   minItemsForDelivery Int?
   createdById         String?
@@ -17,9 +17,9 @@ model Catalog {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  church         Church         @relation(fields: [churchId], references: [id], onDelete: Cascade)
-  kitchen        Kitchen?       @relation(fields: [kitchenId], references: [id])
-  ministry       Ministry?      @relation(fields: [ministryId], references: [id])
+  church         Church          @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  kitchen        Kitchen?        @relation(fields: [kitchenId], references: [id])
+  ministry       Ministry?       @relation(fields: [ministryId], references: [id])
   items          CatalogItem[]
   orders         Order[]
   volunteerLinks VolunteerLink[]

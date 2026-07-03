@@ -1,19 +1,19 @@
 model Order {
-  id           String          @id @default(cuid())
-  churchId     String
-  catalogId    String
-  customerId   String
-  number       Int
-  channel      Channel
-  fulfillment  FulfillmentType
-  status       OrderStatus     @default(SUBMITTED)
-  currency     String
-  subtotal     Int
-  tax          Int             @default(0)
-  tip          Int             @default(0)
-  total        Int
-  notes        String?
-  scheduledFor DateTime?
+  id              String          @id @default(cuid())
+  churchId        String
+  catalogId       String
+  customerId      String
+  number          Int
+  channel         Channel
+  fulfillment     FulfillmentType
+  status          OrderStatus     @default(SUBMITTED)
+  currency        String
+  subtotal        Int
+  tax             Int             @default(0)
+  tip             Int             @default(0)
+  total           Int
+  notes           String?
+  scheduledFor    DateTime?
   takenById       String?
   takenByName     String?
   clientRequestId String?
