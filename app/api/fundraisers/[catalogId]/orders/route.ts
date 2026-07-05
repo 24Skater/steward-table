@@ -33,8 +33,23 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
+  const { catalogId } = await params;
+
+  // Resolve catalog → churchId (bypass tenancy for the lookup) so the
+  // membership check is scoped to the catalog's church — a multi-church
+  // user's first membership may belong to a different church entirely.
+  const catalog = (await (db.catalog.findUnique as PrismaBypass)({
+    where: { id: catalogId },
+    select: { id: true, churchId: true },
+    _bypassTenancyCheck: true,
+  })) as { id: string; churchId: string } | null;
+
+  if (!catalog) {
+    return NextResponse.json({ error: "Catalog not found" }, { status: 404 });
+  }
+
   const membership = session.user.memberships?.find(
-    (m: SessionMembership) => m.status === "ACTIVE",
+    (m: SessionMembership) => m.churchId === catalog.churchId && m.status === "ACTIVE",
   );
   if (!membership) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -48,8 +63,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   if (!result.allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-
-  const { catalogId } = await params;
 
   let body: StaffOrderBody;
   try {
@@ -71,11 +84,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Items do not match this fundraiser" }, { status: 400 });
   }
 
-  const church = await (db.church.findFirst as PrismaBypass)({
+  const church = (await (db.church.findUnique as PrismaBypass)({
     where: { id: membership.churchId },
     select: { currency: true },
     _bypassTenancyCheck: true,
-  });
+  })) as { currency: string } | null;
   if (!church) {
     return NextResponse.json({ error: "Church not found" }, { status: 404 });
   }
