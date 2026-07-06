@@ -775,6 +775,25 @@ describe("can() — RBAC permission gate", () => {
     it("ADMIN inherits STAFF permissions (customer.edit)", async () => {
       expect((await can("customer.edit", makeCtx(["ADMIN"]))).allowed).toBe(true);
     });
+    it("OWNER inherits STAFF permissions (fundraiser.create)", async () => {
+      expect((await can("fundraiser.create", makeCtx(["OWNER"]))).allowed).toBe(true);
+    });
+    it("OWNER inherits ADMIN permissions (fundraiser.edit on any fundraiser)", async () => {
+      expect(
+        (await can("fundraiser.edit", makeCtx(["OWNER"], { catalogCreatedById: "someone-else" })))
+          .allowed,
+      ).toBe(true);
+    });
+    it("OWNER inherits ADMIN permissions (fundraiser.publish on any fundraiser)", async () => {
+      expect(
+        (
+          await can(
+            "fundraiser.publish",
+            makeCtx(["OWNER"], { catalogCreatedById: "someone-else" }),
+          )
+        ).allowed,
+      ).toBe(true);
+    });
     it("COOK does NOT inherit STAFF permissions (order.create)", async () => {
       expect((await can("order.create", makeCtx(["COOK"]))).allowed).toBe(false);
     });
@@ -842,6 +861,81 @@ describe("can() — RBAC permission gate", () => {
       expect(result.allowed).toBe(false);
     });
   });
+
+  // ── Fundraisers ─────────────────────────────────────────────────────
+  describe("fundraiser.create", () => {
+    it("allows STAFF", async () => {
+      const result = await can("fundraiser.create", makeCtx(["STAFF"]));
+      expect(result.allowed).toBe(true);
+    });
+    it("allows ADMIN", async () => {
+      const result = await can("fundraiser.create", makeCtx(["ADMIN"]));
+      expect(result.allowed).toBe(true);
+    });
+    it("allows OWNER", async () => {
+      const result = await can("fundraiser.create", makeCtx(["OWNER"]));
+      expect(result.allowed).toBe(true);
+    });
+    it("denies COOK", async () => {
+      const result = await can("fundraiser.create", makeCtx(["COOK"]));
+      expect(result.allowed).toBe(false);
+    });
+    it("denies DRIVER", async () => {
+      const result = await can("fundraiser.create", makeCtx(["DRIVER"]));
+      expect(result.allowed).toBe(false);
+    });
+    it("denies VIEWER", async () => {
+      const result = await can("fundraiser.create", makeCtx(["VIEWER"]));
+      expect(result.allowed).toBe(false);
+    });
+  });
+
+  for (const action of ["fundraiser.edit", "fundraiser.publish"] as const) {
+    describe(action, () => {
+      it("allows ADMIN on any fundraiser", async () => {
+        const result = await can(
+          action,
+          makeCtx(["ADMIN"], { catalogCreatedById: "someone-else" }),
+        );
+        expect(result.allowed).toBe(true);
+      });
+      it("allows OWNER on any fundraiser", async () => {
+        const result = await can(
+          action,
+          makeCtx(["OWNER"], { catalogCreatedById: "someone-else" }),
+        );
+        expect(result.allowed).toBe(true);
+      });
+      it("allows STAFF on their own fundraiser", async () => {
+        const result = await can(action, makeCtx(["STAFF"], { catalogCreatedById: "user-1" }));
+        expect(result.allowed).toBe(true);
+        expect(result.restrictions?.restriction).toBe("own fundraisers only");
+      });
+      it("denies STAFF on someone else's fundraiser", async () => {
+        const result = await can(
+          action,
+          makeCtx(["STAFF"], { catalogCreatedById: "someone-else" }),
+        );
+        expect(result.allowed).toBe(false);
+      });
+      it("denies STAFF when creator is unknown", async () => {
+        const result = await can(action, makeCtx(["STAFF"]));
+        expect(result.allowed).toBe(false);
+      });
+      it("denies COOK", async () => {
+        const result = await can(action, makeCtx(["COOK"], { catalogCreatedById: "user-1" }));
+        expect(result.allowed).toBe(false);
+      });
+      it("denies DRIVER", async () => {
+        const result = await can(action, makeCtx(["DRIVER"], { catalogCreatedById: "user-1" }));
+        expect(result.allowed).toBe(false);
+      });
+      it("denies VIEWER", async () => {
+        const result = await can(action, makeCtx(["VIEWER"], { catalogCreatedById: "user-1" }));
+        expect(result.allowed).toBe(false);
+      });
+    });
+  }
 
   // ── deny result properties ────────────────────────────────────────────
   describe("CanResult shape", () => {

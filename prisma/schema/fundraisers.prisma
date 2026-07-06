@@ -1,0 +1,17 @@
+model VolunteerLink {
+  id          String    @id @default(cuid())
+  churchId    String
+  catalogId   String
+  tokenHash   String    @unique
+  createdById String
+  expiresAt   DateTime
+  revokedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  catalog Catalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+
+  @@index([churchId])
+  @@index([catalogId])
+  @@map("volunteer_links")
+}

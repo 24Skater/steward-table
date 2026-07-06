@@ -29,6 +29,7 @@ model Church {
 
   catalogs       Catalog[]
   kitchens       Kitchen[]
+  ministries     Ministry[]
   items          Item[]
   modifierGroups ModifierGroup[]
   customers      Customer[]
