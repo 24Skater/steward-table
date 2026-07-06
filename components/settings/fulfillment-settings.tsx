@@ -137,6 +137,7 @@ export function FulfillmentSettings({
                   className="flex h-9 w-36 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
                 >
                   {Array.from({ length: 24 }, (_, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: entries have no stable id; list identity is positional
                     <option key={i} value={i}>
                       {formatHour(i)}
                     </option>
@@ -153,6 +154,7 @@ export function FulfillmentSettings({
                   className="flex h-9 w-36 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
                 >
                   {Array.from({ length: 24 }, (_, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: entries have no stable id; list identity is positional
                     <option key={i} value={i}>
                       {formatHour(i)}
                     </option>

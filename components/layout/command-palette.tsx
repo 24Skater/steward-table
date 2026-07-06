@@ -1,6 +1,7 @@
 "use client";
 
 import { Command } from "cmdk";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -51,8 +52,7 @@ export function CommandPalette() {
 
   function handleSelect(href: string) {
     setOpen(false);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    router.push(href as any);
+    router.push(href as Route);
   }
 
   const groups = Array.from(new Set(NAV_ITEMS.map((i) => i.group)));
@@ -61,6 +61,7 @@ export function CommandPalette() {
     <>
       {/* Trigger button (visible in sidebar / top bar) */}
       <button
+        type="button"
         onClick={openPalette}
         aria-label="Open command palette"
         className="hidden"
@@ -74,6 +75,7 @@ export function CommandPalette() {
         className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]"
       >
         {/* Backdrop */}
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; keyboard users close via Escape */}
         <div
           className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           onClick={() => setOpen(false)}

@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
+import type { Prisma } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -51,8 +52,9 @@ export async function POST(req: NextRequest) {
       churchId: body.churchId as string,
       imageUrl:
         typeof body.imageUrl === "string" && body.imageUrl.trim() ? body.imageUrl.trim() : null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...(body.translations != null && { translations: body.translations as any }),
+      ...(body.translations != null && {
+        translations: body.translations as Prisma.InputJsonValue,
+      }),
     },
   });
 

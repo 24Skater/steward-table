@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus, Prisma } from "@prisma/client";
 
 export class InvalidTransitionError extends Error {
   constructor(
@@ -215,8 +215,7 @@ export async function transition(
         fromStatus: from,
         toStatus: to,
         reason: opts.reason,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        metadata: opts.metadata ? (opts.metadata as any) : undefined,
+        metadata: opts.metadata ? (opts.metadata as unknown as Prisma.InputJsonValue) : undefined,
       },
     });
   });

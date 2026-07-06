@@ -36,6 +36,7 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
     <div className="mt-4 text-center">
       {error && <p className="mb-2 text-sm text-red-500">{error}</p>}
       <button
+        type="button"
         onClick={handleCancel}
         disabled={loading}
         className="text-sm text-red-500 underline-offset-2 hover:underline disabled:opacity-50"
