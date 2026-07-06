@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
+import { getChannelBreakdown, getMinistryRollup } from "@/lib/fundraisers/reporting";
 import { getKitchenRevenue } from "@/lib/kitchens/reporting";
 import { can } from "@/lib/rbac/can";
 import type { OrderStatus } from "@prisma/client";
@@ -121,7 +122,11 @@ export async function GET(request: NextRequest) {
   const revenue = revenueResult._sum.total ?? 0;
   const averageOrderValue = totalOrders > 0 ? Math.round(revenue / totalOrders) : 0;
 
-  const byKitchen = await getKitchenRevenue(db, churchId, rangeStart, COMPLETED_STATUSES);
+  const [byKitchen, channelBreakdown, ministries] = await Promise.all([
+    getKitchenRevenue(db, churchId, rangeStart, COMPLETED_STATUSES),
+    getChannelBreakdown(db, churchId, rangeStart),
+    getMinistryRollup(db, churchId, rangeStart),
+  ]);
 
   return NextResponse.json({
     totalOrders,
@@ -137,5 +142,7 @@ export async function GET(request: NextRequest) {
       count: row._sum.quantity ?? 0,
     })),
     byKitchen,
+    channelBreakdown,
+    ministries,
   });
 }

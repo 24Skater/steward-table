@@ -24,6 +24,7 @@ export interface Catalog {
   status: string;
   opensAt?: Date | string | null;
   closesAt?: Date | string | null;
+  ministry?: { name: string } | null;
   _count: { items: number; orders?: number };
   revenue?: number;
 }

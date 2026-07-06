@@ -22,6 +22,7 @@ export default async function CatalogPage() {
       status: true,
       opensAt: true,
       closesAt: true,
+      ministry: { select: { name: true } },
       _count: { select: { items: true, orders: true } },
     },
     orderBy: { createdAt: "desc" },

@@ -17,17 +17,27 @@ export async function GET(
     return NextResponse.json({ error: "Church not found" }, { status: 404 });
   }
 
-  const zones = await (db.deliveryZone.findMany as PrismaBypass)({
-    where: { churchId: church.id },
-    select: {
-      id: true,
-      name: true,
-      postalCodes: true,
-      feeCents: true,
-      minOrderCents: true,
-    },
-    orderBy: { name: "asc" },
-  });
+  const [zones, openCatalog] = await Promise.all([
+    (db.deliveryZone.findMany as PrismaBypass)({
+      where: { churchId: church.id },
+      select: {
+        id: true,
+        name: true,
+        postalCodes: true,
+        feeCents: true,
+        minOrderCents: true,
+      },
+      orderBy: { name: "asc" },
+    }),
+    db.catalog.findFirst({
+      where: { churchId: church.id, status: "OPEN" },
+      select: { minItemsForDelivery: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
-  return NextResponse.json(zones);
+  return NextResponse.json({
+    zones,
+    minItemsForDelivery: openCatalog?.minItemsForDelivery ?? null,
+  });
 }

@@ -23,6 +23,18 @@ export interface KitchenRevenueItem {
   revenue: number;
 }
 
+export interface ChannelBreakdownItem {
+  channel: string;
+  orders: number;
+  revenue: number;
+}
+
+export interface MinistryRollupItem {
+  name: string;
+  orders: number;
+  revenue: number;
+}
+
 export interface ReportsData {
   totalOrders: number;
   completedOrders: number;
@@ -31,6 +43,8 @@ export interface ReportsData {
   statusBreakdown: StatusBreakdownItem[];
   topItems: TopItem[];
   byKitchen: KitchenRevenueItem[];
+  channelBreakdown: ChannelBreakdownItem[];
+  ministries: MinistryRollupItem[];
 }
 
 interface ReportsPageProps {
@@ -200,6 +214,75 @@ function KitchenRevenueTable({ rows }: { rows: KitchenRevenueItem[] }) {
   );
 }
 
+// ── Per-ministry revenue table ─────────────────────────────────────────────────
+
+function MinistryRollupTable({ rows }: { rows: MinistryRollupItem[] }) {
+  if (rows.length === 0) {
+    return <p className="text-sm text-slate-400">No ministry-attributed orders in this period.</p>;
+  }
+
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="text-left text-slate-400">
+          <th className="pb-2 font-medium">Ministry</th>
+          <th className="pb-2 font-medium text-right tabular-nums">Orders</th>
+          <th className="pb-2 font-medium text-right tabular-nums">Revenue</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.name} className="border-t border-slate-100">
+            <td className="py-1.5 text-slate-700">{row.name}</td>
+            <td className="py-1.5 text-right text-slate-600 tabular-nums">{row.orders}</td>
+            <td className="py-1.5 text-right text-slate-600 tabular-nums">
+              {formatCurrency(row.revenue)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// ── Per-channel breakdown table ────────────────────────────────────────────────
+
+const CHANNEL_LABELS: Record<string, string> = {
+  ONLINE: "Online",
+  VOLUNTEER: "Volunteer (in person)",
+  PHONE: "Phone",
+  IN_PERSON: "In person",
+};
+
+function ChannelBreakdownTable({ rows }: { rows: ChannelBreakdownItem[] }) {
+  if (rows.length === 0) {
+    return <p className="text-sm text-slate-400">No orders in this period.</p>;
+  }
+
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="text-left text-slate-400">
+          <th className="pb-2 font-medium">Channel</th>
+          <th className="pb-2 font-medium text-right tabular-nums">Orders</th>
+          <th className="pb-2 font-medium text-right tabular-nums">Revenue</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.channel} className="border-t border-slate-100">
+            <td className="py-1.5 text-slate-700">{CHANNEL_LABELS[row.channel] ?? row.channel}</td>
+            <td className="py-1.5 text-right text-slate-600 tabular-nums">{row.orders}</td>
+            <td className="py-1.5 text-right text-slate-600 tabular-nums">
+              {formatCurrency(row.revenue)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function ReportsPage({ initialData, churchId }: ReportsPageProps) {
@@ -312,6 +395,19 @@ export function ReportsPage({ initialData, churchId }: ReportsPageProps) {
       <div className="mt-4 rounded-lg border border-slate-200 bg-white p-5">
         <h3 className="mb-4 text-sm font-semibold text-slate-700">Revenue by Kitchen</h3>
         <KitchenRevenueTable rows={data.byKitchen ?? []} />
+      </div>
+
+      {/* Ministry rollup + channel split */}
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-lg border border-slate-200 bg-white p-5">
+          <h3 className="mb-4 text-sm font-semibold text-slate-700">By Ministry</h3>
+          <MinistryRollupTable rows={data.ministries ?? []} />
+        </div>
+
+        <div className="rounded-lg border border-slate-200 bg-white p-5">
+          <h3 className="mb-4 text-sm font-semibold text-slate-700">By Channel</h3>
+          <ChannelBreakdownTable rows={data.channelBreakdown ?? []} />
+        </div>
       </div>
     </div>
   );

@@ -12,6 +12,9 @@ export type Action =
   | "catalog.read"
   | "catalog.edit"
   | "catalog.publish"
+  | "fundraiser.create"
+  | "fundraiser.edit"
+  | "fundraiser.publish"
   | "inventory.read"
   | "inventory.adjust"
   | "customer.read"
@@ -47,6 +50,7 @@ export interface CanContext {
   orderCreatedById?: string;
   catalogId?: string;
   catalogStatus?: string;
+  catalogCreatedById?: string;
   driverId?: string;
   ip?: string;
   userAgent?: string;
@@ -176,6 +180,22 @@ async function resolvePermission(
     case "catalog.publish":
       if (roles.has("ADMIN")) return allow();
       return deny("Requires ADMIN or OWNER");
+
+    // ── Fundraisers ────────────────────────────────────────────────────
+    case "fundraiser.create":
+      if (roles.has("STAFF")) return allow();
+      return deny("Requires STAFF, ADMIN, or OWNER");
+
+    case "fundraiser.edit":
+    case "fundraiser.publish":
+      if (roles.has("ADMIN")) return allow();
+      if (roles.has("STAFF")) {
+        if (ctx.catalogCreatedById && ctx.catalogCreatedById === ctx.userId) {
+          return allow({ restriction: "own fundraisers only" });
+        }
+        return deny("STAFF can only manage fundraisers they created");
+      }
+      return deny("Requires STAFF (own fundraisers only), ADMIN, or OWNER");
 
     // ── Inventory ──────────────────────────────────────────────────────
     case "inventory.read":

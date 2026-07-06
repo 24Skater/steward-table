@@ -53,6 +53,7 @@ enum Channel {
   ONLINE
   PHONE
   IN_PERSON
+  VOLUNTEER
 }
 
 enum FulfillmentType {
