@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/hooks/use-cart";
+import { isDeliveryEligible } from "@/lib/fundraisers/delivery-eligibility";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -98,6 +99,7 @@ export default function CheckoutPage() {
 
   // Delivery zone + address state
   const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [minItemsForDelivery, setMinItemsForDelivery] = useState<number | null>(null);
   const [addressLine1, setAddressLine1] = useState("");
   const [addressCity, setAddressCity] = useState("");
   const [addressRegion, setAddressRegion] = useState("");
@@ -119,11 +121,27 @@ export default function CheckoutPage() {
   const churchSlug = params.churchSlug;
   const nextSevenDays = getNextSevenDays();
 
+  const cartItemCount = items.reduce((s, i) => s + i.quantity, 0);
+  const deliveryUnlocked = isDeliveryEligible(cartItemCount, minItemsForDelivery);
+
+  // Auto-flip back to pickup if the cart drops below the delivery threshold
+  if (fulfillment === "DELIVERY" && !deliveryUnlocked) {
+    setFulfillment("PICKUP");
+    setError(
+      minItemsForDelivery
+        ? `Delivery needs at least ${minItemsForDelivery} items — switched to pickup.`
+        : "Delivery unavailable — switched to pickup.",
+    );
+  }
+
   // Fetch delivery zones and payment config once when component mounts
   useEffect(() => {
     fetch(`/api/storefront/${churchSlug}/delivery-zones`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: DeliveryZone[]) => setDeliveryZones(data))
+      .then((res) => (res.ok ? res.json() : { zones: [], minItemsForDelivery: null }))
+      .then((data: { zones?: DeliveryZone[]; minItemsForDelivery?: number | null }) => {
+        setDeliveryZones(data.zones ?? []);
+        setMinItemsForDelivery(data.minItemsForDelivery ?? null);
+      })
       .catch(() => {
         // Silently ignore — delivery zone lookup is best-effort
       });
@@ -427,21 +445,32 @@ export default function CheckoutPage() {
                     ? deliveryEnabled
                     : dineInEnabled,
               )
-              .map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setFulfillment(type)}
-                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                    fulfillment === type
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  {FULFILLMENT_LABELS[type]}
-                </button>
-              ))}
+              .map((type) => {
+                const isLockedDelivery = type === "DELIVERY" && !deliveryUnlocked;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    disabled={isLockedDelivery}
+                    onClick={() => setFulfillment(type)}
+                    className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                      fulfillment === type
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : isLockedDelivery
+                          ? "border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {FULFILLMENT_LABELS[type]}
+                  </button>
+                );
+              })}
           </div>
+          {deliveryEnabled && !deliveryUnlocked && minItemsForDelivery !== null && (
+            <p className="mt-1.5 text-xs text-amber-600">
+              Add {minItemsForDelivery - cartItemCount} more to unlock delivery
+            </p>
+          )}
         </div>
 
         {fulfillment === "PICKUP" && (
