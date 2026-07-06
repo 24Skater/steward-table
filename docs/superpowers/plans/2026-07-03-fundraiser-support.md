@@ -2115,7 +2115,7 @@ git commit -m "feat: add resilient send-queue hook for quick-entry submits"
 - Create: `app/(dashboard)/fundraisers/[catalogId]/take-orders/page.tsx`
 - Create: `app/v/[token]/page.tsx`
 
-- [ ] **Step 1: Build the shared quick-entry component**
+- [x] **Step 1: Build the shared quick-entry component**
 
 Create `components/fundraisers/quick-entry.tsx`. POS tap grid → customer sheet → submit → reset. Uses `useSendQueue`. Phone-first: min 44px touch targets, `text-lg`.
 
@@ -2571,7 +2571,7 @@ function OptionPicker({ item, onConfirm, onCancel }: OptionPickerProps) {
 }
 ```
 
-- [ ] **Step 2: Staff-door page**
+- [x] **Step 2: Staff-door page**
 
 Create `app/(dashboard)/fundraisers/[catalogId]/take-orders/page.tsx`:
 
@@ -2682,7 +2682,7 @@ export default async function TakeOrdersPage({ params }: PageProps) {
 
 Note: read `ChurchSettings.brandTokens` fulfillment toggles if the storefront checkout consults them for enabling delivery, and mirror that into `deliveryEnabled` — check `app/(storefront)/[churchSlug]/checkout/page.tsx` for how it decides delivery availability and copy the source of truth.
 
-- [ ] **Step 3: Volunteer-door page**
+- [x] **Step 3: Volunteer-door page**
 
 Create `app/v/[token]/page.tsx` (client wrapper fetches via the token API; volunteer types a name once, kept in sessionStorage):
 
@@ -2821,7 +2821,7 @@ Note: `app/v/` sits outside all route groups, so it gets the root layout only �
 
 Run: `pnpm dev`, then create a fundraiser via Prisma Studio or seed data, open both routes on a phone-sized viewport, take a test order, confirm it appears in the kitchen view.
 
-- [ ] **Step 5: Type-check, lint, commit**
+- [x] **Step 5: Type-check, lint, commit**
 
 Run: `npx tsc --noEmit && pnpm build`
 Expected: PASS.
