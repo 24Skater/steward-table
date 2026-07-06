@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, HandCoins, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { Catalog } from "./catalog-card";
@@ -82,6 +82,11 @@ function CatalogRow({ catalog, onUpdated, onDeleted }: CatalogRowProps) {
           >
             {catalog.name}
           </Link>
+          {catalog.ministry?.name && (
+            <span className="ml-2 inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+              {catalog.ministry.name}
+            </span>
+          )}
           {catalog.description && (
             <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{catalog.description}</p>
           )}
@@ -133,6 +138,14 @@ function CatalogRow({ catalog, onUpdated, onDeleted }: CatalogRowProps) {
                 {toggling ? "…" : catalog.status === "OPEN" ? "Close" : "Open"}
               </button>
             )}
+            <Link
+              href={`/fundraisers/new?cloneFrom=${catalog.id}` as never}
+              className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              aria-label="Duplicate as fundraiser"
+              title="Duplicate as fundraiser"
+            >
+              <Copy size={14} />
+            </Link>
             <button
               type="button"
               onClick={() => setEditOpen(true)}
@@ -192,10 +205,18 @@ export function CatalogList({ initialCatalogs, churchId }: CatalogListProps) {
             Manage your sales, menus, and event catalogs.
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus size={16} className="mr-2" />
-          New Catalog
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setCreateOpen(true)}>
+            <Plus size={16} className="mr-2" />
+            New Catalog
+          </Button>
+          <Button asChild>
+            <Link href={"/fundraisers/new" as never}>
+              <HandCoins size={16} className="mr-2" />
+              New Fundraiser
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {catalogs.length === 0 ? (
