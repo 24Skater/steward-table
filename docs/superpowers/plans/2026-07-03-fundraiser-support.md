@@ -2840,7 +2840,7 @@ git commit -m "feat: add volunteer quick-entry UI with POS tap grid and dual acc
 - Create: `app/(dashboard)/fundraisers/new/page.tsx`
 - Modify: `components/catalog/catalog-list.tsx` (New Fundraiser button, ministry badge, Duplicate action)
 
-- [ ] **Step 1: Wizard page (server component)**
+- [x] **Step 1: Wizard page (server component)**
 
 Create `app/(dashboard)/fundraisers/new/page.tsx`:
 
@@ -2901,7 +2901,7 @@ export default async function NewFundraiserPage({ searchParams }: PageProps) {
 
 (Verify the kitchen model name — `db.kitchen` — against `prisma/schema/`; the multi-kitchen feature landed in commit `810c005`. Adjust if the model is named differently.)
 
-- [ ] **Step 2: Wizard component**
+- [x] **Step 2: Wizard component**
 
 Create `components/fundraisers/fundraiser-wizard.tsx`. Single page, four collapsible sections, matching the POST `/api/fundraisers` payload from Task 7. Full component:
 
@@ -3387,7 +3387,7 @@ export function FundraiserWizard({
 }
 ```
 
-- [ ] **Step 3: Catalog page entry points**
+- [x] **Step 3: Catalog page entry points**
 
 In `components/catalog/catalog-list.tsx` (read it first; integrate, don't overwrite):
 1. Add a **"New Fundraiser"** primary button linking to `/fundraisers/new` next to the existing create-catalog button.
@@ -3395,7 +3395,7 @@ In `components/catalog/catalog-list.tsx` (read it first; integrate, don't overwr
 3. Add a **"Duplicate as fundraiser"** item to each card's action menu linking to `/fundraisers/new?cloneFrom=<catalogId>`.
 4. Add a ministry filter dropdown above the list (client-side filter over the loaded catalogs is sufficient — they're already all loaded).
 
-- [ ] **Step 4: Verify, type-check, commit**
+- [x] **Step 4: Verify, type-check, commit**
 
 Run: `npx tsc --noEmit && pnpm build`, then `pnpm dev` — create a fundraiser end-to-end: basics → items with an option group → min-items rule → publish → volunteer link appears.
 
@@ -3414,7 +3414,7 @@ git commit -m "feat: add fundraiser wizard with clone prefill and catalog page e
 
 Server-side enforcement already landed in Task 5; this makes the storefront UI honest about it.
 
-- [ ] **Step 1: Expose the rule to the storefront**
+- [x] **Step 1: Expose the rule to the storefront**
 
 In `app/api/storefront/[churchSlug]/delivery-zones/route.ts`, alongside the zones lookup, fetch the OPEN catalog's `minItemsForDelivery` and include it in the response payload:
 
@@ -3430,7 +3430,7 @@ In `app/api/storefront/[churchSlug]/delivery-zones/route.ts`, alongside the zone
 
 Read the route first and match its existing response shape — if it currently returns a bare array, wrap it as `{ zones, minItemsForDelivery }` and update the checkout page's fetch accordingly.
 
-- [ ] **Step 2: Gate the delivery option in checkout**
+- [x] **Step 2: Gate the delivery option in checkout**
 
 In `app/(storefront)/[churchSlug]/checkout/page.tsx`:
 - Import `isDeliveryEligible` from `@/lib/fundraisers/delivery-eligibility`.
@@ -3438,7 +3438,7 @@ In `app/(storefront)/[churchSlug]/checkout/page.tsx`:
 - Where the fulfillment selector renders the DELIVERY choice, disable it when `!isDeliveryEligible(cartItemCount, minItemsForDelivery)` and render the nudge: `Add ${minItemsForDelivery - cartItemCount} more to unlock delivery`.
 - If delivery is selected and the count drops below the rule, switch to PICKUP and show the same visible notice pattern used by the quick-entry component.
 
-- [ ] **Step 3: Verify, type-check, commit**
+- [x] **Step 3: Verify, type-check, commit**
 
 Run: `npx tsc --noEmit && pnpm build`
 Expected: PASS.
@@ -3456,7 +3456,7 @@ git commit -m "feat: enforce min-items delivery rule in storefront checkout"
 - Modify: `app/api/reports/route.ts`
 - Modify: `app/(dashboard)/reports/page.tsx`
 
-- [ ] **Step 1: Add per-ministry and per-channel aggregates to the reports API**
+- [x] **Step 1: Add per-ministry and per-channel aggregates to the reports API**
 
 In `app/api/reports/route.ts`, add to the existing `Promise.all` block (around line 72):
 
@@ -3501,13 +3501,13 @@ Then resolve catalog → ministry after the `Promise.all`:
 
 Include `channelBreakdown` and `ministries: [...ministryRollup.values()]` in the JSON response. Match the route's existing response shape and variable naming — read it fully first.
 
-- [ ] **Step 2: Render both sections on the reports page**
+- [x] **Step 2: Render both sections on the reports page**
 
 In `app/(dashboard)/reports/page.tsx`, add two cards following the page's existing card/section pattern:
 - **"By ministry"** — table of ministry name, orders, revenue (formatted with the page's existing money formatter).
 - **"By channel"** — Online / Volunteer / Phone / In person rows with counts and revenue. Label `VOLUNTEER` as "Volunteer (in person)".
 
-- [ ] **Step 3: Verify, type-check, commit**
+- [x] **Step 3: Verify, type-check, commit**
 
 Run: `npx tsc --noEmit && pnpm build`
 Expected: PASS.
@@ -3524,7 +3524,7 @@ git commit -m "feat: add per-ministry and per-channel reporting"
 **Files:**
 - Create: `tests/e2e/fundraiser.spec.ts`
 
-- [ ] **Step 1: Write the E2E test**
+- [x] **Step 1: Write the E2E test**
 
 Follow the conventions in `tests/e2e/storefront.spec.ts` and `tests/e2e/kitchen.spec.ts` for auth/session setup and base URL handling — copy their login helper and seed approach exactly. The journey:
 
@@ -3584,12 +3584,12 @@ test.describe("fundraiser volunteer flow", () => {
 
 Fill in the auth helper and kitchen assertion from the existing spec files while implementing — those two pieces must match the repo's real seeding, which the existing specs demonstrate.
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `pnpm exec playwright test tests/e2e/fundraiser.spec.ts`
 Expected: PASS against a running dev stack (same environment the existing e2e specs use).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tests/e2e/fundraiser.spec.ts
@@ -3600,7 +3600,7 @@ git commit -m "test: add e2e coverage for fundraiser wizard and volunteer order 
 
 ### Task 18: Final verification + deploy loop
 
-- [ ] **Step 1: Full suite**
+- [x] **Step 1: Full suite**
 
 ```bash
 npx tsc --noEmit && pnpm test && pnpm build
