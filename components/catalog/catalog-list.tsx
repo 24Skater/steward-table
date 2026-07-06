@@ -182,6 +182,14 @@ function CatalogRow({ catalog, onUpdated, onDeleted }: CatalogRowProps) {
 export function CatalogList({ initialCatalogs, churchId }: CatalogListProps) {
   const [catalogs, setCatalogs] = useState(initialCatalogs);
   const [createOpen, setCreateOpen] = useState(false);
+  const [ministryFilter, setMinistryFilter] = useState("");
+
+  const ministryNames = [
+    ...new Set(catalogs.map((c) => c.ministry?.name).filter((n): n is string => !!n)),
+  ].sort();
+  const visibleCatalogs = ministryFilter
+    ? catalogs.filter((c) => c.ministry?.name === ministryFilter)
+    : catalogs;
 
   function handleCreated(catalog: Catalog) {
     setCatalogs((prev) => [catalog, ...prev]);
@@ -219,6 +227,27 @@ export function CatalogList({ initialCatalogs, churchId }: CatalogListProps) {
         </div>
       </div>
 
+      {ministryNames.length > 0 && (
+        <div className="flex items-center gap-2">
+          <label htmlFor="ministry-filter" className="text-sm text-slate-500">
+            Ministry
+          </label>
+          <select
+            id="ministry-filter"
+            className="h-9 rounded-md border border-slate-200 px-2 text-sm"
+            value={ministryFilter}
+            onChange={(e) => setMinistryFilter(e.target.value)}
+          >
+            <option value="">All ministries</option>
+            {ministryNames.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {catalogs.length === 0 ? (
         <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 py-16 text-center">
           <p className="text-slate-500 text-sm">No catalogs yet.</p>
@@ -255,7 +284,7 @@ export function CatalogList({ initialCatalogs, churchId }: CatalogListProps) {
               </tr>
             </thead>
             <tbody>
-              {catalogs.map((catalog) => (
+              {visibleCatalogs.map((catalog) => (
                 <CatalogRow
                   key={catalog.id}
                   catalog={catalog}
