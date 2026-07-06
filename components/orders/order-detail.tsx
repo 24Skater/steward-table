@@ -296,6 +296,7 @@ export function OrderDetail({ order, auditLogs, drivers }: OrderDetailProps) {
                             <ul className="mt-1 ml-3 flex flex-col gap-0.5">
                               {modifiers.map((mod, i) => (
                                 <li
+                                  // biome-ignore lint/suspicious/noArrayIndexKey: entries have no stable id; list identity is positional
                                   key={i}
                                   className="text-xs text-slate-500 flex items-baseline gap-1"
                                 >

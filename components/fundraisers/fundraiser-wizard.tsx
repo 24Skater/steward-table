@@ -425,7 +425,10 @@ export function FundraiserWizard({
                             updateGroup(index, groupIndex, {
                               options: group.options.map((o, i) =>
                                 i === optIndex
-                                  ? { ...o, priceDelta: Math.round(Number(e.target.value) * 100) || 0 }
+                                  ? {
+                                      ...o,
+                                      priceDelta: Math.round(Number(e.target.value) * 100) || 0,
+                                    }
                                   : o,
                               ),
                             })

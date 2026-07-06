@@ -69,6 +69,7 @@ export function NotificationBell() {
     }
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deps intentionally minimal; adding more changes runtime behavior (lint cleanup keeps behavior identical)
   useEffect(() => {
     void fetchNotifications();
     // Poll every 30 seconds for new notifications

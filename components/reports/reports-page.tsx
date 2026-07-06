@@ -336,6 +336,7 @@ export function ReportsPage({ initialData, churchId }: ReportsPageProps) {
         <div className="flex items-center gap-1 rounded-lg bg-white border border-slate-200 p-1">
           {(["today", "week", "month"] as ReportsRange[]).map((r) => (
             <button
+              type="button"
               key={r}
               onClick={() => handleRangeChange(r)}
               className={[

@@ -40,6 +40,7 @@ export default function CartPage() {
                 {item.modifiers.length > 0 && (
                   <ul className="mt-1 space-y-0.5">
                     {item.modifiers.map((m, i) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: entries have no stable id; list identity is positional
                       <li key={i} className="text-xs text-slate-500">
                         {m.optionName}
                         {m.priceDelta !== 0 && (
@@ -67,6 +68,7 @@ export default function CartPage() {
             <div className="mt-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
                   aria-label="Decrease quantity"
                   className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
@@ -77,6 +79,7 @@ export default function CartPage() {
                   {item.quantity}
                 </span>
                 <button
+                  type="button"
                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
                   aria-label="Increase quantity"
                   className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
@@ -85,6 +88,7 @@ export default function CartPage() {
                 </button>
               </div>
               <button
+                type="button"
                 onClick={() => removeItem(item.id)}
                 aria-label="Remove item"
                 className="text-slate-400 transition-colors hover:text-rose-500"

@@ -70,6 +70,7 @@ export function ModifierDialog({
   });
 
   // Sync state when dialog opens with different initial values (for cart editing)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deps intentionally minimal; adding more changes runtime behavior (lint cleanup keeps behavior identical)
   useEffect(() => {
     if (!open) return;
     setAttempted(false);

@@ -113,10 +113,11 @@ function SetPriceDialog({ count, onConfirm, onClose }: SetPriceDialogProps) {
             ))}
           </div>
           <div>
-            <label className="text-sm text-slate-600 mb-1 block">
+            <label htmlFor="bulk-price-value" className="text-sm text-slate-600 mb-1 block">
               {mode === "fixed" ? "New price (USD)" : "Adjustment (e.g. 10 for +10%, -5 for -5%)"}
             </label>
             <Input
+              id="bulk-price-value"
               type="number"
               step={mode === "fixed" ? "0.01" : "0.1"}
               value={value}
@@ -176,10 +177,11 @@ function SetTaxCategoryDialog({ count, onConfirm, onClose }: SetTaxCategoryDialo
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div>
-            <label className="text-sm text-slate-600 mb-1 block">
+            <label htmlFor="tax-category-value" className="text-sm text-slate-600 mb-1 block">
               Tax category (leave blank to clear)
             </label>
             <Input
+              id="tax-category-value"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder="e.g. FOOD, TAX_EXEMPT"

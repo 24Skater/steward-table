@@ -12,9 +12,7 @@ interface PageProps {
 /** Same source of truth as the storefront checkout (payment-config route). */
 function readDeliveryEnabled(brandTokens: unknown): boolean {
   const tokens =
-    brandTokens && typeof brandTokens === "object"
-      ? (brandTokens as Record<string, unknown>)
-      : {};
+    brandTokens && typeof brandTokens === "object" ? (brandTokens as Record<string, unknown>) : {};
   return typeof tokens.deliveryEnabled === "boolean" ? tokens.deliveryEnabled : false;
 }
 

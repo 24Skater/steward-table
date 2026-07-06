@@ -90,6 +90,7 @@ export function KitchenFilters({
   return (
     <div className="flex flex-wrap items-center gap-3 px-4 py-2 bg-slate-900 border-b border-slate-800">
       {/* Status tabs */}
+      {/* biome-ignore lint/a11y/useSemanticElements: swapping the element would break the existing layout; ARIA role conveys the semantics */}
       <div className="flex items-center gap-1" role="group" aria-label="Filter by status">
         <StatusTab
           value="ALL_ACTIVE"
@@ -120,6 +121,7 @@ export function KitchenFilters({
       {/* Fulfillment toggles */}
       <div
         className="flex items-center gap-1.5"
+        // biome-ignore lint/a11y/useSemanticElements: swapping the element would break the existing layout; ARIA role conveys the semantics
         role="group"
         aria-label="Filter by fulfillment type"
       >

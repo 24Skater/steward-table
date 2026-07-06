@@ -160,8 +160,11 @@ function EditCustomerForm({ customer, onCancel, onSaved }: EditCustomerFormProps
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-600">Name</label>
+          <label htmlFor="customer-name" className="text-xs font-medium text-slate-600">
+            Name
+          </label>
           <input
+            id="customer-name"
             type="text"
             value={form.name}
             onChange={(e) => handleChange("name", e.target.value)}
@@ -171,8 +174,11 @@ function EditCustomerForm({ customer, onCancel, onSaved }: EditCustomerFormProps
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-600">Email</label>
+          <label htmlFor="customer-email" className="text-xs font-medium text-slate-600">
+            Email
+          </label>
           <input
+            id="customer-email"
             type="email"
             value={form.email}
             onChange={(e) => handleChange("email", e.target.value)}
@@ -182,8 +188,11 @@ function EditCustomerForm({ customer, onCancel, onSaved }: EditCustomerFormProps
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-600">Phone</label>
+          <label htmlFor="customer-phone" className="text-xs font-medium text-slate-600">
+            Phone
+          </label>
           <input
+            id="customer-phone"
             type="tel"
             value={form.phone}
             onChange={(e) => handleChange("phone", e.target.value)}
@@ -193,8 +202,11 @@ function EditCustomerForm({ customer, onCancel, onSaved }: EditCustomerFormProps
         </div>
 
         <div className="flex flex-col gap-1 sm:col-span-2">
-          <label className="text-xs font-medium text-slate-600">Notes</label>
+          <label htmlFor="customer-notes" className="text-xs font-medium text-slate-600">
+            Notes
+          </label>
           <textarea
+            id="customer-notes"
             value={form.notes}
             onChange={(e) => handleChange("notes", e.target.value)}
             placeholder="Internal notes (not visible to customer)"

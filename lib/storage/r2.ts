@@ -24,11 +24,14 @@ export function getStorageClient(): S3Client | null {
 
   if (!_client) {
     const env = getEnv();
+    if (!env.endpoint || !env.accessKeyId || !env.secretAccessKey) {
+      throw new Error("R2 storage is not configured (missing R2_* environment variables)");
+    }
     _client = new S3Client({
-      endpoint: env.endpoint!,
+      endpoint: env.endpoint,
       credentials: {
-        accessKeyId: env.accessKeyId!,
-        secretAccessKey: env.secretAccessKey!,
+        accessKeyId: env.accessKeyId,
+        secretAccessKey: env.secretAccessKey,
       },
       region: "auto",
       forcePathStyle: true,

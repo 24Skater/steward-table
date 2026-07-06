@@ -316,6 +316,7 @@ export function StaffManager({
                           >
                             {owner && role === "OWNER" && (
                               <svg
+                                aria-hidden="true"
                                 className="h-3 w-3"
                                 fill="none"
                                 viewBox="0 0 24 24"
