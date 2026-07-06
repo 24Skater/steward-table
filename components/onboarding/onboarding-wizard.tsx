@@ -346,6 +346,7 @@ export function OnboardingWizard({ initialDisplayName = "" }: OnboardingWizardPr
         <div className="p-8 text-center">
           <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
             <svg
+              aria-hidden="true"
               className="w-6 h-6 text-green-600"
               fill="none"
               viewBox="0 0 24 24"

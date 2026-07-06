@@ -65,6 +65,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
     <>
       {/* Header cart button */}
       <button
+        type="button"
         onClick={() => setOpen(true)}
         className="relative inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
         aria-label="Open cart"
@@ -93,6 +94,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
       {count > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4">
           <button
+            type="button"
             onClick={() => setOpen(true)}
             className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 shadow-lg transition-opacity hover:opacity-90"
             style={{ backgroundColor: "var(--color-accent, #10b981)" }}
@@ -150,6 +152,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <p className="text-slate-500">{s.emptyCart}</p>
               <button
+                type="button"
                 onClick={() => setOpen(false)}
                 className="mt-4 text-sm underline-offset-2 hover:underline"
                 style={{ color: "var(--color-accent, #10b981)" }}
@@ -198,6 +201,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
                             {formatCents(item.totalPrice)}
                           </span>
                           <button
+                            type="button"
                             onClick={() => removeItem(item.id)}
                             aria-label="Remove item"
                             className="text-slate-300 transition-colors hover:text-rose-400"
@@ -209,6 +213,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
 
                       <div className="mt-2 flex items-center gap-2">
                         <button
+                          type="button"
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           aria-label="Decrease quantity"
                           className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
@@ -219,6 +224,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
                           {item.quantity}
                         </span>
                         <button
+                          type="button"
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           aria-label="Increase quantity"
                           className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50"
@@ -246,6 +252,7 @@ export function CartShell({ churchSlug }: CartShellProps) {
                   </Button>
                 </Link>
                 <button
+                  type="button"
                   onClick={() => setOpen(false)}
                   className="mt-3 w-full text-center text-sm text-slate-400 hover:text-slate-600"
                 >

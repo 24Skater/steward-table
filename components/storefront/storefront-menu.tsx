@@ -25,6 +25,7 @@ export function StorefrontMenu({
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
         aria-label="Open menu"
         className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100"
@@ -37,6 +38,7 @@ export function StorefrontMenu({
           <div className="flex items-center justify-between px-5 pb-3 pt-6">
             <SheetTitle className="text-base font-semibold text-slate-800">Menu</SheetTitle>
             <button
+              type="button"
               onClick={() => setOpen(false)}
               aria-label="Close menu"
               className="rounded-md p-1 text-slate-400 transition-colors hover:text-slate-600"

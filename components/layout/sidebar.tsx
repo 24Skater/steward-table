@@ -59,6 +59,7 @@ export function Sidebar({ churchName }: SidebarProps) {
       {/* Command palette trigger */}
       <div className="px-2 py-2 border-b border-slate-800">
         <button
+          type="button"
           onClick={() => {
             const evt = new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true });
             window.dispatchEvent(evt);

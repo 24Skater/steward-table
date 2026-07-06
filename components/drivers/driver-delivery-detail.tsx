@@ -126,6 +126,7 @@ export function DriverDeliveryDetail({
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Items</p>
           <ul className="space-y-3">
             {items.map((item, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: entries have no stable id; list identity is positional
               <li key={i}>
                 <p className="text-sm font-medium text-slate-800">
                   {item.quantity}× {item.itemName}

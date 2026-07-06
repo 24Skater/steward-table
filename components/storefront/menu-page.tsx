@@ -88,6 +88,7 @@ export function MenuPage({
       {categories.length > 0 && (
         <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
           <button
+            type="button"
             onClick={() => setSelectedCategory(null)}
             className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
               selectedCategory === null
@@ -104,6 +105,7 @@ export function MenuPage({
           </button>
           {categories.map((cat) => (
             <button
+              type="button"
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${

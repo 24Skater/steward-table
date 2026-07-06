@@ -91,33 +91,66 @@ export default async function CatalogPage({ params, searchParams }: CatalogPageP
   const churchDefault: "EN" | "ES" = (church.locale as string) === "ES" ? "ES" : "EN";
   const locale: "EN" | "ES" = langParam === "EN" || langParam === "ES" ? langParam : churchDefault;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items: MenuItemData[] = (catalog.items as any[]).map((ci: any) => ({
-    itemId: ci.item.id as string,
+  interface RawOption {
+    id: string;
+    name: string;
+    priceDelta: number;
+    isDefault: boolean;
+  }
+  interface RawItemModifierGroup {
+    overrideMin: number | null;
+    overrideMax: number | null;
+    overrideIsRequired: boolean | null;
+    group: {
+      id: string;
+      name: string;
+      translations: unknown;
+      defaultMinSelections: number;
+      defaultMaxSelections: number;
+      defaultIsRequired: boolean;
+      options: RawOption[];
+    };
+  }
+  interface RawCatalogItem {
+    priceOverride: number | null;
+    isAvailable: boolean | null;
+    maxQuantityPerOrder: number | null;
+    item: {
+      id: string;
+      name: string;
+      translations: unknown;
+      description: string | null;
+      defaultPrice: number;
+      station: string | null;
+      imageUrl: string | null;
+      modifierGroups: RawItemModifierGroup[];
+    };
+  }
+
+  const items: MenuItemData[] = (catalog.items as unknown as RawCatalogItem[]).map((ci) => ({
+    itemId: ci.item.id,
     catalogId: catalog.id as string,
-    name: translate(ci.item.name as string, ci.item.translations, locale),
+    name: translate(ci.item.name, ci.item.translations, locale),
     description:
       ci.item.description != null
-        ? translate(ci.item.description as string, ci.item.translations, locale, "description")
+        ? translate(ci.item.description, ci.item.translations, locale, "description")
         : null,
-    price: (ci.priceOverride ?? ci.item.defaultPrice) as number,
-    category: (ci.item.station as string | null) ?? null,
-    imageUrl: (ci.item.imageUrl as string | null) ?? null,
-    isAvailable: (ci.isAvailable as boolean) ?? true,
-    maxQuantityPerOrder: (ci.maxQuantityPerOrder as number | null) ?? null,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    modifierGroups: (ci.item.modifierGroups as any[]).map((img: any) => ({
-      id: img.group.id as string,
-      name: translate(img.group.name as string, img.group.translations, locale),
-      minSelections: (img.overrideMin ?? img.group.defaultMinSelections) as number,
-      maxSelections: (img.overrideMax ?? img.group.defaultMaxSelections) as number,
-      isRequired: (img.overrideIsRequired ?? img.group.defaultIsRequired) as boolean,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      options: (img.group.options as any[]).map((o: any) => ({
-        id: o.id as string,
-        name: o.name as string,
-        priceDelta: o.priceDelta as number,
-        isDefault: o.isDefault as boolean,
+    price: ci.priceOverride ?? ci.item.defaultPrice,
+    category: ci.item.station ?? null,
+    imageUrl: ci.item.imageUrl ?? null,
+    isAvailable: ci.isAvailable ?? true,
+    maxQuantityPerOrder: ci.maxQuantityPerOrder ?? null,
+    modifierGroups: ci.item.modifierGroups.map((img) => ({
+      id: img.group.id,
+      name: translate(img.group.name, img.group.translations, locale),
+      minSelections: img.overrideMin ?? img.group.defaultMinSelections,
+      maxSelections: img.overrideMax ?? img.group.defaultMaxSelections,
+      isRequired: img.overrideIsRequired ?? img.group.defaultIsRequired,
+      options: img.group.options.map((o) => ({
+        id: o.id,
+        name: o.name,
+        priceDelta: o.priceDelta,
+        isDefault: o.isDefault,
       })),
     })),
   }));

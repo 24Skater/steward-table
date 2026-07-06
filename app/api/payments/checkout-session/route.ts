@@ -19,8 +19,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const order = await (db.order.findUnique as any)({
+  const order = await (db.order.findUnique as PrismaBypass)({
     where: { id: body.orderId },
     include: {
       items: {
@@ -42,8 +41,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // Check whether the church has a Stripe key configured
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stripeKeyRow = await (db.apiKey.findFirst as any)({
+  const stripeKeyRow = await (db.apiKey.findFirst as PrismaBypass)({
     where: { churchId: order.churchId, provider: "stripe", isLive: true },
     select: { id: true },
     _bypassTenancyCheck: true,

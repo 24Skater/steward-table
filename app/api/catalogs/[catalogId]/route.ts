@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac/can";
+import type { Prisma } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
 
 async function getAuthSession() {
@@ -60,8 +61,7 @@ export async function PATCH(
       ...(body?.name !== undefined && { name: body.name }),
       ...(body?.description !== undefined && { description: body.description }),
       ...(body?.translations !== undefined && {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        translations: body.translations as any,
+        translations: body.translations as Prisma.InputJsonValue,
       }),
       ...(body?.opensAt !== undefined && {
         opensAt: body.opensAt ? new Date(body.opensAt) : null,

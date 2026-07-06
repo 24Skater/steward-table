@@ -50,9 +50,7 @@ function saveQueue(scope: string, queue: QueuedSubmit[]): void {
  * storage so entries enqueued while a submit was in flight are preserved.
  */
 function removeEntry(scope: string, clientRequestId: string): QueuedSubmit[] {
-  const queue = loadQueue(scope).filter(
-    (q) => q.clientRequestId !== clientRequestId,
-  );
+  const queue = loadQueue(scope).filter((q) => q.clientRequestId !== clientRequestId);
   saveQueue(scope, queue);
   return queue;
 }

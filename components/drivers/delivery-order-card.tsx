@@ -114,8 +114,14 @@ export function DeliveryOrderCard({ order, drivers, canAssign }: DeliveryOrderCa
       {/* Driver assignment */}
       {canAssign ? (
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-500">Assigned driver</label>
+          <label
+            htmlFor={`driver-select-${order.id}`}
+            className="text-xs font-medium text-slate-500"
+          >
+            Assigned driver
+          </label>
           <select
+            id={`driver-select-${order.id}`}
             value={selectedDriverId}
             disabled={inFlight}
             onChange={(e) => handleAssign(e.target.value)}

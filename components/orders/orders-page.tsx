@@ -175,6 +175,7 @@ function MobileOrderCard({ order }: { order: OrderRowData }) {
   }
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: swapping the element would break the existing layout; ARIA role conveys the semantics
     <div
       role="button"
       tabIndex={0}
@@ -204,6 +205,7 @@ function MobileOrderCard({ order }: { order: OrderRowData }) {
       </div>
       {nextStep && !inFlight && (
         <button
+          type="button"
           onClick={handleNextStep}
           className="mt-1 w-full rounded-md border border-slate-200 bg-white py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
         >
@@ -268,6 +270,7 @@ function BulkActionBar({
       </span>
       {bulkAction && (
         <button
+          type="button"
           onClick={onBulkAction}
           disabled={isBulkLoading}
           className="px-3 py-1.5 rounded-md bg-slate-800 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -276,6 +279,7 @@ function BulkActionBar({
         </button>
       )}
       <button
+        type="button"
         onClick={onClear}
         disabled={isBulkLoading}
         aria-label="Clear selection"
@@ -363,6 +367,7 @@ export function OrdersPage({ orders, churchId, range, drivers = [] }: OrdersPage
   }
 
   // Clear selection when tab or search changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deps intentionally minimal; adding more changes runtime behavior (lint cleanup keeps behavior identical)
   useEffect(() => {
     setSelectedIds(new Set());
   }, [activeTab, search]);
@@ -385,6 +390,7 @@ export function OrdersPage({ orders, churchId, range, drivers = [] }: OrdersPage
             const isFlashing = flashTab === tab;
             return (
               <button
+                type="button"
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={[

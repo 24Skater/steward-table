@@ -6,6 +6,14 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+
+interface OrderItemRow {
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  modifierSnapshot: unknown;
+}
 import { notFound } from "next/navigation";
 
 interface OrderStatusPageProps {
@@ -113,40 +121,29 @@ export default async function OrderStatusPage({ params }: OrderStatusPageProps) 
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">Items</h2>
         <ul className="divide-y divide-slate-100">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {(order.items as any[]).map(
-            (
-              item: {
-                itemName: string;
-                quantity: number;
-                unitPrice: number;
-                total: number;
-                modifierSnapshot: unknown;
-              },
-              i: number,
-            ) => {
-              const mods = Array.isArray(item.modifierSnapshot)
-                ? (item.modifierSnapshot as Array<{ optionName: string }>)
-                : [];
-              return (
-                <li key={i} className="flex items-start justify-between py-3">
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">
-                      {item.quantity}x {item.itemName}
+          {(order.items as OrderItemRow[]).map((item: OrderItemRow, i: number) => {
+            const mods = Array.isArray(item.modifierSnapshot)
+              ? (item.modifierSnapshot as Array<{ optionName: string }>)
+              : [];
+            return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: entries have no stable id; list identity is positional
+              <li key={i} className="flex items-start justify-between py-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    {item.quantity}x {item.itemName}
+                  </p>
+                  {mods.length > 0 && (
+                    <p className="text-xs text-slate-400">
+                      {mods.map((m) => m.optionName).join(", ")}
                     </p>
-                    {mods.length > 0 && (
-                      <p className="text-xs text-slate-400">
-                        {mods.map((m) => m.optionName).join(", ")}
-                      </p>
-                    )}
-                  </div>
-                  <span className="text-sm font-medium text-slate-700">
-                    {formatCents(item.total)}
-                  </span>
-                </li>
-              );
-            },
-          )}
+                  )}
+                </div>
+                <span className="text-sm font-medium text-slate-700">
+                  {formatCents(item.total)}
+                </span>
+              </li>
+            );
+          })}
         </ul>
 
         <div className="mt-3 border-t border-slate-100 pt-3">

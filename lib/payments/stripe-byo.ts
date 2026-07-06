@@ -16,8 +16,7 @@ import type {
 const STRIPE_API_VERSION = "2025-02-24.acacia" as const;
 
 async function getStripeClientForChurch(churchId: string): Promise<Stripe> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const apiKey = await (db.apiKey.findFirst as any)({
+  const apiKey = await (db.apiKey.findFirst as PrismaBypass)({
     where: { churchId, provider: "stripe", isLive: true },
     select: { encrypted: true },
     _bypassTenancyCheck: true,
@@ -122,8 +121,7 @@ export class StripeBYOAdapter implements PaymentAdapter {
     churchId: string,
   ): Promise<Stripe.Event> {
     // Fetch both the Stripe secret key and webhook secret in parallel
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const findFirst = db.apiKey.findFirst as any;
+    const findFirst = db.apiKey.findFirst as PrismaBypass;
     const [stripeKeyRow, webhookKeyRow] = await Promise.all([
       findFirst({
         where: { churchId, provider: "stripe", isLive: true },

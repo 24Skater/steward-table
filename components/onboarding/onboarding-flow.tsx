@@ -136,6 +136,7 @@ export function OnboardingFlow() {
             </p>
           </div>
           <button
+            type="button"
             onClick={() => setStep("details")}
             className="w-full bg-slate-900 text-white text-sm font-medium py-2.5 px-4 rounded-lg hover:bg-slate-800 transition-colors"
           >
@@ -148,6 +149,7 @@ export function OnboardingFlow() {
         <div className="p-8">
           <div className="mb-6">
             <button
+              type="button"
               onClick={() => setStep("welcome")}
               className="text-xs text-slate-400 hover:text-slate-600 mb-4 flex items-center gap-1 transition-colors"
             >
@@ -219,6 +221,7 @@ export function OnboardingFlow() {
             )}
 
             <button
+              type="button"
               onClick={handleSubmit}
               disabled={submitting}
               className="w-full bg-slate-900 text-white text-sm font-medium py-2.5 px-4 rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
@@ -233,6 +236,7 @@ export function OnboardingFlow() {
         <div className="p-8 text-center">
           <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
             <svg
+              aria-hidden="true"
               className="w-5 h-5 text-green-600"
               fill="none"
               viewBox="0 0 24 24"
@@ -247,6 +251,7 @@ export function OnboardingFlow() {
             {form.name} has been set up. You can now start managing orders.
           </p>
           <button
+            type="button"
             onClick={() => {
               window.location.href = "/orders";
             }}

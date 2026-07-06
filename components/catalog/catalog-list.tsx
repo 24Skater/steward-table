@@ -18,13 +18,13 @@ function formatRevenue(cents: number): string {
 }
 
 function formatWindow(catalog: Catalog): string {
-  if (!catalog.opensAt && !catalog.closesAt) return "No schedule";
   const fmt = (d: Date | string) =>
     new Date(d).toLocaleString([], { dateStyle: "short", timeStyle: "short" });
   if (catalog.opensAt && catalog.closesAt)
     return `${fmt(catalog.opensAt)} – ${fmt(catalog.closesAt)}`;
   if (catalog.opensAt) return `Opens ${fmt(catalog.opensAt)}`;
-  return `Closes ${fmt(catalog.closesAt!)}`;
+  if (catalog.closesAt) return `Closes ${fmt(catalog.closesAt)}`;
+  return "No schedule";
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -119,7 +119,7 @@ function CatalogRow({ catalog, onUpdated, onDeleted }: CatalogRowProps) {
         {/* Revenue */}
         <td className="py-3 px-3 text-sm text-slate-700 text-right tabular-nums whitespace-nowrap">
           {(catalog.revenue ?? 0) > 0 ? (
-            formatRevenue(catalog.revenue!)
+            formatRevenue(catalog.revenue ?? 0)
           ) : (
             <span className="text-slate-300">—</span>
           )}

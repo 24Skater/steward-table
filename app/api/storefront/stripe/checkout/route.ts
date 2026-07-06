@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getStripeForChurch } from "@/lib/stripe/client";
+import type { Prisma } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
@@ -225,8 +226,7 @@ export async function POST(req: NextRequest) {
             itemName: item.itemName,
             unitPrice,
             quantity: item.quantity,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            modifierSnapshot: item.modifiers as any,
+            modifierSnapshot: item.modifiers as unknown as Prisma.InputJsonValue,
             subtotal: itemSubtotal,
             tax: 0,
             total: itemSubtotal,

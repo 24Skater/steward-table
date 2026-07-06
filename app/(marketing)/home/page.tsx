@@ -12,10 +12,16 @@ export default function HomePage() {
             Steward Table
           </span>
           <nav className="flex items-center gap-6">
-            <a href="#" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
+            <a
+              href="https://github.com/24Skater/steward-table"
+              className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
+            >
               GitHub
             </a>
-            <a href="#" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
+            <a
+              href="https://github.com/24Skater/steward-table#readme"
+              className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
+            >
               Docs
             </a>
             <Link
@@ -53,7 +59,7 @@ export default function HomePage() {
                   Get started free
                 </Link>
                 <a
-                  href="#"
+                  href="https://github.com/24Skater/steward-table"
                   className="inline-flex items-center gap-2 border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 font-medium px-6 py-3 rounded-md transition-colors text-sm bg-white"
                 >
                   <Github className="w-4 h-4" />
@@ -239,7 +245,7 @@ export default function HomePage() {
                 Get started
               </Link>
               <a
-                href="#"
+                href="https://github.com/24Skater/steward-table#readme"
                 className="inline-flex items-center gap-2 border border-emerald-400 hover:border-white text-white font-medium px-6 py-3 rounded-md transition-colors text-sm"
               >
                 Read the docs
@@ -254,10 +260,16 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-400">Steward Table is open source. AGPL-3.0.</p>
           <nav className="flex items-center gap-6">
-            <a href="#" className="text-sm text-slate-400 hover:text-slate-700 transition-colors">
+            <a
+              href="https://github.com/24Skater/steward-table"
+              className="text-sm text-slate-400 hover:text-slate-700 transition-colors"
+            >
               GitHub
             </a>
-            <a href="#" className="text-sm text-slate-400 hover:text-slate-700 transition-colors">
+            <a
+              href="https://github.com/24Skater/steward-table#readme"
+              className="text-sm text-slate-400 hover:text-slate-700 transition-colors"
+            >
               Documentation
             </a>
             <Link

@@ -93,6 +93,7 @@ export function KitchenDisplay({ slug, kitchenName }: KitchenDisplayProps) {
   }
 
   // SSE connection with exponential backoff (1s, 2s, 4s, 8s, cap 30s)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deps intentionally minimal; adding more changes runtime behavior (lint cleanup keeps behavior identical)
   useEffect(() => {
     let es: EventSource | null = null;
     let reconnectTimeout: ReturnType<typeof setTimeout>;

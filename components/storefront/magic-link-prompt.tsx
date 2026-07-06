@@ -45,6 +45,7 @@ export function MagicLinkPrompt({ churchSlug, orderId, maskedPhone }: MagicLinkP
         <p className="mt-1 text-xs text-red-500">Something went wrong. Try again.</p>
       )}
       <button
+        type="button"
         onClick={handleRequest}
         disabled={state === "loading"}
         className="mt-3 w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"

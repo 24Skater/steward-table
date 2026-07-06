@@ -112,6 +112,7 @@ function StepItems({
   }, [churchId]);
 
   // Fetch items when catalog changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deps intentionally minimal; adding more changes runtime behavior (lint cleanup keeps behavior identical)
   useEffect(() => {
     if (!selectedCatalogId) {
       setCatalogItems([]);

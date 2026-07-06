@@ -22,6 +22,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           </p>
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
             <button
+              type="button"
               onClick={reset}
               className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
             >

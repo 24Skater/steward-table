@@ -18,6 +18,7 @@ export function LangSwitcher({ churchSlug }: { churchSlug: string }) {
   const [locale, setLocale] = useState<Locale>("EN");
   const [open, setOpen] = useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deps intentionally minimal; adding more changes runtime behavior (lint cleanup keeps behavior identical)
   useEffect(() => {
     // Resolution order: URL param → stored locale → browser Accept-Language → default (EN)
     const fromParam = searchParams.get("lang")?.toUpperCase();
@@ -52,6 +53,7 @@ export function LangSwitcher({ churchSlug }: { churchSlug: string }) {
   return (
     <div className="relative">
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label="Switch language"
         className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
@@ -62,10 +64,12 @@ export function LangSwitcher({ churchSlug }: { churchSlug: string }) {
 
       {open && (
         <>
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; keyboard users close via Escape */}
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
           <div className="absolute right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
             {LOCALES.map((l) => (
               <button
+                type="button"
                 key={l}
                 onClick={() => switchLocale(l)}
                 className={`block w-full px-4 py-2 text-left text-sm transition-colors hover:bg-slate-50 ${

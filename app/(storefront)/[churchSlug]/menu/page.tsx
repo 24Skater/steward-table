@@ -61,6 +61,7 @@ export default async function MenuListPage({ params }: MenuListPageProps) {
               Coming up
             </p>
             {upcomingCatalogs.map((c, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: entries have no stable id; list identity is positional
               <div key={i} className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                 <p className="font-medium text-slate-800">{c.name}</p>
                 {c.opensAt && (

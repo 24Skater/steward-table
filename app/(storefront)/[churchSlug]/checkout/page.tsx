@@ -244,6 +244,7 @@ export default function CheckoutPage() {
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <p className="text-xl font-semibold text-slate-700">Your cart is empty</p>
         <button
+          type="button"
           onClick={() => router.push(`/${churchSlug}/menu`)}
           className="mt-6 text-emerald-600 underline-offset-2 hover:underline"
         >

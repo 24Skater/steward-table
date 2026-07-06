@@ -60,8 +60,18 @@ function createPrismaClient() {
           const modelLower = model?.toLowerCase() ?? "";
 
           // ── Tenancy bypass ───────────────────────────────────────────
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const anyArgs = args as any;
+          // Prisma's per-operation args union is too wide to narrow here;
+          // this structural view covers exactly the keys the middleware touches.
+          const anyArgs = args as {
+            _bypassTenancyCheck?: boolean;
+            where?: {
+              withDeleted?: boolean;
+              deletedAt?: unknown;
+              churchId?: unknown;
+              church?: unknown;
+            };
+            data?: { churchId?: unknown; church?: unknown };
+          };
           let bypassTenancy = false;
 
           if (anyArgs?._bypassTenancyCheck === true) {
