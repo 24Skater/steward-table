@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Steward Table",
+  title: "Steward · Table",
   description: "Order management and fulfillment for churches and ministries",
   other: {
     // "only light" prevents Chrome's Auto Dark Mode flag from overriding colors,
@@ -19,6 +19,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-product="table"
       className="bg-white"
       style={{ backgroundColor: "white", colorScheme: "only light" }}
     >

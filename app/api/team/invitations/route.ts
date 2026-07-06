@@ -125,9 +125,9 @@ export async function POST(req: NextRequest) {
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL ?? "noreply@stewardtable.com",
         to: emailLower,
-        subject: "You have been invited to join Steward Table",
+        subject: "You have been invited to join Steward · Table",
         html: `
-          <p>You have been invited to join a church on Steward Table.</p>
+          <p>You have been invited to join a church on Steward · Table.</p>
           <p>Your role will be: <strong>${body.role}</strong></p>
           <p><a href="${inviteUrl}">Accept invitation</a></p>
           <p>This invitation expires in ${INVITATION_TTL_DAYS} days.</p>

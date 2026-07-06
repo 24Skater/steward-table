@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
 test.describe("Storefront", () => {
   test("marketing home page loads", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle(/Steward Table/);
+    await expect(page).toHaveTitle(/Steward · Table/);
     // Expects redirect to /home
     await page.waitForURL("**/home");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

@@ -9,7 +9,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
           <span className="text-base font-semibold tracking-tight text-slate-900">
-            Steward Table
+            Steward · Table
           </span>
           <nav className="flex items-center gap-6">
             <a
@@ -72,7 +72,7 @@ export default function HomePage() {
             <div className="rounded-xl overflow-hidden shadow-2xl ring-1 ring-slate-200">
               <Image
                 src="/screenshots/dashboard-orders.png"
-                alt="Steward Table orders dashboard showing real-time order management"
+                alt="Steward · Table orders dashboard showing real-time order management"
                 width={1440}
                 height={900}
                 className="w-full h-auto"
@@ -195,7 +195,7 @@ export default function HomePage() {
             <div>
               <h2 className="text-3xl font-bold text-slate-900 mb-4">Every role. Every need.</h2>
               <p className="text-slate-500 mb-8 leading-relaxed">
-                Steward Table ships with six roles out of the box. Each person on your team sees
+                Steward · Table ships with six roles out of the box. Each person on your team sees
                 exactly what they need — nothing more.
               </p>
               <ul className="space-y-3">
@@ -221,7 +221,7 @@ export default function HomePage() {
             <div className="rounded-xl overflow-hidden shadow-xl ring-1 ring-slate-800">
               <Image
                 src="/screenshots/kitchen-display.png"
-                alt="Steward Table kitchen display showing live order queue"
+                alt="Steward · Table kitchen display showing live order queue"
                 width={1440}
                 height={900}
                 className="w-full h-auto"
@@ -258,7 +258,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-slate-100 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-slate-400">Steward Table is open source. AGPL-3.0.</p>
+          <p className="text-sm text-slate-400">Steward · Table is open source. AGPL-3.0.</p>
           <nav className="flex items-center gap-6">
             <a
               href="https://github.com/24Skater/steward-table"

@@ -46,7 +46,7 @@ export const STOREFRONT_STRINGS = {
     noItemsMatchQuery: "No items match",
     // Misc
     contactUs: "Contact us",
-    poweredBy: "Powered by Steward Table",
+    poweredBy: "Powered by Steward · Table",
   },
   ES: {
     // Cart actions
@@ -95,7 +95,7 @@ export const STOREFRONT_STRINGS = {
     noItemsMatchQuery: "No hay artículos que coincidan con",
     // Misc
     contactUs: "Contáctanos",
-    poweredBy: "Desarrollado por Steward Table",
+    poweredBy: "Desarrollado por Steward · Table",
   },
 } as const;
 

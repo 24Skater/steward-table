@@ -42,7 +42,7 @@ export function AcceptInviteCard({
       <div className="space-y-1">
         <h1 className="text-xl font-semibold text-slate-900">You've been invited</h1>
         <p className="text-slate-600 text-sm">
-          Join <span className="font-medium text-slate-900">{churchName}</span> on Steward Table
+          Join <span className="font-medium text-slate-900">{churchName}</span> on Steward · Table
         </p>
       </div>
 
