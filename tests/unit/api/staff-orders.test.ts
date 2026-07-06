@@ -109,7 +109,7 @@ describe("POST /api/fundraisers/[catalogId]/orders", () => {
   it("returns 400 when an item's catalogId does not match the URL catalog", async () => {
     const body = {
       ...validBody,
-      items: [{ ...validBody.items[0]!, catalogId: "other-catalog" }],
+      items: validBody.items.map((item) => ({ ...item, catalogId: "other-catalog" })),
     };
 
     const res = await POST(makeRequest(body), routeParams());
@@ -129,7 +129,7 @@ describe("POST /api/fundraisers/[catalogId]/orders", () => {
       deduplicated: false,
     });
 
-    const serviceArg = mocks.createStorefrontOrder.mock.calls[0]![0];
+    const serviceArg = mocks.createStorefrontOrder.mock.calls[0]?.[0];
     expect(serviceArg.channel).toBe("VOLUNTEER");
     expect(serviceArg.takenById).toBe("user-1");
     expect(serviceArg.takenByName).toBeUndefined();

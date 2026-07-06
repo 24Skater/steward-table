@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { isDeliveryEligible } from "@/lib/fundraisers/delivery-eligibility";
 import { effectQueue } from "@/lib/orders/effect-queue";
 import { transition } from "@/lib/orders/transitions";
-import type { Channel, PaymentMethod } from "@prisma/client";
+import type { Channel, PaymentMethod, Prisma } from "@prisma/client";
 
 export interface CartModifierPayload {
   groupName: string;
@@ -153,8 +153,7 @@ export async function createStorefrontOrder(params: CreateOrderParams): Promise<
               itemName: item.itemName,
               unitPrice,
               quantity: item.quantity,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              modifierSnapshot: item.modifiers as any,
+              modifierSnapshot: item.modifiers as unknown as Prisma.InputJsonValue,
               subtotal: itemSubtotal,
               tax: 0,
               total: itemSubtotal,

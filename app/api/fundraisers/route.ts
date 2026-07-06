@@ -38,12 +38,11 @@ const createFundraiserSchema = z.object({
 });
 
 function buildSlug(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") + `-${Date.now()}`
-  );
+  const base = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `${base}-${Date.now()}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -129,9 +128,7 @@ export async function POST(req: NextRequest) {
       select: { id: true },
     });
 
-    for (let index = 0; index < items.length; index++) {
-      const itemData = items[index]!;
-
+    for (const [index, itemData] of items.entries()) {
       const newItem = await tx.item.create({
         data: {
           churchId,
@@ -151,9 +148,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      for (let groupIndex = 0; groupIndex < itemData.modifierGroups.length; groupIndex++) {
-        const group = itemData.modifierGroups[groupIndex]!;
-
+      for (const [groupIndex, group] of itemData.modifierGroups.entries()) {
         const newGroup = await tx.modifierGroup.create({
           data: {
             churchId,

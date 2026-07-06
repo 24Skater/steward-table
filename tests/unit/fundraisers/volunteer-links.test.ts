@@ -44,7 +44,7 @@ describe("volunteer links", () => {
       });
 
       expect(result.token).toMatch(/^[a-f0-9]{64}$/);
-      const createArg = mocks.volunteerLink.create.mock.calls[0]![0];
+      const createArg = mocks.volunteerLink.create.mock.calls[0]?.[0];
       expect(createArg.data.tokenHash).toBe(hashToken(result.token));
       expect(createArg.data.tokenHash).not.toBe(result.token);
       expect(createArg.data.expiresAt).toEqual(new Date("2026-08-01T00:00:00Z"));
@@ -72,7 +72,7 @@ describe("volunteer links", () => {
       mocks.volunteerLink.findUnique.mockResolvedValue(validRow);
       const result = await validateVolunteerToken("a".repeat(64));
       expect(result).toEqual({ catalogId: "cat-1", churchId: "church-1", linkId: "link-1" });
-      expect(mocks.volunteerLink.findUnique.mock.calls[0]![0].where.tokenHash).toBe(
+      expect(mocks.volunteerLink.findUnique.mock.calls[0]?.[0].where.tokenHash).toBe(
         hashToken("a".repeat(64)),
       );
     });
@@ -131,12 +131,12 @@ describe("volunteer links", () => {
 
       await revokeVolunteerLink("link-1", "church-1", "cat-1");
 
-      expect(mocks.volunteerLink.findFirst.mock.calls[0]![0].where).toEqual({
+      expect(mocks.volunteerLink.findFirst.mock.calls[0]?.[0].where).toEqual({
         id: "link-1",
         churchId: "church-1",
         catalogId: "cat-1",
       });
-      const updateArg = mocks.volunteerLink.update.mock.calls[0]![0];
+      const updateArg = mocks.volunteerLink.update.mock.calls[0]?.[0];
       expect(updateArg.where).toEqual({ id: "link-1" });
       expect(updateArg.data.revokedAt).toBeInstanceOf(Date);
     });
@@ -144,9 +144,7 @@ describe("volunteer links", () => {
     it("does not update when the link is not in this church", async () => {
       mocks.volunteerLink.findFirst.mockResolvedValue(null);
 
-      await expect(
-        revokeVolunteerLink("link-1", "other-church", "cat-1"),
-      ).resolves.toBeUndefined();
+      await expect(revokeVolunteerLink("link-1", "other-church", "cat-1")).resolves.toBeUndefined();
       expect(mocks.volunteerLink.update).not.toHaveBeenCalled();
     });
 
