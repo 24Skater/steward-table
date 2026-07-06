@@ -3,6 +3,7 @@ import { ReportsPage } from "@/components/reports";
 import type { ReportsData } from "@/components/reports";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getChannelBreakdown, getMinistryRollup } from "@/lib/fundraisers/reporting";
 import { getKitchenRevenue } from "@/lib/kitchens/reporting";
 import type { OrderStatus } from "@prisma/client";
 import { redirect } from "next/navigation";
@@ -74,7 +75,11 @@ export default async function ReportsPageRoute() {
 
   const revenue = revenueResult._sum.total ?? 0;
 
-  const byKitchen = await getKitchenRevenue(db, churchId, startOfToday, COMPLETED_STATUSES);
+  const [byKitchen, channelBreakdown, ministries] = await Promise.all([
+    getKitchenRevenue(db, churchId, startOfToday, COMPLETED_STATUSES),
+    getChannelBreakdown(db, churchId, startOfToday),
+    getMinistryRollup(db, churchId, startOfToday),
+  ]);
 
   const initialData: ReportsData = {
     totalOrders,
@@ -90,6 +95,8 @@ export default async function ReportsPageRoute() {
       count: row._sum.quantity ?? 0,
     })),
     byKitchen,
+    channelBreakdown,
+    ministries,
   };
 
   return (
