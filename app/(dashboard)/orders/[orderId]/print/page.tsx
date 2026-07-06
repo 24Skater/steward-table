@@ -406,7 +406,7 @@ export default async function PrintReceiptPage({
                 {churchSettings.receiptCustomFooter}
               </p>
             )}
-            <p style={{ marginTop: "0.5rem" }}>Powered by Steward Table</p>
+            <p style={{ marginTop: "0.5rem" }}>Powered by Steward · Table</p>
           </div>
         </div>
       </div>

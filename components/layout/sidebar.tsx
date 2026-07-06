@@ -52,7 +52,7 @@ export function Sidebar({ churchName }: SidebarProps) {
       {/* Header */}
       <div className="px-4 py-4 border-b border-slate-800">
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wider truncate">
-          {churchName ?? "Steward Table"}
+          {churchName ?? "Steward · Table"}
         </p>
       </div>
 

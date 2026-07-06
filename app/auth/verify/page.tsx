@@ -7,7 +7,7 @@ export default function VerifyRequestPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Steward Table</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Steward · Table</h1>
         </div>
         <Card className="border-slate-200 shadow-sm">
           <CardHeader>

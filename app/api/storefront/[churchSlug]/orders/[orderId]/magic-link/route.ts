@@ -46,7 +46,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
   const callbackUrl = `/${churchSlug}/order/${orderId}`;
   const magicUrl = `${baseUrl}/${churchSlug}/auth/verify?token=${token}&phone=${encodeURIComponent(phone)}&orderId=${orderId}&next=${encodeURIComponent(callbackUrl)}`;
 
-  await sendSms(phone, `Your Steward Table order tracking link:\n${magicUrl}`, church.id);
+  await sendSms(phone, `Your Steward · Table order tracking link:\n${magicUrl}`, church.id);
 
   return NextResponse.json({ sent: true });
 }
