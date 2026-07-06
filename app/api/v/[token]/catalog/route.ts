@@ -19,7 +19,14 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
       id: true,
       name: true,
       minItemsForDelivery: true,
-      church: { select: { name: true, currency: true, accentColor: true } },
+      church: {
+        select: {
+          name: true,
+          currency: true,
+          accentColor: true,
+          settings: { select: { brandTokens: true } },
+        },
+      },
       items: {
         orderBy: { sortOrder: "asc" },
         where: { isAvailable: true },
@@ -60,5 +67,25 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   if (!catalog) {
     return NextResponse.json({ error: "Invalid or expired link" }, { status: 404 });
   }
-  return NextResponse.json(catalog);
+
+  // Mirror the storefront checkout's delivery toggle (brandTokens.deliveryEnabled)
+  // without leaking the full settings blob to the public endpoint.
+  const { church, ...rest } = catalog as {
+    church: {
+      name: string;
+      currency: string;
+      accentColor: string | null;
+      settings: { brandTokens: unknown } | null;
+    };
+  } & Record<string, unknown>;
+  const tokens =
+    church.settings?.brandTokens && typeof church.settings.brandTokens === "object"
+      ? (church.settings.brandTokens as Record<string, unknown>)
+      : {};
+
+  return NextResponse.json({
+    ...rest,
+    church: { name: church.name, currency: church.currency, accentColor: church.accentColor },
+    deliveryEnabled: typeof tokens.deliveryEnabled === "boolean" ? tokens.deliveryEnabled : false,
+  });
 }
