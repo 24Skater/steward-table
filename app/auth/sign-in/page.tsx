@@ -29,7 +29,7 @@ export default async function SignInPage({
       <div className="w-full max-w-sm space-y-6">
         {/* Wordmark */}
         <div className="text-center space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Steward Table</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Steward · Table</h1>
           <p className="text-sm text-slate-500">Order management for churches and ministries</p>
         </div>
 

@@ -25,7 +25,7 @@ export const authConfig: NextAuthConfig = {
     }),
     Resend({
       apiKey: process.env.RESEND_API_KEY,
-      from: "Steward Table <noreply@table.steward.app>",
+      from: "Steward · Table <noreply@table.steward.app>",
     }),
     Credentials({
       name: "credentials",

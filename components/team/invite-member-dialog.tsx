@@ -80,7 +80,7 @@ export function InviteMemberDialog({ open, onOpenChange, onSuccess }: InviteMemb
         <DialogHeader>
           <DialogTitle>Invite team member</DialogTitle>
           <DialogDescription>
-            Send an invitation to join your church on Steward Table.
+            Send an invitation to join your church on Steward · Table.
           </DialogDescription>
         </DialogHeader>
 

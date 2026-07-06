@@ -30,7 +30,7 @@ export default async function DriverLayout({
     <div className="flex flex-col min-h-screen bg-slate-50">
       <header className="sticky top-0 z-10 flex items-center justify-between bg-white border-b border-slate-200 px-4 py-3 shadow-sm">
         <span className="font-semibold text-slate-800 text-sm truncate">
-          {church?.name ?? "Steward Table"}
+          {church?.name ?? "Steward · Table"}
         </span>
         <a
           href="/api/auth/signout"

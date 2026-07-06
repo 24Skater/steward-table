@@ -130,7 +130,7 @@ export function OnboardingFlow() {
             <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center mb-4">
               <span className="text-white text-sm font-semibold">ST</span>
             </div>
-            <h1 className="text-xl font-semibold text-slate-900 mb-2">Welcome to Steward Table</h1>
+            <h1 className="text-xl font-semibold text-slate-900 mb-2">Welcome to Steward · Table</h1>
             <p className="text-sm text-slate-500">
               Let&apos;s set up your church so your team can start managing orders.
             </p>
