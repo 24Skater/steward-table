@@ -21,7 +21,7 @@ export default function NotFound() {
               Back to orders
             </Link>
             <Link
-              href="/home"
+              href="/"
               className="rounded-lg border border-slate-200 px-4 py-2 text-center text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
             >
               Home

@@ -1,4 +1,4 @@
-version: "3.9"
+name: steward-table
 
 services:
   postgres:
@@ -45,14 +45,14 @@ services:
       - ../.env.local
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/steward_table
-      NEXTAUTH_URL: http://localhost:3000
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXTAUTH_URL: http://localhost:3001
+      NEXT_PUBLIC_APP_URL: http://localhost:3001
       R2_ENDPOINT: http://minio:9000
       R2_ACCESS_KEY_ID: minioadmin
       R2_SECRET_ACCESS_KEY: minioadmin
       R2_BUCKET_NAME: steward-table
     ports:
-      - "3000:3000"
+      - "3001:3000"
     depends_on:
       postgres:
         condition: service_healthy

@@ -4,12 +4,10 @@ import { expect, test } from "@playwright/test";
 // a running database by testing the page structure/routing
 
 test.describe("Storefront", () => {
-  test("marketing home page loads", async ({ page }) => {
+  test("root redirects to sign-in", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle(/Steward · Table/);
-    // Expects redirect to /home
-    await page.waitForURL("**/home");
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await page.waitForURL("**/auth/sign-in");
+    await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   });
 
   test("sign-in page has required fields", async ({ page }) => {
