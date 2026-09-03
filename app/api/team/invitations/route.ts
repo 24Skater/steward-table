@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
+import { appBaseUrl, defaultSenderAddress } from "@/lib/platform-domain";
 import { can } from "@/lib/rbac/can";
 import type { Role } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
@@ -119,11 +120,11 @@ export async function POST(req: NextRequest) {
     if (resendKey) {
       const { Resend } = await import("resend");
       const resend = new Resend(resendKey);
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.stewardtable.com";
+      const appUrl = appBaseUrl();
       const inviteUrl = `${appUrl}/auth/accept-invite?token=${token}`;
 
       await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL ?? "noreply@stewardtable.com",
+        from: process.env.RESEND_FROM_EMAIL ?? defaultSenderAddress("noreply"),
         to: emailLower,
         subject: "You have been invited to join Steward · Table",
         html: `
