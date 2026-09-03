@@ -2,6 +2,7 @@ import { TopBar } from "@/components/layout/top-bar";
 import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
+import { appBaseUrl } from "@/lib/platform-domain";
 import { can } from "@/lib/rbac/can";
 import type { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
@@ -58,7 +59,7 @@ export default async function WebhooksPage() {
     ...({ _bypassTenancyCheck: true } as object),
   })) as WebhookEventRow[];
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.steward.app";
+  const appUrl = appBaseUrl();
   const webhookEndpoint = `${appUrl}/api/payments/stripe/webhook`;
 
   return (

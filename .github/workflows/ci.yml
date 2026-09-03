@@ -62,6 +62,16 @@ jobs:
       - name: Biome check
         run: pnpm biome check .
 
+  boundaries:
+    name: Platform Boundaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check platform boundaries
+        run: sh scripts/ci/check-platform-boundaries.sh
+
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
