@@ -1,24 +1,14 @@
 import { auth } from "@/lib/auth";
+import { extractTenantSlug } from "@/lib/platform-domain";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-// Production domain: {slug}.table.steward.app
-// Development: localhost:3000/{slug} or subdomain via /etc/hosts
-const _APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
+// Tenant host: {slug}.{appHost}, derived from PLATFORM_ROOT_DOMAIN.
+// Production: grace.table.<root>. Local dev: grace.localhost:3000 via
+// /etc/hosts, or localhost:3000/grace with the slug in the path.
 function extractChurchSlug(req: NextRequest): string | null {
-  const host = req.headers.get("host") ?? "";
-
-  // Subdomain pattern: {slug}.table.steward.app
-  const subdomainMatch = host.match(/^([a-z0-9-]+)\.table\.steward\.app$/i);
-  if (subdomainMatch?.[1]) {
-    return subdomainMatch[1];
-  }
-
-  // Development fallback: first path segment if it looks like a slug
-  // This is only for local dev — production always uses subdomains
-  return null;
+  return extractTenantSlug(req.headers.get("host"));
 }
 
 export async function middleware(req: NextRequest) {
