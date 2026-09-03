@@ -16,9 +16,7 @@
  */
 
 import { timingSafeEqual } from "node:crypto";
-
-/** Only the variables actually read - not the whole ProcessEnv shape. */
-type EnvBag = Record<string, string | undefined>;
+import type { EnvBag } from "./env";
 
 const EXPECTED_PREFIX = "stw_svc_table_";
 

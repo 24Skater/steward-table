@@ -62,6 +62,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.2.9
         version: 1.2.9(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@steward-apps/platform-client':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@steward-apps/tokens':
         specifier: 1.0.0
         version: 1.0.0
@@ -1601,6 +1604,10 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
+  '@steward-apps/platform-client@0.1.0':
+    resolution: {integrity: sha512-B41O5pG+Bq2rSqUmyXtPOok23ZeEQ5HZgp1WZervEphuKXmDehNS0huORsdhbv5fsYEbpobJDm3TaZEqxtfbMQ==}
+    engines: {node: '>=20.0.0'}
+
   '@steward-apps/tokens@1.0.0':
     resolution: {integrity: sha512-7i38DEN7M3zOcQ0hoBKdSCHLawF4GycWs4V82Rz0gObOJx7e63uawrhNOMqhGIpu4OOo06NMvLg/TmBnxCISKQ==}
 
@@ -2175,6 +2182,9 @@ packages:
   jiti@2.7.0:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
+
+  jose@5.10.0:
+    resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
   jose@6.2.3:
     resolution: {integrity: sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw==}
@@ -4116,6 +4126,10 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
+  '@steward-apps/platform-client@0.1.0':
+    dependencies:
+      jose: 5.10.0
+
   '@steward-apps/tokens@1.0.0': {}
 
   '@swc/helpers@0.5.15':
@@ -4740,6 +4754,8 @@ snapshots:
       '@pkgjs/parseargs': 0.11.0
 
   jiti@2.7.0: {}
+
+  jose@5.10.0: {}
 
   jose@6.2.3: {}
 
