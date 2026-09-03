@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/notifications/email";
+import { defaultSenderAddress } from "@/lib/platform-domain";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import type { NextAuthConfig } from "next-auth";
@@ -25,7 +26,7 @@ export const authConfig: NextAuthConfig = {
     }),
     Resend({
       apiKey: process.env.RESEND_API_KEY,
-      from: "Steward · Table <noreply@table.steward.app>",
+      from: `Steward · Table <${defaultSenderAddress("noreply")}>`,
     }),
     Credentials({
       name: "credentials",

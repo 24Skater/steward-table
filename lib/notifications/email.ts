@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { appBaseUrl, defaultSenderAddress } from "@/lib/platform-domain";
 import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -134,7 +135,7 @@ export async function sendOrderNotification(orderId: string, status: string): Pr
     replyToEmail: order.church.settings?.replyToEmail ?? null,
   };
 
-  const fromAddress = process.env.RESEND_FROM_EMAIL ?? "orders@table.steward.app";
+  const fromAddress = process.env.RESEND_FROM_EMAIL ?? defaultSenderAddress("orders");
   const subject = `${message.subject} — ${payload.churchName}`;
 
   const sendOptions: Parameters<typeof resend.emails.send>[0] = {
@@ -197,7 +198,7 @@ function buildItemsTable(items: OrderItemDetail[]): string {
 }
 
 function buildOrderCta(payload: OrderNotificationPayload): string {
-  const baseUrl = process.env.NEXTAUTH_URL ?? "https://table.steward.app";
+  const baseUrl = process.env.NEXTAUTH_URL ?? appBaseUrl();
   const orderUrl = `${baseUrl}/${payload.churchSlug}/order/${payload.orderId}`;
   return `
     <div style="text-align: center; margin-top: 20px;">
@@ -318,7 +319,7 @@ export async function sendStaffNewOrderEmail(orderId: string): Promise<void> {
 
   const itemList = order.items.map((i) => `${i.quantity}× ${i.itemName}`).join(", ");
   const subject = `New order #${order.number} — ${order.church.name}`;
-  const fromAddress = process.env.RESEND_FROM_EMAIL ?? "orders@table.steward.app";
+  const fromAddress = process.env.RESEND_FROM_EMAIL ?? defaultSenderAddress("orders");
 
   const html = `
 <!DOCTYPE html>
@@ -374,7 +375,7 @@ export async function sendWelcomeEmail(userId: string): Promise<void> {
   if (!user?.email) return;
 
   const displayName = user.name ?? user.email;
-  const fromAddress = process.env.RESEND_FROM_EMAIL ?? "noreply@table.steward.app";
+  const fromAddress = process.env.RESEND_FROM_EMAIL ?? defaultSenderAddress("noreply");
 
   try {
     await resend.emails.send({

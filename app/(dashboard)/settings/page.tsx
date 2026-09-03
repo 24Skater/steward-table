@@ -4,6 +4,7 @@ import { StorefrontShareCard } from "@/components/settings/storefront-share-card
 import { auth } from "@/lib/auth";
 import type { SessionMembership } from "@/lib/auth/types";
 import { db } from "@/lib/db";
+import { appBaseUrl, storefrontUrl } from "@/lib/platform-domain";
 import { can } from "@/lib/rbac/can";
 import type { Route } from "next";
 import Link from "next/link";
@@ -87,13 +88,9 @@ export default async function SettingsRoute() {
 
   if (!church) redirect("/auth/sign-in");
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? `https://${church.slug}.stewardtable.com`;
+  const appUrl = appBaseUrl();
   const webhookUrl = `${appUrl}/api/webhooks/stripe`;
-
-  const isLocalDev = appUrl.includes("localhost");
-  const storefrontUrl = isLocalDev
-    ? `${appUrl}/${church.slug}`
-    : `https://${church.slug}.table.steward.app`;
+  const storefront = storefrontUrl(church.slug);
 
   const fulfillment = parseFulfillmentPrefs(church.settings?.brandTokens);
 
@@ -122,7 +119,7 @@ export default async function SettingsRoute() {
               Share this link so customers can browse and place orders.
             </p>
           </div>
-          <StorefrontShareCard url={storefrontUrl} />
+          <StorefrontShareCard url={storefront} />
         </div>
 
         <div className="mt-6 pt-6 border-t border-slate-200 flex flex-col gap-2">

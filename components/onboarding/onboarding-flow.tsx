@@ -1,5 +1,6 @@
 "use client";
 
+import { tenantHost } from "@/lib/platform-domain";
 import { useId, useState } from "react";
 
 type Step = "welcome" | "details" | "done";
@@ -190,7 +191,7 @@ export function OnboardingFlow() {
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
               />
               {form.slug && !errors.slug && (
-                <p className="mt-1.5 text-xs text-slate-400">{form.slug}.table.steward.app</p>
+                <p className="mt-1.5 text-xs text-slate-400">{tenantHost(form.slug)}</p>
               )}
               {errors.slug && <p className="mt-1.5 text-xs text-red-600">{errors.slug}</p>}
             </div>

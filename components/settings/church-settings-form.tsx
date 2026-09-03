@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { tenantHost } from "@/lib/platform-domain";
 import { Check } from "lucide-react";
 import { useState } from "react";
 
@@ -173,7 +174,7 @@ export function ChurchSettingsForm({ church, settings }: ChurchSettingsFormProps
           </p>
         )}
         <p className="text-xs text-slate-500">
-          Your storefront URL: <span className="font-mono">{slug || "…"}.table.steward.app</span>
+          Your storefront URL: <span className="font-mono">{slug ? tenantHost(slug) : "…"}</span>
         </p>
       </div>
 
