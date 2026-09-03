@@ -24,7 +24,19 @@ The `as unknown as PrismaClient` cast is **required** — Prisma `$extends` eras
 
 ### Multi-Tenancy
 
-Tenancy is enforced via a Prisma query extension in `lib/db.ts` that automatically injects `churchId` on every query. To bypass for cross-tenant or ID-only lookups (e.g., looking up a church by its own ID during auth):
+Tenancy is enforced via a Prisma query extension in `lib/db.ts`. It does **not** inject `churchId` — it *throws* when a query on a tenanted model is missing one. That distinction matters: an injecting guard silently changes what your query means, while a throwing guard makes you say what you meant.
+
+Models are classified into three sets, and `tests/unit/tenancy/model-classification.test.ts` checks those sets against Prisma's DMMF so they cannot drift from the schema:
+
+| Set | Meaning |
+|---|---|
+| `TENANTED_MODELS` | Has a required `churchId`. Reads must be scoped; creates must supply one. |
+| `PARENT_SCOPED_MODELS` | No `churchId` of its own; reachable only through a tenanted parent. The guard cannot check these. |
+| `GLOBAL_MODELS` | Genuinely not tenant data — the tenant root, identity tables, platform registries. |
+
+Adding a model without classifying it fails CI. So does giving a parent-scoped model a `churchId` without promoting it.
+
+To bypass for cross-tenant or ID-only lookups (e.g., looking up a church by its own ID during auth):
 
 ```ts
 db.church.findUnique({
