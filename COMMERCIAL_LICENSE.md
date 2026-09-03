@@ -22,4 +22,4 @@ Contact: legal@steward.app
 The AGPL-3.0 license remains in effect for all open-source use.
 This commercial license is an additional option for organizations that need it.
 
-Copyright (c) 2025 Emerson Ramos
+Copyright (c) 2026 Steward
