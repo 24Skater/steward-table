@@ -115,4 +115,4 @@ Steward Table is dual-licensed:
 - **AGPL-3.0** for open-source use (see [LICENSE](LICENSE))
 - **Commercial license** for organizations that cannot comply with AGPL-3.0 (see [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md))
 
-Copyright (c) 2025 Emerson Ramos. IP assignment to the Steward entity pending LLC formation.
+Copyright (c) 2026 Steward. Entity formation pending.
