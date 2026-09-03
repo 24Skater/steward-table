@@ -59,12 +59,34 @@ the subscription itself.
 - This app never imports the console's Stripe client. It knows about
   entitlements; it does not know about invoices.
 
+## Provisioning
+
+`POST /api/internal/provision` is how an organization comes to exist in this
+app. The console calls it with this app's service token
+(`PLATFORM_SERVICE_TOKEN`) when someone signs up for Table.
+
+Two properties the console depends on:
+
+- **`Church.id` is the console's `orgId`.** Not a mapping table, not a foreign
+  key — the same value. One organization has one id across all four Steward
+  apps, forever, and the console mints it.
+- **Idempotent by `orgId`.** The console retries with backoff, so a repeat call
+  for an existing org succeeds and changes nothing. In particular it does not
+  rename a church the owner may have renamed since.
+
+A slug already held by a *different* church returns **409**, not 500. The
+console's classifier fails fast on any 4xx other than 429, so a collision
+reaches the operator instead of being retried five times into the same wall.
+
+There is no DNS or certificate work in provisioning. The wildcard record and
+wildcard certificate already resolve `{slug}-stewardtable.app.<root>`.
+
 ## Roadmap position
 
-- **Phase 0 (done here):** domain configuration, the boundary guard in CI.
-- **Phase 1 (next):** `Church.id = orgId` at provisioning, `POST
-  /internal/provision`, `requireEntitlement("table")` in `middleware.ts`, and
-  the DMMF test that fails CI when a Prisma model is classified as neither
-  tenanted nor global.
+- **Phase 0 (done):** domain configuration, the boundary guard in CI.
+- **Phase 1 (in progress):** the DMMF classification test and the tenancy fixes
+  it surfaced; `POST /api/internal/provision` creating `Church` with
+  `id = orgId`. Still to come: `requireEntitlement("table")` in `middleware.ts`,
+  which waits on `@steward-apps/platform-client` being published.
 
 See the decision record for the full sequence.
