@@ -114,6 +114,10 @@ jobs:
       NEXTAUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      # Auth.js v5 refuses an untrusted Host and answers every /api/auth call
+      # with UntrustedHost, which surfaces as a page that never signs in. There
+      # is no proxy in front of the runner, so localhost is the real host here.
+      AUTH_TRUST_HOST: "true"
 
     services:
       postgres:
