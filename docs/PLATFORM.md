@@ -81,6 +81,23 @@ reaches the operator instead of being retried five times into the same wall.
 There is no DNS or certificate work in provisioning. The wildcard record and
 wildcard certificate already resolve `{slug}-stewardtable.app.<root>`.
 
+## The tenancy bypass audit
+
+`_bypassTenancyCheck: true` is the escape hatch from the guard in `lib/db.ts`.
+There are 187 of them, and an escape hatch nobody reviews stops being an escape
+hatch and becomes the default.
+
+`scripts/ci/check-tenancy-bypasses.mjs` runs in CI and fails the build on a
+bypass that is on a **tenanted** model, has **no `churchId`** anywhere in the
+enclosing query, and carries **no comment** explaining why. It finds the
+enclosing call by brace-matching rather than a line window, because a long
+`select` routinely puts the `where` twenty lines above the bypass.
+
+Nine sites needed justifying when it was written. All nine turned out to be the
+same safe shape — a row fetched scoped by `churchId`, then mutated by the
+primary key that fetch had just proven — plus unguessable invitation tokens and
+Stripe webhooks, which have no session to scope by. Each now says so.
+
 ## Roadmap position
 
 - **Phase 0 (done):** domain configuration, the boundary guard in CI.
