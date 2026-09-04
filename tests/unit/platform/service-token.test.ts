@@ -3,11 +3,11 @@ import { checkSlugFormat } from "@/lib/platform/slug";
 import { describe, expect, it } from "vitest";
 
 const TOKEN = "stw_svc_table_1a2b3c4d5e6f7g8h";
-type Env = Record<string, string | undefined>;
+import type { EnvBag } from "@/lib/platform/env";
 
-const ENV: Env = { PLATFORM_SERVICE_TOKEN: TOKEN };
+const ENV: EnvBag = { PLATFORM_SERVICE_TOKEN: TOKEN };
 
-const check = (header: string | null, env: Env = ENV) => isPlatformRequest(header, env);
+const check = (header: string | null, env: EnvBag = ENV) => isPlatformRequest(header, env);
 
 describe("isPlatformRequest", () => {
   it("accepts this app's configured token", () => {

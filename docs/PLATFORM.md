@@ -97,13 +97,48 @@ Nine sites needed justifying when it was written. All nine turned out to be the
 same safe shape — a row fetched scoped by `churchId`, then mutated by the
 primary key that fetch had just proven — plus unguessable invitation tokens and
 Stripe webhooks, which have no session to scope by. Each now says so.
+## Entitlement enforcement
+
+`middleware.ts` checks the org's entitlement on every dashboard request, via
+`@steward-apps/platform-client`. Verification is offline against a cached JWKS,
+so the check costs no network call on the request path.
+
+**The org id needs no lookup.** `Church.id` *is* the console's `orgId`, so the
+`churchId` already on the session membership is the value the console keys on.
+
+| State                 | Dashboard                                  |
+| --------------------- | ------------------------------------------ |
+| `ACTIVE` / `GRACE`    | Full access                                |
+| `READ_ONLY`           | Reads and exports; writes get 402          |
+| `REVOKED`             | Redirected to `/billing/required`          |
+| absent (not bought)   | Redirected to `/billing/required`          |
+
+API routes get a **402** they can branch on; people get a page that explains
+which of the three situations they are in. Telling a church "subscription
+required" when they never had one, or asking them to pay when they only need to
+stop writing, is how support tickets get made.
+
+**The storefront is not gated.** Cutting off a church's customers mid-order
+punishes the wrong people, and the plan puts refusal of public traffic at the
+edge, where it costs nothing.
+
+### Self-hosted installs are unaffected
+
+Table is AGPL and self-hostable. With `PLATFORM_CONSOLE_URL` or
+`PLATFORM_SERVICE_TOKEN` unset, there is no client and every check passes —
+the app behaves exactly as it did before the platform existed. Enforcement is
+opt-in by deployment.
+
+The same instinct applies during an outage: if the client has no cached
+entitlement at all and cannot reach the console, the request is **allowed** and
+the reason logged. Refusing would lock out a church whose first request of the
+day happened to land during a console outage.
 
 ## Roadmap position
 
 - **Phase 0 (done):** domain configuration, the boundary guard in CI.
-- **Phase 1 (in progress):** the DMMF classification test and the tenancy fixes
+- **Phase 1 (done here):** the DMMF classification test and the tenancy fixes
   it surfaced; `POST /api/internal/provision` creating `Church` with
-  `id = orgId`. Still to come: `requireEntitlement("table")` in `middleware.ts`,
-  which waits on `@steward-apps/platform-client` being published.
+  `id = orgId`; entitlement enforcement in `middleware.ts`.
 
 See the decision record for the full sequence.
