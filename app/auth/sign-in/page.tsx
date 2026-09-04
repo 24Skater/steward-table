@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -36,14 +36,13 @@ export default async function SignInPage({
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="space-y-1 pb-4">
             {/*
-              CardTitle renders a div, so this was not a heading for a screen
-              reader — the only heading on the page was the wordmark. A card
-              title naming what the page is for should be one, and the E2E spec
-              had assumed it already was.
+              A real h2 rather than CardTitle, which renders a div. Without it
+              the only heading on this page was the wordmark, and a screen
+              reader had no way to know what the page was for. Biome's
+              useSemanticElements rule is right that a heading role on a div is
+              the wrong way to fix that.
             */}
-            <CardTitle role="heading" aria-level={2} className="text-lg font-medium text-slate-800">
-              Sign in
-            </CardTitle>
+            <h2 className="text-lg font-medium tracking-tight text-slate-800">Sign in</h2>
             <CardDescription className="text-slate-500">
               Use your email and password or continue with Google.
             </CardDescription>
