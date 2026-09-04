@@ -5,6 +5,8 @@ allowBuilds:
   esbuild: true
   prisma: true
   sharp: true
+minimumReleaseAgeExclude:
+  - '@steward-apps/platform-client@0.1.0'
 onlyBuiltDependencies:
   - "@biomejs/biome"
   - "@prisma/client"
