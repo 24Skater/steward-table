@@ -12,9 +12,12 @@ test.describe("Storefront", () => {
 
   test("sign-in page has required fields", async ({ page }) => {
     await page.goto("/auth/sign-in");
-    await expect(page.getByLabel("Email")).toBeVisible();
+    // Exact, because the page offers two ways in and so has two email inputs:
+    // this one, and "Or get a sign-in link by email". A loose match resolves to
+    // both and fails on strict mode rather than telling you that.
+    await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
     await expect(page.getByLabel("Password")).toBeVisible();
-    await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /sign in/i }).first()).toBeVisible();
   });
 
   test("sign-in page shows error on bad credentials", async ({ page }) => {
