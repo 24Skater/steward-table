@@ -35,7 +35,15 @@ export default async function SignInPage({
 
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-lg font-medium text-slate-800">Sign in</CardTitle>
+            {/*
+              CardTitle renders a div, so this was not a heading for a screen
+              reader — the only heading on the page was the wordmark. A card
+              title naming what the page is for should be one, and the E2E spec
+              had assumed it already was.
+            */}
+            <CardTitle role="heading" aria-level={2} className="text-lg font-medium text-slate-800">
+              Sign in
+            </CardTitle>
             <CardDescription className="text-slate-500">
               Use your email and password or continue with Google.
             </CardDescription>
