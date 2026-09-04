@@ -82,6 +82,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       status: true,
       user: { select: { id: true, name: true, email: true, image: true } },
     },
+    // Safe to bypass: the row was fetched immediately above with churchId in
+    // the where clause, so this id has already been proven to belong to the
+    // caller's church. Re-stating churchId on a primary-key update would
+    // not add a check, only the appearance of one.
     _bypassTenancyCheck: true,
   });
 
@@ -146,6 +150,10 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
   await (db.membership.update as PrismaBypass)({
     where: { id: membershipId },
     data: { status: "REMOVED" },
+    // Safe to bypass: the row was fetched immediately above with churchId in
+    // the where clause, so this id has already been proven to belong to the
+    // caller's church. Re-stating churchId on a primary-key update would
+    // not add a check, only the appearance of one.
     _bypassTenancyCheck: true,
   });
 

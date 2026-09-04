@@ -72,6 +72,9 @@ jobs:
       - name: Check platform boundaries
         run: sh scripts/ci/check-platform-boundaries.sh
 
+      - name: Audit tenancy bypasses
+        run: node scripts/ci/check-tenancy-bypasses.mjs
+
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -98,6 +101,75 @@ jobs:
 
       - name: Run unit tests
         run: pnpm test
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    # The plan calls this the real safety net: with only a handful of unit
+    # specs covering the app's behaviour, the browser tests are what actually
+    # catch a broken page. They had never run in CI.
+    env:
+      DATABASE_URL: postgresql://steward:steward@localhost:5432/steward_table
+      NEXTAUTH_SECRET: ci-secret-not-real
+      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: steward
+          POSTGRES_PASSWORD: steward
+          POSTGRES_DB: steward_table
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U steward -d steward_table"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Migrate database
+        run: npx prisma migrate deploy
+
+      - name: Seed
+        run: pnpm db:seed
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npx playwright test
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
 
   build:
     name: Build
