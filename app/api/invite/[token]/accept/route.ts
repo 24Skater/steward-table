@@ -12,6 +12,10 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ to
 
   const invitation = await (db.invitation.findUnique as PrismaBypass)({
     where: { token },
+    // Safe to bypass: an invitation token is unique and unguessable, so it
+    // identifies exactly one row on its own. The church it belongs to is a
+    // result of this lookup, not an input to it — there is no churchId to
+    // scope by until the token has been resolved.
     _bypassTenancyCheck: true,
   });
 

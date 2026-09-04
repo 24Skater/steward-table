@@ -17,5 +17,23 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  // Don't automatically start the server — the dev server should already be running
+  /**
+   * Started here so CI is self-contained, reused locally.
+   *
+   * `reuseExistingServer` off CI means a developer with `pnpm dev` already
+   * running keeps their fast refresh; in CI there is nothing to reuse, so
+   * Playwright builds and starts the app itself. Without this the suite could
+   * only ever run on a machine where somebody had remembered to start a server,
+   * which is why it had never run in CI at all.
+   */
+  webServer: {
+    command: "pnpm build && pnpm start",
+    url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+    reuseExistingServer: !process.env.CI,
+    // A cold Next build is slow, and a timeout here reads as a mysterious
+    // suite failure rather than "the build had not finished".
+    timeout: 240_000,
+    stdout: "pipe",
+    stderr: "pipe",
+  },
 });
