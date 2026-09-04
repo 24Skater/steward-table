@@ -27,7 +27,11 @@ export default defineConfig({
    * which is why it had never run in CI at all.
    */
   webServer: {
-    command: "pnpm build && pnpm start",
+    // NEXT_DISABLE_STANDALONE so `next start` can actually serve what was
+    // built; see next.config.ts for why standalone output does not work here.
+    command: process.env.CI
+      ? "NEXT_DISABLE_STANDALONE=1 pnpm build && pnpm start"
+      : "pnpm dev",
     url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     // A cold Next build is slow, and a timeout here reads as a mysterious
