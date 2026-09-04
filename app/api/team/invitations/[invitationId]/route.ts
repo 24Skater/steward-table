@@ -51,6 +51,10 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
   await (db.invitation.update as PrismaBypass)({
     where: { id: invitationId },
     data: { status: "REVOKED" },
+    // Safe to bypass: the row was fetched immediately above with churchId in
+    // the where clause, so this id has already been proven to belong to the
+    // caller's church. Re-stating churchId on a primary-key update would
+    // not add a check, only the appearance of one.
     _bypassTenancyCheck: true,
   });
 

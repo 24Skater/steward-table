@@ -144,6 +144,10 @@ export async function DELETE(req: NextRequest) {
   await (db.deliveryZone.update as PrismaBypass)({
     where: { id },
     data: { deletedAt: new Date() },
+    // Safe to bypass: the row was fetched immediately above with churchId in
+    // the where clause, so this id has already been proven to belong to the
+    // caller's church. Re-stating churchId on a primary-key update would
+    // not add a check, only the appearance of one.
     _bypassTenancyCheck: true,
   });
 

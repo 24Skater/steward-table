@@ -108,6 +108,9 @@ async function handleCheckoutCompleted(
   const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: { id: true, status: true, payments: { select: { id: true, status: true } } },
+    // Safe to bypass: the order id comes from a Stripe event whose signature
+    // has already been verified, and an order id is globally unique. No
+    // church is signed in here to scope by — a webhook has no session.
     _bypassTenancyCheck: true,
   })) as { id: string; status: string; payments: Array<{ id: string; status: string }> } | null;
 
@@ -149,6 +152,9 @@ async function handleCheckoutExpired(orderId: string): Promise<void> {
   const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: { id: true, status: true },
+    // Safe to bypass: the order id comes from a Stripe event whose signature
+    // has already been verified, and an order id is globally unique. No
+    // church is signed in here to scope by — a webhook has no session.
     _bypassTenancyCheck: true,
   })) as { id: string; status: string } | null;
 
@@ -168,6 +174,9 @@ async function handlePaymentFailed(
   const order = (await (db.order.findUnique as PrismaBypass)({
     where: { id: orderId },
     select: { id: true, status: true },
+    // Safe to bypass: the order id comes from a Stripe event whose signature
+    // has already been verified, and an order id is globally unique. No
+    // church is signed in here to scope by — a webhook has no session.
     _bypassTenancyCheck: true,
   })) as { id: string; status: string } | null;
 
