@@ -15,10 +15,11 @@
  *
  * Reads survive almost everything on purpose. A church that has lapsed must
  * still be able to log in and export its data, and a console outage must never
- * stop a Sunday — see the fail-open behaviour in @steward-apps/platform-client.
+ * stop a Sunday — see the fail-open behaviour in ./client.
  */
 
-import { type EntitlementState, PlatformClient, canWrite } from "@steward-apps/platform-client";
+import { PlatformClient } from "./client";
+import { type EntitlementState, canWrite } from "./entitlement-state";
 import type { EnvBag } from "./env";
 
 const PRODUCT = "table" as const;
