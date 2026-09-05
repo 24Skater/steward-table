@@ -1,10 +1,10 @@
+import type { PlatformClient } from "@/lib/platform/client";
 import {
   checkEntitlement,
   isMutationMethod,
   platformClient,
   resetPlatformClient,
 } from "@/lib/platform/entitlements";
-import type { PlatformClient } from "@steward-apps/platform-client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const ORG_ID = "0a4c2b8e-5f1d-4a2b-9c3e-7d8f1a2b3c4d";
