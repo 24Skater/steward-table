@@ -41,19 +41,27 @@ Churches and ministries that run food sales — pupusa sales, bake sales, fundra
 git clone https://github.com/steward-app/steward-table.git
 cd steward-table
 
-# 2. Copy environment variables
+# 2. (optional) Override the built-in local defaults with your own secrets.
+#    docker/docker-compose.yml runs without this; a .env.local layers on top.
 cp .env.example .env.local
-# Edit .env.local with your secrets
 
-# 3. Start services
-docker compose -f docker/docker-compose.yml up -d
+# 3. Start services. Migrations run automatically (the `migrate` service);
+#    the app waits for them before starting.
+docker compose -f docker/docker-compose.yml up -d --build
 
-# 4. Run migrations
-docker compose exec app pnpm db:migrate
+#    …or with demo data and a ready-to-use login
+#    (owner@gracefellowship.demo / demo1234):
+docker compose -f docker/docker-compose.yml --profile demo up -d --build
 
-# 5. Open the app
-open http://localhost:3000
+# 4. Open the app
+open http://localhost:3001
 ```
+
+> For a real deployment, set `NEXTAUTH_SECRET` (`openssl rand -base64 32`) and,
+> if you want OAuth or emailed sign-in links, `GOOGLE_CLIENT_ID` /
+> `GOOGLE_CLIENT_SECRET` or `RESEND_API_KEY`. Without any of those, email +
+> password is the only way in — create the first account with `--profile demo`
+> or by running `pnpm db:seed` against the database.
 
 ---
 

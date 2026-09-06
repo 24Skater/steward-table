@@ -1,5 +1,32 @@
 name: steward-table
 
+# Self-host / local quickstart. `docker compose -f docker/docker-compose.yml up -d`
+# brings up Postgres + MinIO, applies migrations, then starts the app.
+# Add `--profile demo` to also load the demo church and a sign-in you can use:
+# owner@gracefellowship.demo / demo1234.
+
+# Environment shared by the app and the one-off migrate/seed jobs. Values here
+# are safe local defaults; a `../.env.local` (git-ignored) layers on top and
+# wins, and is optional.
+x-app-env: &app-env
+  DATABASE_URL: postgresql://postgres:postgres@postgres:5432/steward_table
+  NEXTAUTH_URL: http://localhost:3001
+  NEXT_PUBLIC_APP_URL: http://localhost:3001
+  # Dev-only placeholder so the app boots out of the box. Generate a real one
+  # (`openssl rand -base64 32`) for anything exposed to a network.
+  NEXTAUTH_SECRET: dev-insecure-nextauth-secret-change-me-0000000000
+  # Auth.js v5 rejects every request as UntrustedHost behind Docker's port
+  # publish without this.
+  AUTH_TRUST_HOST: "true"
+  R2_ENDPOINT: http://minio:9000
+  R2_ACCESS_KEY_ID: minioadmin
+  R2_SECRET_ACCESS_KEY: minioadmin
+  R2_BUCKET_NAME: steward-table
+
+x-app-envfile: &app-envfile
+  - path: ../.env.local
+    required: false
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -36,26 +63,55 @@ services:
       timeout: 20s
       retries: 3
 
+  # One-off: apply Prisma migrations, then exit. The runner image is a Next.js
+  # standalone bundle with no Prisma CLI, so this uses the `builder` stage.
+  migrate:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: builder
+    env_file: *app-envfile
+    environment: *app-env
+    command: sh -c "node_modules/.bin/prisma migrate deploy --schema prisma/schema"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # Opt-in demo data: `docker compose --profile demo up -d`. Loads the
+  # "Grace Fellowship" church and owner@gracefellowship.demo / demo1234.
+  # Idempotent — everything is upserted; only the sample orders/customers are
+  # recreated — so it is safe to leave the profile on.
+  seed:
+    profiles: ["demo"]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: builder
+    env_file: *app-envfile
+    environment: *app-env
+    command: sh -c "pnpm db:seed"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   app:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     restart: unless-stopped
-    env_file:
-      - ../.env.local
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/steward_table
-      NEXTAUTH_URL: http://localhost:3001
-      NEXT_PUBLIC_APP_URL: http://localhost:3001
-      R2_ENDPOINT: http://minio:9000
-      R2_ACCESS_KEY_ID: minioadmin
-      R2_SECRET_ACCESS_KEY: minioadmin
-      R2_BUCKET_NAME: steward-table
+    env_file: *app-envfile
+    environment: *app-env
     ports:
       - "3001:3000"
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   postgres_data:
