@@ -18,7 +18,8 @@ export async function middleware(req: NextRequest) {
   // Pass through Next.js internals and static files
   if (
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/auth") ||
+    // Auth.js endpoints and the sign-in / error / verify pages both live
+    // under /auth (see `basePath` in lib/auth/config.ts).
     pathname.startsWith("/auth") ||
     // Must stay reachable, or the entitlement redirect below loops onto itself.
     pathname.startsWith("/billing/required") ||

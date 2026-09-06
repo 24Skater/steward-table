@@ -15,6 +15,12 @@ const credentialsSchema = z.object({
 });
 
 export const authConfig: NextAuthConfig = {
+  // The route handler lives at `app/auth/[...nextauth]`, not the Auth.js default
+  // `app/api/auth/[...nextauth]`. Without this, Auth.js keeps its default
+  // `/api/auth` basePath and every session / csrf / callback request 404s with
+  // "UnknownAction: Cannot parse action at /auth/session" — sign-in cannot work
+  // at all. The custom `pages` paths below are unrelated (those are UI routes).
+  basePath: "/auth",
   adapter: PrismaAdapter(db),
   session: {
     strategy: "jwt",
