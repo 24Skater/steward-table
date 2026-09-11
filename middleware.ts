@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { extractTenantSlug } from "@/lib/platform-domain";
 import { checkEntitlement, isMutationMethod } from "@/lib/platform/entitlements";
+import { gateFor, isStaticAsset } from "@/lib/platform/request-gate";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -12,94 +13,89 @@ function extractChurchSlug(req: NextRequest): string | null {
   return extractTenantSlug(req.headers.get("host"));
 }
 
+/**
+ * Refuse a request the entitlement gate turned down.
+ *
+ * 402 for anything programmatic, a page for a person. An API client needs a
+ * status it can branch on; a human needs somewhere to go.
+ */
+function refuse(req: NextRequest, pathname: string, reason: string): NextResponse {
+  if (pathname.startsWith("/api")) {
+    return NextResponse.json({ error: "subscription_required", reason }, { status: 402 });
+  }
+
+  const billingUrl = new URL("/billing/required", req.url);
+  billingUrl.searchParams.set("reason", reason);
+  return NextResponse.redirect(billingUrl);
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Pass through Next.js internals and static files
-  if (
-    pathname.startsWith("/_next") ||
-    // Auth.js endpoints and the sign-in / error / verify pages both live
-    // under /auth (see `basePath` in lib/auth/config.ts).
-    pathname.startsWith("/auth") ||
-    // Must stay reachable, or the entitlement redirect below loops onto itself.
-    pathname.startsWith("/billing/required") ||
-    pathname.startsWith("/favicon") ||
-    pathname.includes(".")
-  ) {
+  if (isStaticAsset(pathname)) {
     return NextResponse.next();
   }
 
-  // Resolve church slug from subdomain
+  const { gate } = gateFor(pathname);
+
+  // Handed straight back, before the storefront rewrite could relocate them
+  // under a church's slug.
+  if (gate === "bypass") {
+    return NextResponse.next();
+  }
+
+  // Resolve church slug from subdomain. Storefront rewriting happens before the
+  // entitlement gate: the storefront is public, and cutting off a church's
+  // customers mid-order would punish the wrong people. The plan puts
+  // public-traffic refusal at the edge, not here.
   const churchSlug = extractChurchSlug(req);
 
-  // Rewrite storefront routes for subdomain access
   if (churchSlug && !pathname.startsWith("/(storefront)")) {
     const url = req.nextUrl.clone();
     url.pathname = `/${churchSlug}${pathname}`;
     return NextResponse.rewrite(url);
   }
 
-  // Protect dashboard routes — require authentication
-  if (
-    pathname.startsWith("/orders") ||
-    pathname.startsWith("/kitchen") ||
-    pathname.startsWith("/catalog") ||
-    pathname.startsWith("/customers") ||
-    pathname.startsWith("/inventory") ||
-    pathname.startsWith("/drivers") ||
-    pathname.startsWith("/settings") ||
-    pathname.startsWith("/reports")
-  ) {
-    const session = await auth();
+  if (gate === "none") {
+    return NextResponse.next();
+  }
 
-    if (!session?.user?.id) {
-      const signInUrl = new URL("/auth/sign-in", req.url);
-      signInUrl.searchParams.set("callbackUrl", req.url);
-      return NextResponse.redirect(signInUrl);
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    // An API route with no session is anonymous storefront traffic. It has no
+    // organization to check, and the route authenticates its own callers.
+    if (gate === "session-optional") return NextResponse.next();
+
+    const signInUrl = new URL("/auth/sign-in", req.url);
+    signInUrl.searchParams.set("callbackUrl", req.url);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // Entitlement enforcement.
+  //
+  // The org id is already in the session: Church.id IS the console's orgId, so
+  // a membership's churchId needs no lookup and no extra round trip.
+  const orgId = session.user.memberships?.[0]?.churchId;
+
+  if (orgId) {
+    const entitlement = await checkEntitlement(orgId, isMutationMethod(req.method));
+
+    if (!entitlement.allow) {
+      return refuse(req, pathname, entitlement.reason);
     }
 
-    // Entitlement enforcement.
-    //
-    // The org id is already in the session: Church.id IS the console's orgId, so
-    // a membership's churchId needs no lookup and no extra round trip.
-    //
-    // Only the dashboard is gated here. The storefront is public and stays
-    // reachable — cutting off a church's customers mid-order would punish the
-    // wrong people, and the plan puts public-traffic refusal at the edge.
-    const orgId = session.user.memberships?.[0]?.churchId;
-
-    if (orgId) {
-      const decision = await checkEntitlement(orgId, isMutationMethod(req.method));
-
-      if (!decision.allow) {
-        // 402 for anything programmatic, a page for a person. An API client
-        // needs a status it can branch on; a human needs somewhere to go.
-        if (pathname.startsWith("/api")) {
-          return NextResponse.json(
-            { error: "subscription_required", reason: decision.reason },
-            { status: 402 },
-          );
-        }
-
-        const billingUrl = new URL("/billing/required", req.url);
-        billingUrl.searchParams.set("reason", decision.reason);
-        return NextResponse.redirect(billingUrl);
-      }
-
-      const response = NextResponse.next();
-      response.headers.set("x-user-id", session.user.id);
-      // Lets the dashboard render a read-only banner without asking again.
-      if (decision.readOnly) response.headers.set("x-entitlement-read-only", "1");
-      return response;
-    }
-
-    // Attach userId to request headers for downstream use
     const response = NextResponse.next();
     response.headers.set("x-user-id", session.user.id);
+    // Lets the dashboard render a read-only banner without asking again.
+    if (entitlement.readOnly) response.headers.set("x-entitlement-read-only", "1");
     return response;
   }
 
-  return NextResponse.next();
+  // Attach userId to request headers for downstream use
+  const response = NextResponse.next();
+  response.headers.set("x-user-id", session.user.id);
+  return response;
 }
 
 export const config = {
