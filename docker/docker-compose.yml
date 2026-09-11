@@ -45,8 +45,13 @@ services:
       timeout: 5s
       retries: 5
 
+  # From quay.io, and pinned. MinIO withdrew `minio/minio` from Docker Hub, so
+  # `minio/minio:latest` now answers "pull access denied ... repository does not
+  # exist" and the quickstart below cannot start. quay.io is where MinIO
+  # publishes now; the pin is the other half, because a floating tag is a
+  # dependency on someone else's Tuesday.
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
