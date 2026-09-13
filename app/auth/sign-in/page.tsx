@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { auth, signIn } from "@/lib/auth";
+import { isLocalPasswordLoginAllowed, isSsoConfigured, ssoButtonLabel } from "@/lib/auth/sso";
 import type { Route } from "next";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
@@ -23,6 +24,9 @@ export default async function SignInPage({
   if (session?.user?.id) {
     redirect(destination);
   }
+
+  const sso = isSsoConfigured();
+  const passwords = isLocalPasswordLoginAllowed();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
@@ -44,7 +48,9 @@ export default async function SignInPage({
             */}
             <h2 className="text-lg font-medium tracking-tight text-slate-800">Sign in</h2>
             <CardDescription className="text-slate-500">
-              Use your email and password or continue with Google.
+              {sso
+                ? "Use single sign-on, or the email and password you already had."
+                : "Use your email and password or continue with Google."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -55,67 +61,99 @@ export default async function SignInPage({
                   ? "Incorrect email or password."
                   : error === "OAuthAccountNotLinked"
                     ? "An account already exists with that email. Sign in with your original method."
-                    : "Something went wrong. Please try again."}
+                    : error === "AccessDenied"
+                      ? "That address is not verified with the identity provider yet. Verify it there, or sign in below the way you did before."
+                      : "Something went wrong. Please try again."}
               </div>
             )}
 
-            {/* Credentials form */}
-            <form
-              action={async (formData: FormData) => {
-                "use server";
-                const email = formData.get("email") as string;
-                const password = formData.get("password") as string;
-                try {
-                  await signIn("credentials", {
-                    email,
-                    password,
-                    redirectTo: destination,
-                  });
-                } catch (error) {
-                  if (error instanceof AuthError) {
-                    redirect(
-                      `/auth/sign-in?error=${error.type}&callbackUrl=${encodeURIComponent(destination)}` as Route,
-                    );
-                  }
-                  throw error;
-                }
-              }}
-              className="space-y-3"
-            >
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-sm font-medium text-slate-700">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  placeholder="you@church.org"
-                  className="h-10 border-slate-300 focus:border-slate-500"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-sm font-medium text-slate-700">
-                  Password
-                </Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="h-10 border-slate-300 focus:border-slate-500"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium"
+            {/*
+              Single sign-on first, because it is the recommendation - but on
+              the same screen as every other way in, not behind a disclosure.
+              The paths below it are the ones that still work when the identity
+              provider does not, which is exactly when somebody will be hunting
+              for them.
+            */}
+            {sso && (
+              <form
+                action={async () => {
+                  "use server";
+                  await signIn("auth0", { redirectTo: destination });
+                }}
               >
-                Sign in
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium"
+                >
+                  {ssoButtonLabel()}
+                </Button>
+              </form>
+            )}
+
+            {/* Credentials form */}
+            {passwords && (
+              <form
+                action={async (formData: FormData) => {
+                  "use server";
+                  const email = formData.get("email") as string;
+                  const password = formData.get("password") as string;
+                  try {
+                    await signIn("credentials", {
+                      email,
+                      password,
+                      redirectTo: destination,
+                    });
+                  } catch (error) {
+                    if (error instanceof AuthError) {
+                      redirect(
+                        `/auth/sign-in?error=${error.type}&callbackUrl=${encodeURIComponent(destination)}` as Route,
+                      );
+                    }
+                    throw error;
+                  }
+                }}
+                className="space-y-3"
+              >
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    placeholder="you@church.org"
+                    className="h-10 border-slate-300 focus:border-slate-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="password" className="text-sm font-medium text-slate-700">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    className="h-10 border-slate-300 focus:border-slate-500"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  variant={sso ? "outline" : "default"}
+                  className={
+                    sso
+                      ? "w-full h-11 border-slate-300 text-slate-700 hover:bg-slate-50 font-medium"
+                      : "w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-medium"
+                  }
+                >
+                  Sign in
+                </Button>
+              </form>
+            )}
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
