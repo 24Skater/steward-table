@@ -1,7 +1,8 @@
 name: steward-table
 
 # Self-host / local quickstart. `docker compose -f docker/docker-compose.yml up -d`
-# brings up Postgres + MinIO, applies migrations, then starts the app.
+# brings up Postgres + S3-compatible storage, applies migrations, then starts
+# the app.
 # Add `--profile demo` to also load the demo church and a sign-in you can use:
 # owner@gracefellowship.demo / demo1234.
 
@@ -18,10 +19,13 @@ x-app-env: &app-env
   # Auth.js v5 rejects every request as UntrustedHost behind Docker's port
   # publish without this.
   AUTH_TRUST_HOST: "true"
-  R2_ENDPOINT: http://minio:9000
-  R2_ACCESS_KEY_ID: minioadmin
-  R2_SECRET_ACCESS_KEY: minioadmin
-  R2_BUCKET_NAME: steward-table
+  # The bundled storage container, as browsers reach it: presigned uploads and
+  # image links are built from this, so it is the published port, not the
+  # in-network name. A `../.env.local` with real R2_* values switches to R2.
+  R2_ENDPOINT: http://localhost:9000
+  R2_ACCESS_KEY_ID: &storage-access steward-table
+  R2_SECRET_ACCESS_KEY: &storage-secret dev-insecure-storage-secret-change-me
+  R2_BUCKET_NAME: &storage-bucket steward-table
 
 x-app-envfile: &app-envfile
   - path: ../.env.local
@@ -45,28 +49,64 @@ services:
       timeout: 5s
       retries: 5
 
-  # From quay.io, and pinned. MinIO withdrew `minio/minio` from Docker Hub, so
-  # `minio/minio:latest` now answers "pull access denied ... repository does not
-  # exist" and the quickstart below cannot start. quay.io is where MinIO
-  # publishes now; the pin is the other half, because a floating tag is a
-  # dependency on someone else's Tuesday.
-  minio:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+  # Object storage: Versity S3 Gateway, an Apache-2.0 S3 server keeping each
+  # object as a plain file under /data/<bucket>/. It replaced MinIO when MinIO
+  # stopped publishing images anyone can pull (quay.io and Docker Hub both
+  # answer 401). One port, the S3 API; it refuses to start without
+  # credentials. Region "auto" because the app signs requests the way R2
+  # expects. Pinned: a floating tag is a dependency on someone else's Tuesday.
+  storage:
+    image: versity/versitygw:v1.9.0
     restart: unless-stopped
-    command: server /data --console-address ":9001"
+    command: ["posix", "/data"]
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      ROOT_ACCESS_KEY: *storage-access
+      ROOT_SECRET_KEY: *storage-secret
+      VGW_REGION: auto
+      VGW_HEALTH: /health
+      VGW_QUIET: "true"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9000:7070"
     volumes:
-      - minio_data:/data
+      - storage_data:/data
+    depends_on:
+      storage-createbucket:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:7070/health"]
       interval: 30s
-      timeout: 20s
+      timeout: 10s
       retries: 3
+
+  # A bucket is a top-level directory on the gateway's volume.
+  storage-createbucket:
+    image: versity/versitygw:v1.9.0
+    entrypoint: ["sh", "-c", "mkdir -p /data/steward-table && echo 'bucket ready: steward-table'"]
+    volumes:
+      - storage_data:/data
+    network_mode: none
+    restart: "no"
+
+  # One-off: let browsers upload to the bucket (CORS) and show what they
+  # uploaded (anonymous read of objects, not of the listing). See
+  # scripts/storage-init.mjs. The app does not wait on it: without it only
+  # image upload is affected.
+  storage-init:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: builder
+    environment:
+      STORAGE_INTERNAL_ENDPOINT: http://storage:7070
+      STORAGE_ACCESS_KEY: *storage-access
+      STORAGE_SECRET_KEY: *storage-secret
+      STORAGE_BUCKET: *storage-bucket
+      NEXT_PUBLIC_APP_URL: http://localhost:3001
+    command: node scripts/storage-init.mjs
+    depends_on:
+      storage:
+        condition: service_healthy
+    restart: "no"
 
   # One-off: apply Prisma migrations, then exit. The runner image is a Next.js
   # standalone bundle with no Prisma CLI, so this uses the `builder` stage.
@@ -120,4 +160,4 @@ services:
 
 volumes:
   postgres_data:
-  minio_data:
+  storage_data:
