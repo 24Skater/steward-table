@@ -116,8 +116,9 @@ without anyone remembering to.
 
 ## Quick start
 
-**Requirements:** Docker and Docker Compose. Nothing else — Postgres and MinIO
-come up in the stack.
+**Requirements:** Docker and Docker Compose. Nothing else — Postgres and
+S3-compatible storage come up in the stack, so it runs entirely on your own
+hardware.
 
 ```bash
 git clone https://github.com/24Skater/steward-table.git
@@ -184,7 +185,7 @@ whether the app works.
 | `ENCRYPTION_KEY` | for Stripe | — | AES-256-GCM key for stored church API keys |
 | `GOOGLE_CLIENT_ID` / `_SECRET` | no | — | Google sign-in |
 | `RESEND_API_KEY` | no | — | Emailed sign-in links and receipts |
-| `R2_*` | no | — | S3-compatible image storage; MinIO locally |
+| `R2_*` | no | — | S3-compatible image storage; the bundled gateway locally |
 | `TWILIO_*` | no | — | SMS order notifications |
 
 With none of the optional providers set, email and password is the only way in.
@@ -211,7 +212,7 @@ With none of the optional providers set, email and password is the only way in.
         ┌───────────────────┼───────────────────┐
         │                   │                   │
   ┌─────▼─────┐   ┌─────────▼────────┐   ┌──────▼──────┐
-  │ Postgres  │   │ LISTEN/NOTIFY    │   │ S3 / MinIO  │
+  │ Postgres  │   │ LISTEN/NOTIFY    │   │ S3 storage  │
   │    16     │──▶│      → SSE       │   │   images    │
   └───────────┘   └──────────────────┘   └─────────────┘
 ```
@@ -257,7 +258,7 @@ Every permission denial is written to the audit log.
 | Auth | Auth.js v5 |
 | Database | PostgreSQL 16 via Prisma 6 |
 | Payments | Stripe — church-owned keys by default |
-| Storage | S3-compatible: Cloudflare R2, or MinIO self-hosted |
+| Storage | S3-compatible: Cloudflare R2, or Versity S3 Gateway self-hosted |
 | Realtime | Postgres `LISTEN/NOTIFY` → SSE |
 | Email / SMS | Resend or SMTP · Twilio, optional |
 | Testing | Vitest, Playwright |
